@@ -203,7 +203,7 @@ export default function DashboardPage() {
                 { href: '/dashboard/log', emoji: '🎤', label: 'Log now' },
                 { href: '/dashboard/upload', emoji: '📄', label: 'Upload test' },
                 { href: '/dashboard/meal-plan', emoji: '🍽️', label: 'Meal plan' },
-                { href: '/dashboard/report', emoji: '📊', label: 'Report' },
+                { href: '/dashboard/food-checker', emoji: '🔍', label: 'Food check' },
               ].map(({ href, emoji, label }) => (
                 <Link key={href} href={href}>
                   <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center hover:border-[#00B4B4]/30 transition-colors active:scale-95">
