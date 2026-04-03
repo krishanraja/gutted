@@ -404,7 +404,7 @@ export default function DashboardPage() {
                   if (url) window.location.href = url
                 }}
                 className="text-[#4ADE80] text-sm font-medium hover:underline"
-              >Upgrade to Core - $9/mo →</button>
+              >Upgrade to Core - $14/mo →</button>
             </div>
           )}
 
@@ -457,7 +457,7 @@ export default function DashboardPage() {
                 if (url) window.location.href = url
               }}
               className="text-[#4ADE80] text-sm font-medium hover:underline"
-            >Upgrade to Core - $9/mo →</button>
+            >Upgrade to Core - $14/mo →</button>
           </div>
         )}
       </div>
