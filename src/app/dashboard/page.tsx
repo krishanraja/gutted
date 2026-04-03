@@ -12,7 +12,9 @@ import { DashboardSkeleton } from '@/components/ui/Skeleton'
 
 interface Profile { name: string; plan: string; gut_profile: Record<string, unknown> }
 interface Log { id: string; type: string; content: string; gut_score: number; logged_at: string }
-interface Pattern { trigger: string; effect: string; confidence: string; detail: string }
+interface Pattern { trigger: string; effect: string; confidence: string; detail: string; occurrences?: number }
+interface TriggerFood { food: string; avgScoreAfter: number; timesLogged: number; symptoms: string[] }
+interface BeneficialFood { food: string; avgScoreAfter: number; timesLogged: number; benefits: string[] }
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -23,6 +25,8 @@ export default function DashboardPage() {
   const [streak, setStreak] = useState(0)
   const [dailyInsight, setDailyInsight] = useState<{ insight: string; type: string } | null>(null)
   const [patterns, setPatterns] = useState<Pattern[]>([])
+  const [triggerFoods, setTriggerFoods] = useState<TriggerFood[]>([])
+  const [beneficialFoods, setBeneficialFoods] = useState<BeneficialFood[]>([])
   const [hasLoggedToday, setHasLoggedToday] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
 
@@ -75,7 +79,11 @@ export default function DashboardPage() {
     if (allLogs.length >= 5) {
       fetch('/api/patterns', { method: 'POST' })
         .then(r => r.json())
-        .then(data => { if (data.patterns?.length) setPatterns(data.patterns) })
+        .then(data => {
+          if (data.patterns?.length) setPatterns(data.patterns)
+          if (data.triggerFoods?.length) setTriggerFoods(data.triggerFoods)
+          if (data.beneficialFoods?.length) setBeneficialFoods(data.beneficialFoods)
+        })
         .catch(() => {})
     }
   }, [])
@@ -184,8 +192,45 @@ export default function DashboardPage() {
                       <p className="text-sm text-white/70">{p.detail}</p>
                       <div className="flex gap-2 mt-1">
                         <Badge variant={p.confidence === 'high' ? 'green' : 'amber'}>{p.confidence}</Badge>
+                        {p.occurrences && <span className="text-white/30 text-xs">{p.occurrences}x observed</span>}
                       </div>
                     </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Trigger Foods */}
+          {triggerFoods.length > 0 && (
+            <Card className="border-red-500/20 bg-red-500/5">
+              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Trigger foods</p>
+              <div className="space-y-2">
+                {triggerFoods.map((f, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-red-400 text-sm">⚠️</span>
+                      <span className="text-sm text-white/70">{f.food}</span>
+                    </div>
+                    <Badge variant="red">{f.avgScoreAfter}/10</Badge>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Beneficial Foods */}
+          {beneficialFoods.length > 0 && (
+            <Card className="border-[#4ADE80]/20 bg-[#4ADE80]/5">
+              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Gut-friendly foods</p>
+              <div className="space-y-2">
+                {beneficialFoods.map((f, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#4ADE80] text-sm">✓</span>
+                      <span className="text-sm text-white/70">{f.food}</span>
+                    </div>
+                    <Badge variant="green">{f.avgScoreAfter}/10</Badge>
                   </div>
                 ))}
               </div>
