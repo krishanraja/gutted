@@ -83,12 +83,10 @@ export default function LandingPage() {
 
         {/* Hero content */}
         <div className="relative z-10 px-6 py-16 sm:py-24 text-center max-w-2xl mx-auto">
-          <div className="mb-3">
+          <div className="mb-1">
             <Image src="/logo.png" alt="gutted." width={240} height={80} className="h-auto w-60 sm:w-72 mx-auto drop-shadow-2xl" priority />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-10">
-            <span className="gradient-text">Know Your Gut</span>
-          </h2>
+          <p className="text-sm sm:text-base font-light tracking-[0.25em] uppercase text-white/50 mb-10">Know Your Gut</p>
           <p className="text-lg text-white/80 mb-10 leading-relaxed drop-shadow-lg">
             Voice-log your symptoms. Upload your tests. Get a meal plan that actually fits your gut - not a generic one-size-fits-all template.
           </p>
