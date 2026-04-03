@@ -88,6 +88,18 @@ export default function SettingsPage() {
               </button>
             )}
           </div>
+          {profile?.plan !== 'free' && (
+            <button
+              onClick={async () => {
+                const res = await fetch('/api/stripe/portal', { method: 'POST' })
+                const { url } = await res.json()
+                if (url) window.location.href = url
+              }}
+              className="text-white/40 text-sm hover:text-white/60 mt-3 transition-colors"
+            >
+              Manage subscription →
+            </button>
+          )}
         </Card>
 
         {/* Export data (desktop) */}
