@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { getPlanLimits } from '@/lib/plan-limits'
 import { haptic } from '@/lib/haptics'
 import { MealPlanSkeleton } from '@/components/ui/Skeleton'
+import { useToast } from '@/components/ToastProvider'
 
 interface Meal { name: string; description: string; gutBenefits: string; prepTime: string }
 interface Day { day: string; breakfast: Meal; lunch: Meal; dinner: Meal; snacks: string[] }
@@ -24,7 +25,9 @@ export default function MealPlanPage() {
 
   const [userPlan, setUserPlan] = useState('free')
   const [planAge, setPlanAge] = useState(0)
+  const [emailing, setEmailing] = useState(false)
   const touchStartRef = useRef(0)
+  const { toast } = useToast()
   const limits = getPlanLimits(userPlan)
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -85,6 +88,31 @@ export default function MealPlanPage() {
       setError((e as Error).message || 'Could not generate meal plan')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const emailPlan = async () => {
+    setEmailing(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: profile } = await supabase.from('profiles').select('name, email').eq('id', user.id).single()
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'weekly-meal-plan',
+          to: profile?.email || user.email,
+          data: { name: profile?.name || 'there', mealPlanUrl: `${window.location.origin}/dashboard/meal-plan` },
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to send')
+      toast('Meal plan sent to your email', 'success')
+    } catch {
+      toast('Could not send email', 'error')
+    } finally {
+      setEmailing(false)
     }
   }
 
@@ -222,7 +250,7 @@ export default function MealPlanPage() {
             </div>
           )}
 
-          <div className="px-6 flex gap-3">
+          <div className="px-6 flex gap-3 flex-wrap">
             <Button onClick={generate} loading={generating} variant="outline" className="flex-1">Regenerate</Button>
             <Button
               variant="outline"
@@ -231,6 +259,16 @@ export default function MealPlanPage() {
             >
               Print plan
             </Button>
+            {limits.emailMealPlans && (
+              <Button
+                variant="outline"
+                className="flex-1"
+                loading={emailing}
+                onClick={emailPlan}
+              >
+                Email me this plan
+              </Button>
+            )}
           </div>
         </>
       )}
