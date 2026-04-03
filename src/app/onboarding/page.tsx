@@ -62,7 +62,7 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-black flex flex-col px-6">
       <div className="pt-8 pb-4 flex justify-center">
-        <Image src="/logo.png" alt="gutted." width={100} height={32} className="h-8 w-auto" />
+        <Image src="/icon.png" alt="gutted." width={32} height={32} className="h-8 w-8" />
       </div>
 
       {/* Progress bar */}
@@ -74,6 +74,12 @@ export default function OnboardingPage() {
       </div>
 
       <div className="flex-1 flex flex-col max-w-sm mx-auto w-full">
+        {step > 0 && (
+          <button onClick={() => setStep(s => s - 1)} className="text-white/40 text-sm mb-3 flex items-center gap-1 self-start">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+            Back
+          </button>
+        )}
         <p className="text-white/40 text-sm mb-2">Step {step + 1} of {totalSteps}</p>
 
         {!isLastStep ? (
@@ -117,10 +123,15 @@ export default function OnboardingPage() {
         )}
       </div>
 
-      <div className="pb-8 pt-4 max-w-sm mx-auto w-full">
+      <div className="pb-8 pt-4 max-w-sm mx-auto w-full space-y-3">
         <Button onClick={next} loading={saving} className="w-full" size="lg">
           {isLastStep ? 'Build my gut profile' : 'Continue'}
         </Button>
+        {!isLastStep && (
+          <button onClick={() => setStep(s => s + 1)} className="w-full text-center text-white/30 text-sm hover:text-white/50 transition-colors">
+            Skip for now
+          </button>
+        )}
       </div>
     </div>
   )

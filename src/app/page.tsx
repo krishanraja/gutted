@@ -55,7 +55,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-black text-white">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 max-w-4xl mx-auto">
-        <Image src="/logo.png" alt="gutted." width={100} height={32} className="h-8 w-auto" />
+        <Image src="/icon.png" alt="gutted." width={32} height={32} className="h-8 w-8" />
         <div className="flex gap-3">
           <Link href="/auth/login">
             <Button variant="ghost" size="sm">Sign in</Button>
@@ -67,14 +67,11 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="px-6 py-20 text-center max-w-2xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm text-white/60 mb-8">
-          <span className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse"/>
-          AI-powered gut health
+      <section className="px-6 py-16 sm:py-20 text-center max-w-2xl mx-auto">
+        <div className="mb-6">
+          <Image src="/logo.png" alt="gutted." width={240} height={80} className="h-auto w-60 sm:w-72 mx-auto" priority />
         </div>
-        <h1 className="text-5xl sm:text-6xl font-bold leading-tight mb-6">
-          <span className="gradient-text">Know your gut.</span>
-        </h1>
+        <p className="text-xl text-white/60 font-medium tracking-wide uppercase mb-10">Know Your Gut</p>
         <p className="text-lg text-white/60 mb-10 leading-relaxed">
           Voice-log your symptoms. Upload your tests. Get a meal plan that actually fits your gut - not a generic one-size-fits-all template.
         </p>

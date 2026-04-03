@@ -27,8 +27,12 @@ export default function LogPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [mode, setMode] = useState<'voice' | 'text'>('voice')
+  const [tagsChanged, setTagsChanged] = useState(false)
 
-  const toggleTag = (tag: string) => setTags(p => p.includes(tag) ? p.filter(t => t !== tag) : [...p, tag])
+  const toggleTag = (tag: string) => {
+    setTags(p => p.includes(tag) ? p.filter(t => t !== tag) : [...p, tag])
+    if (analysis) setTagsChanged(true)
+  }
 
   const handleTranscription = (text: string) => {
     setTranscript(text)
@@ -52,6 +56,7 @@ export default function LogPage() {
       setError((e as Error).message || 'Analysis failed')
     } finally {
       setAnalysing(false)
+      setTagsChanged(false)
     }
   }
 
@@ -146,9 +151,25 @@ export default function LogPage() {
             </button>
           ))}
         </div>
+        {tagsChanged && transcript && (
+          <Button onClick={() => analyseText(transcript)} loading={analysing} variant="outline" size="sm" className="mt-3">
+            Re-analyse with updated tags
+          </Button>
+        )}
       </div>
 
-      {error && <p className="px-6 text-red-400 text-sm mb-4">{error}</p>}
+      {error && (
+        <div className="px-6 mb-4">
+          <p className="text-red-400 text-sm">{error}</p>
+          <p className="text-white/30 text-xs mt-1">
+            {error.toLowerCase().includes('microphone') || error.toLowerCase().includes('permission')
+              ? 'Check your browser microphone permissions and try again.'
+              : error.toLowerCase().includes('transcri') || error.toLowerCase().includes('failed')
+              ? 'Try recording again or switch to text mode.'
+              : 'Please try again.'}
+          </p>
+        </div>
+      )}
 
       {/* Analysis results */}
       {analysing && (
