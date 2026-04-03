@@ -3,28 +3,42 @@ import { anthropic } from '@/lib/anthropic'
 
 export async function POST(req: NextRequest) {
   try {
-    const { text, userProfile } = await req.json()
-    const gutProfile = userProfile?.gut_profile || {}
+    const { text, userProfile, recentLogs } = await req.json()
+    if (!text) return NextResponse.json({ error: 'No log text' }, { status: 400 })
 
-    const message = await anthropic.messages.create({
+    const systemPrompt = `You are a gut health AI assistant. Analyse daily gut health log entries from users and provide personalised, evidence-based insights. Be warm, encouraging, and specific. Never provide medical diagnoses. Always recommend consulting a healthcare professional for serious concerns.
+
+User profile: ${JSON.stringify(userProfile || {})}
+Recent logs (last 5): ${JSON.stringify(recentLogs || [])}`
+
+    const userPrompt = `Analyse this gut health log entry and return a JSON response:
+
+Log entry: "${text}"
+
+Return exactly this JSON structure:
+{
+  "gutScore": <number 1-10, based on symptoms described>,
+  "summary": "<2-3 sentence plain English interpretation of what this tells us about their gut health today>",
+  "insights": ["<insight 1>", "<insight 2>", "<insight 3>"],
+  "recommendations": ["<actionable recommendation 1>", "<actionable recommendation 2>"],
+  "flagged": <true if any serious symptoms mentioned that warrant medical attention, else false>
+}`
+
+    const msg = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 1024,
-      system: `You are a gut health AI assistant. Analyse daily log entries and return a JSON object with:
-- gutScore (1-10 integer): overall gut health score for this entry
-- insights (array of 2-3 short strings): what this tells us about their gut
-- recommendations (array of 2-3 short strings): specific, actionable next steps
-- mood (string): one of 'good', 'neutral', 'concerning'
-
-User's gut profile: ${JSON.stringify(gutProfile)}
-Be specific, warm, and avoid medical diagnoses. Return ONLY valid JSON.`,
-      messages: [{ role: 'user', content: `Log entry: "${text}"` }],
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
     })
 
-    const raw = message.content[0].type === 'text' ? message.content[0].text : '{}'
-    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim())
-    return NextResponse.json(result)
-  } catch (err) {
-    console.error('Analyse log error:', err)
-    return NextResponse.json({ gutScore: 5, insights: ['Log saved'], recommendations: ['Keep logging daily'], mood: 'neutral' })
+    const content = msg.content[0].type === 'text' ? msg.content[0].text : ''
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('Invalid AI response')
+    const parsed = JSON.parse(jsonMatch[0])
+
+    return NextResponse.json(parsed)
+  } catch (e: unknown) {
+    console.error('Analyse log error:', e)
+    return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
   }
 }

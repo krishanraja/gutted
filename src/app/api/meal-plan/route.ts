@@ -1,52 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { anthropic } from '@/lib/anthropic'
-import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { userProfile, documents, recentLogs } = await req.json()
 
-    const { userProfile, documents } = await req.json()
-    const gutProfile = userProfile?.gut_profile || {}
+    const prompt = `You are a gut health nutritionist AI. Create a personalised 7-day meal plan based on the user's gut health profile, test results, and recent logs.
 
-    const message = await anthropic.messages.create({
+User profile: ${JSON.stringify(userProfile || {})}
+Recent gut health test findings: ${JSON.stringify(documents?.slice(0, 3) || [])}
+Recent symptom logs: ${JSON.stringify(recentLogs?.slice(0, 5) || [])}
+
+Create a practical, gut-friendly 7-day meal plan. Be specific with meal names and include gut health benefits for each meal.
+
+Return exactly this JSON structure:
+{
+  "weekSummary": "<2-3 sentence overview of the approach this week and why>",
+  "days": [
+    {
+      "day": "Monday",
+      "breakfast": { "name": "<meal name>", "description": "<brief description>", "gutBenefits": "<why this is good for their gut>", "prepTime": "<X mins>" },
+      "lunch": { "name": "<meal name>", "description": "<brief description>", "gutBenefits": "<why>", "prepTime": "<X mins>" },
+      "dinner": { "name": "<meal name>", "description": "<brief description>", "gutBenefits": "<why>", "prepTime": "<X mins>" },
+      "snacks": ["<snack 1>", "<snack 2>"]
+    }
+  ],
+  "gutTips": ["<daily gut health tip 1>", "<tip 2>", "<tip 3>"]
+}`
+
+    const msg = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 4096,
-      system: `You are a gut health nutritionist AI. Create a personalised 7-day meal plan as JSON.
-Return a JSON object with key "days" — an array of 7 objects, each with:
-- day (string): e.g. "Monday"
-- breakfast, lunch, dinner, snacks — each an object with:
-  - name (string)
-  - description (string, 1 sentence)
-  - gutBenefits (string, 1 sentence about why this is good for gut health)
-  - prepTime (string, e.g. "10 min")
-
-User profile: ${JSON.stringify(gutProfile)}
-Recent test findings: ${documents?.length ? documents.map((d: Record<string, unknown>) => d.ai_interpretation).join('. ') : 'None uploaded yet'}
-
-Make the meals delicious, practical, and genuinely gut-health optimised for this user's specific profile.
-Return ONLY valid JSON.`,
-      messages: [{ role: 'user', content: 'Generate my personalised weekly meal plan.' }],
+      messages: [{ role: 'user', content: prompt }],
     })
 
-    const raw = message.content[0].type === 'text' ? message.content[0].text : '{}'
-    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim())
+    const content = msg.content[0].type === 'text' ? msg.content[0].text : ''
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('Invalid AI response')
+    const plan = JSON.parse(jsonMatch[0])
 
-    // Save to DB
-    const weekStart = new Date()
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1)
-    await supabase.from('meal_plans').upsert({
-      user_id: user.id,
-      week_start: weekStart.toISOString().split('T')[0],
-      plan: result,
-      generated_at: new Date().toISOString(),
-    })
-
-    return NextResponse.json(result)
-  } catch (err) {
-    console.error('Meal plan error:', err)
-    return NextResponse.json({ error: 'Failed to generate meal plan' }, { status: 500 })
+    return NextResponse.json({ plan })
+  } catch (e: unknown) {
+    console.error('Meal plan error:', e)
+    return NextResponse.json({ error: 'Could not generate meal plan' }, { status: 500 })
   }
 }

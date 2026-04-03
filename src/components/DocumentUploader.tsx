@@ -1,61 +1,63 @@
 'use client'
-import { useState, useRef, DragEvent, ChangeEvent } from 'react'
-
-type DocType = 'gut_test' | 'doctor_report' | 'food_label'
+import { useState, useRef, DragEvent } from 'react'
 
 interface DocumentUploaderProps {
-  type: DocType
-  onAnalysis: (result: { summary: string; biomarkers: Record<string, string>; recommendations: string[] }) => void
-  onError?: (err: string) => void
+  type: 'gut_test' | 'doctor_report' | 'food_label'
+  onAnalysed: (result: { summary: string; biomarkers?: Record<string, string>; recommendations: string[] }) => void
+  onError?: (msg: string) => void
 }
 
-const labels: Record<DocType, { title: string; desc: string; icon: string }> = {
-  gut_test: { title: 'Gut Test Results', desc: 'Viome, GI-MAP, Thryve, SIBO, Microbiome reports', icon: '🧬' },
-  doctor_report: { title: "Doctor's Report / Scan", desc: 'Certificates, pathology, imaging results', icon: '🏥' },
-  food_label: { title: 'Food Label', desc: 'Ingredients list or nutrition panel', icon: '🥗' },
+const labels = {
+  gut_test: { title: 'Gut Test Results', desc: 'Viome, GI-MAP, Thryve, SIBO', emoji: '🧬' },
+  doctor_report: { title: "Doctor's Report / Scan", desc: 'Certificates, prescriptions, scans', emoji: '🏥' },
+  food_label: { title: 'Food Label / Ingredients', desc: 'Photo a label or ingredient list', emoji: '🍎' },
 }
 
-export function DocumentUploader({ type, onAnalysis, onError }: DocumentUploaderProps) {
-  const [dragging, setDragging] = useState(false)
+export function DocumentUploader({ type, onAnalysed, onError }: DocumentUploaderProps) {
   const [state, setState] = useState<'idle' | 'uploading' | 'analysing'>('idle')
+  const [progress, setProgress] = useState(0)
+  const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const label = labels[type]
+  const { title, desc, emoji } = labels[type]
 
   const process = async (file: File) => {
-    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-      onError?.('Please upload an image or PDF.')
+    if (!file) return
+    const allowed = ['image/jpeg', 'image/png', 'image/heic', 'image/webp', 'application/pdf']
+    if (!allowed.includes(file.type)) {
+      onError?.('Please upload an image (JPG, PNG, HEIC, WebP) or PDF.')
       return
     }
     setState('uploading')
-    const form = new FormData()
-    form.append('file', file)
-    form.append('type', type)
+    setProgress(0)
+
+    // Upload to our API which handles Supabase storage + analysis
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('type', type)
+
+    // Simulate progress
+    const progressInterval = setInterval(() => setProgress(p => Math.min(p + 10, 70)), 300)
+
     try {
-      const uploadRes = await fetch('/api/upload-document', { method: 'POST', body: form })
-      const { fileUrl } = await uploadRes.json()
       setState('analysing')
-      const analyseRes = await fetch('/api/analyse-document', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileUrl, documentType: type }),
-      })
-      const result = await analyseRes.json()
-      onAnalysis(result)
-    } catch {
-      onError?.('Upload failed. Please try again.')
+      const res = await fetch('/api/analyse-document', { method: 'POST', body: fd })
+      clearInterval(progressInterval)
+      setProgress(100)
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      onAnalysed(data)
+    } catch (e: unknown) {
+      onError?.((e as Error).message || 'Analysis failed. Please try again.')
+    } finally {
+      setState('idle')
+      setProgress(0)
     }
-    setState('idle')
   }
 
   const onDrop = (e: DragEvent) => {
     e.preventDefault()
-    setDragging(false)
+    setDragOver(false)
     const file = e.dataTransfer.files[0]
-    if (file) process(file)
-  }
-
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
     if (file) process(file)
   }
 
@@ -63,31 +65,43 @@ export function DocumentUploader({ type, onAnalysis, onError }: DocumentUploader
 
   return (
     <div
-      onDragOver={e => { e.preventDefault(); setDragging(true) }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={onDrop}
       onClick={() => !busy && inputRef.current?.click()}
-      className={`relative flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 border-dashed transition-all cursor-pointer min-h-[140px]
-        ${dragging ? 'border-[#4ADE80] bg-[#4ADE80]/5' : 'border-white/20 hover:border-white/40 bg-white/3'}
-        ${busy ? 'opacity-70 cursor-not-allowed' : ''}
-      `}
+      onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={onDrop}
+      className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer ${
+        dragOver ? 'border-[#00B4B4] bg-[#00B4B4]/10' :
+        busy ? 'border-white/10 cursor-not-allowed' :
+        'border-white/20 hover:border-[#00B4B4]/50 hover:bg-white/5'
+      }`}
     >
-      <input ref={inputRef} type="file" accept="image/*,application/pdf" capture="environment" className="hidden" onChange={onChange} disabled={busy}/>
-      <span className="text-3xl">{label.icon}</span>
-      <div className="text-center">
-        <p className="font-semibold text-white text-sm">{label.title}</p>
-        <p className="text-white/40 text-xs mt-0.5">{label.desc}</p>
-      </div>
-      {busy && (
-        <div className="flex items-center gap-2 text-[#4ADE80] text-sm">
-          <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-          </svg>
-          {state === 'uploading' ? 'Uploading...' : 'Analysing with AI...'}
+      <input
+        ref={inputRef}
+        type="file"
+        className="hidden"
+        accept="image/*,application/pdf"
+        capture={type === 'food_label' ? 'environment' : undefined}
+        onChange={e => { const f = e.target.files?.[0]; if (f) process(f) }}
+      />
+      <div className="text-3xl mb-3">{emoji}</div>
+      <p className="font-semibold text-white mb-1">{title}</p>
+      <p className="text-white/40 text-sm mb-4">{desc}</p>
+
+      {busy ? (
+        <div className="space-y-2">
+          <div className="w-full bg-white/10 rounded-full h-1.5">
+            <div
+              className="h-1.5 rounded-full bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-[#4ADE80] text-sm animate-pulse">
+            {state === 'uploading' ? 'Uploading...' : 'Analysing with AI...'}
+          </p>
         </div>
+      ) : (
+        <p className="text-xs text-white/30">Tap to upload or take a photo - JPG, PNG, PDF</p>
       )}
-      {!busy && <p className="text-[#00B4B4] text-xs">Tap to upload or take a photo</p>}
     </div>
   )
 }

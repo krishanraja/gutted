@@ -8,128 +8,139 @@ import { GutScore } from '@/components/GutScore'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 
-interface Log { id: string; content: string; gut_score: number; type: string; logged_at: string }
-interface Profile { name: string; gut_profile: Record<string, unknown> }
-
-function getHour() { return new Date().getHours() }
-function greeting(name: string) {
-  const h = getHour()
-  const t = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
-  return `${t}, ${name?.split(' ')[0] || 'there'}.`
-}
-
-function scoreBadge(score: number) {
-  if (score >= 7) return <Badge variant="green">{score}/10</Badge>
-  if (score >= 4) return <Badge variant="amber">{score}/10</Badge>
-  return <Badge variant="red">{score}/10</Badge>
-}
+interface Profile { name: string; plan: string; gut_profile: Record<string, unknown> }
+interface Log { id: string; type: string; content: string; gut_score: number; logged_at: string }
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [logs, setLogs] = useState<Log[]>([])
-  const [avgScore, setAvgScore] = useState(0)
+  const [todayScore, setTodayScore] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = createClient()
     const load = async () => {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/auth/login'; return }
+
       const [{ data: p }, { data: l }] = await Promise.all([
-        supabase.from('profiles').select('name, gut_profile').eq('id', user.id).single(),
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('logs').select('*').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(10),
       ])
+
       setProfile(p)
       setLogs(l || [])
-      if (l?.length) setAvgScore(Math.round(l.reduce((s: number, x: Log) => s + (x.gut_score || 5), 0) / l.length))
+      const scores = (l || []).filter(log => log.gut_score).map(log => log.gut_score)
+      setTodayScore(scores.length ? Math.round(scores.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(scores.length, 3)) : 0)
       setLoading(false)
     }
     load()
   }, [])
 
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#4ADE80] border-t-transparent rounded-full animate-spin"/>
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin"/>
     </div>
   )
 
   return (
-    <div className="min-h-screen pb-24 max-w-md mx-auto">
+    <div className="min-h-screen bg-black pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-12 pb-6">
-        <div>
-          <p className="text-white/50 text-sm">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-          <h1 className="text-xl font-bold mt-0.5">{greeting(profile?.name || '')}</h1>
+      <div className="px-6 pt-12 pb-6">
+        <div className="flex items-center justify-between mb-6">
+          <Image src="/logo.png" alt="gutted." width={80} height={26} className="h-7 w-auto" />
+          {profile?.plan !== 'free' && (
+            <Badge variant="teal">{profile?.plan}</Badge>
+          )}
         </div>
-        <Image src="/icon.png" alt="gutted." width={36} height={36} className="rounded-xl"/>
+        <p className="text-white/50 text-sm">{greeting},</p>
+        <h1 className="text-2xl font-bold mt-0.5">{profile?.name || 'friend'}</h1>
       </div>
 
-      {/* Gut Score Card */}
-      <div className="mx-5 mb-5">
+      {/* Gut score card */}
+      <div className="px-6 mb-6">
         <Card glow className="flex items-center gap-6 py-6">
-          <GutScore score={avgScore || 5} size="lg"/>
+          <GutScore score={todayScore} size="lg" />
           <div>
-            <p className="text-white/50 text-sm">Today's gut score</p>
-            <p className="text-white font-semibold mt-0.5">{avgScore >= 7 ? 'Your gut is thriving' : avgScore >= 4 ? 'Room to improve' : 'Needs attention'}</p>
-            <p className="text-white/40 text-xs mt-1">Based on {logs.length} log{logs.length !== 1 ? 's' : ''}</p>
+            <p className="text-white/40 text-sm mb-1">Today's gut score</p>
+            <p className="text-lg font-semibold">
+              {todayScore === 0 ? 'Log your first entry' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day - take it easy'}
+            </p>
+            {todayScore === 0 && <p className="text-white/30 text-xs mt-1">Tap "Log now" to get your score</p>}
           </div>
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <div className="px-5 mb-6">
+      {/* Quick actions */}
+      <div className="px-6 mb-6">
+        <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Quick actions</p>
         <div className="grid grid-cols-3 gap-3">
           {[
-            { href: '/dashboard/log', icon: '🎤', label: 'Log now' },
-            { href: '/dashboard/upload', icon: '📄', label: 'Upload test' },
-            { href: '/dashboard/meal-plan', icon: '🍽️', label: 'Meal plan' },
-          ].map(a => (
-            <Link key={a.href} href={a.href} className="flex flex-col items-center gap-2 bg-white/5 border border-white/10 rounded-2xl p-4 active:scale-95 transition-all hover:bg-white/8">
-              <span className="text-2xl">{a.icon}</span>
-              <span className="text-xs text-white/70 font-medium">{a.label}</span>
+            { href: '/dashboard/log', emoji: '🎤', label: 'Log now' },
+            { href: '/dashboard/upload', emoji: '📄', label: 'Upload test' },
+            { href: '/dashboard/meal-plan', emoji: '🍽️', label: 'Meal plan' },
+          ].map(({ href, emoji, label }) => (
+            <Link key={href} href={href}>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center hover:border-[#00B4B4]/30 transition-colors active:scale-95">
+                <div className="text-2xl mb-1">{emoji}</div>
+                <p className="text-xs text-white/60">{label}</p>
+              </div>
             </Link>
           ))}
         </div>
       </div>
 
-      {/* Upload CTA if no logs */}
-      {logs.length === 0 && (
-        <div className="mx-5 mb-6">
-          <Card className="text-center py-8">
-            <p className="text-3xl mb-3">🧬</p>
-            <p className="font-semibold mb-1">Upload your first gut test</p>
-            <p className="text-white/50 text-sm mb-4">Get personalised insights from your Viome, GI-MAP, or any gut health report.</p>
-            <Link href="/dashboard/upload">
-              <button className="text-[#4ADE80] text-sm font-medium">Upload now</button>
-            </Link>
-          </Card>
+      {/* Recent logs */}
+      <div className="px-6">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-white/40 text-xs uppercase tracking-wide">Recent logs</p>
+          <Link href="/dashboard/history" className="text-[#4ADE80] text-xs">View all</Link>
         </div>
-      )}
-
-      {/* Recent Logs */}
-      {logs.length > 0 && (
-        <div className="px-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Recent logs</h2>
-            <Link href="/dashboard/history" className="text-[#4ADE80] text-sm">See all</Link>
-          </div>
+        {logs.length === 0 ? (
+          <Card className="text-center py-8">
+            <p className="text-2xl mb-2">🎤</p>
+            <p className="text-white/50 text-sm">No logs yet. Start by recording how you feel.</p>
+            <Link href="/dashboard/log" className="inline-block mt-3 text-[#4ADE80] text-sm">Log now</Link>
+          </Card>
+        ) : (
           <div className="space-y-3">
             {logs.slice(0, 3).map(log => (
               <Card key={log.id}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-white/80 text-sm leading-relaxed line-clamp-2">{log.content || 'Voice log'}</p>
-                    <p className="text-white/30 text-xs mt-1">{new Date(log.logged_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm">{log.type === 'voice' ? '🎤' : '✏️'}</span>
+                      <span className="text-white/30 text-xs">{new Date(log.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <p className="text-sm text-white/70 truncate">{log.content}</p>
                   </div>
-                  {log.gut_score && scoreBadge(log.gut_score)}
+                  {log.gut_score > 0 && (
+                    <Badge variant={log.gut_score >= 7 ? 'green' : log.gut_score >= 4 ? 'amber' : 'red'}>
+                      {log.gut_score}/10
+                    </Badge>
+                  )}
                 </div>
               </Card>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Upsell if free */}
+      {profile?.plan === 'free' && (
+        <div className="px-6 mt-6">
+          <div className="bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border border-[#00B4B4]/20 rounded-2xl p-4">
+            <p className="font-semibold mb-1">Unlock your full gut profile</p>
+            <p className="text-white/50 text-sm mb-3">Upload a gut test and get a personalised weekly meal plan.</p>
+            <Link href="/auth/signup?plan=core" className="text-[#4ADE80] text-sm font-medium">Upgrade to Core - $9/mo →</Link>
+          </div>
         </div>
       )}
 
-      <Navigation/>
+      <Navigation />
     </div>
   )
 }

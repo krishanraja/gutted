@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Navigation } from '@/components/Navigation'
 import { VoiceRecorder } from '@/components/VoiceRecorder'
@@ -8,168 +8,195 @@ import { GutScore } from '@/components/GutScore'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
-const quickTags = ['🫧 Bloated', '😫 Cramps', '💩 Irregular', '😴 Fatigue', '✨ Feeling good', '🔥 Heartburn', '😮‍💨 Gassy', '💧 Dehydrated']
+const quickTags = ['🫧 Bloated', '😫 Cramps', '💩 Irregular', '😴 Fatigue', '✨ Feeling good', '🔥 Heartburn', '🤢 Nausea', '💧 Well hydrated']
 
-interface Analysis { gutScore: number; insights: string[]; recommendations: string[] }
+interface Analysis {
+  gutScore: number
+  summary: string
+  insights: string[]
+  recommendations: string[]
+  flagged: boolean
+}
 
 export default function LogPage() {
-  const [text, setText] = useState('')
+  const router = useRouter()
+  const [transcript, setTranscript] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [mode, setMode] = useState<'voice' | 'text'>('voice')
+  const [analysing, setAnalysing] = useState(false)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [saving, setSaving] = useState(false)
-  const [analysing, setAnalysing] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [mode, setMode] = useState<'voice' | 'text'>('voice')
 
-  const onTranscription = (t: string) => setText(t)
+  const toggleTag = (tag: string) => setTags(p => p.includes(tag) ? p.filter(t => t !== tag) : [...p, tag])
 
-  const analyse = async () => {
+  const handleTranscription = (text: string) => {
+    setTranscript(text)
+    analyseText(text)
+  }
+
+  const analyseText = async (text: string) => {
     if (!text.trim()) return
     setAnalysing(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: profile } = await supabase.from('profiles').select('gut_profile').eq('id', user?.id || '').single()
-    const res = await fetch('/api/analyse-log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: `${text} ${tags.join(', ')}`, userProfile: profile }),
-    })
-    const result = await res.json()
-    setAnalysis(result)
-    setAnalysing(false)
+    setError('')
+    try {
+      const res = await fetch('/api/analyse-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text + (tags.length ? ` Tags: ${tags.join(', ')}` : '') }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setAnalysis(data)
+    } catch (e: unknown) {
+      setError((e as Error).message || 'Analysis failed')
+    } finally {
+      setAnalysing(false)
+    }
   }
 
   const save = async () => {
-    if (!text.trim() && tags.length === 0) return
+    if (!transcript.trim()) return
     setSaving(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/auth/login'); return }
     await supabase.from('logs').insert({
-      user_id: user?.id,
+      user_id: user.id,
       type: mode,
-      content: [text, ...tags].filter(Boolean).join(' | '),
-      gut_score: analysis?.gutScore || null,
-      ai_analysis: analysis || null,
-      logged_at: new Date().toISOString(),
+      content: transcript,
+      gut_score: analysis?.gutScore || 0,
+      ai_analysis: analysis,
     })
-    setSaved(true)
-    setSaving(false)
+    router.push('/dashboard')
   }
 
-  if (saved) return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-5 max-w-md mx-auto text-center pb-24">
-      <div className="text-5xl mb-4">✅</div>
-      <h2 className="text-xl font-bold mb-2">Log saved</h2>
-      <p className="text-white/50 mb-8">Keep logging daily to improve your gut score over time.</p>
-      <div className="flex gap-3 w-full">
-        <Button variant="outline" onClick={() => { setText(''); setTags([]); setAnalysis(null); setSaved(false) }} className="flex-1">Log again</Button>
-        <Link href="/dashboard" className="flex-1"><Button className="w-full">Dashboard</Button></Link>
-      </div>
-      <Navigation/>
-    </div>
-  )
-
   return (
-    <div className="min-h-screen pb-24 max-w-md mx-auto">
-      <div className="px-5 pt-12 pb-6">
-        <Link href="/dashboard" className="text-white/50 text-sm flex items-center gap-1 mb-4">
+    <div className="min-h-screen bg-black pb-24">
+      <div className="px-6 pt-12 pb-6">
+        <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
-          Dashboard
-        </Link>
-        <h1 className="text-2xl font-bold">Log your gut</h1>
-        <p className="text-white/50 text-sm mt-1">How's your body feeling right now?</p>
+          Back
+        </button>
+        <h1 className="text-2xl font-bold">How's your gut today?</h1>
+        <p className="text-white/40 text-sm mt-1">Voice-log or type how you're feeling</p>
       </div>
 
       {/* Mode toggle */}
-      <div className="px-5 mb-6">
-        <div className="flex bg-white/5 rounded-xl p-1">
+      <div className="px-6 mb-6">
+        <div className="flex bg-white/5 rounded-xl p-1 max-w-xs">
           {(['voice', 'text'] as const).map(m => (
-            <button key={m} onClick={() => setMode(m)} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === m ? 'bg-white/10 text-white' : 'text-white/40'}`}>
-              {m === 'voice' ? '🎤 Voice' : '⌨️ Text'}
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${mode === m ? 'bg-white/10 text-white' : 'text-white/40'}`}
+            >
+              {m === 'voice' ? '🎤 Voice' : '✏️ Text'}
             </button>
           ))}
         </div>
       </div>
 
       {/* Input */}
-      <div className="px-5 mb-6">
+      <div className="px-6 mb-6">
         {mode === 'voice' ? (
-          <div className="flex flex-col items-center py-4">
-            <VoiceRecorder onTranscription={onTranscription} onError={setError}/>
-            {text && (
-              <div className="mt-6 w-full bg-white/5 border border-white/10 rounded-xl p-4">
-                <p className="text-xs text-white/40 mb-2">Transcription - tap to edit</p>
-                <textarea
-                  value={text} onChange={e => setText(e.target.value)}
-                  className="w-full bg-transparent text-white/80 text-sm resize-none focus:outline-none"
-                  rows={3}
-                />
-              </div>
-            )}
-          </div>
+          <VoiceRecorder onTranscription={handleTranscription} onError={setError} />
         ) : (
-          <textarea
-            value={text} onChange={e => setText(e.target.value)}
-            placeholder="How's your gut feeling? Any symptoms, meals, or energy levels to note..."
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#4ADE80]/50 resize-none"
-            rows={5}
-          />
+          <div className="space-y-3">
+            <textarea
+              value={transcript}
+              onChange={e => setTranscript(e.target.value)}
+              placeholder="How is your gut feeling today? Describe any symptoms, what you ate, your energy levels..."
+              rows={5}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 resize-none transition-colors"
+            />
+            <Button onClick={() => analyseText(transcript)} loading={analysing} variant="outline" className="w-full" disabled={!transcript.trim()}>
+              Analyse
+            </Button>
+          </div>
         )}
-        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+
+        {/* Transcript display (after voice) */}
+        {mode === 'voice' && transcript && (
+          <div className="mt-4">
+            <p className="text-white/40 text-xs mb-2">Transcription</p>
+            <textarea
+              value={transcript}
+              onChange={e => setTranscript(e.target.value)}
+              rows={3}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#00B4B4]/50 resize-none"
+            />
+          </div>
+        )}
       </div>
 
       {/* Quick tags */}
-      <div className="px-5 mb-6">
-        <p className="text-white/50 text-sm mb-3">Quick symptoms</p>
+      <div className="px-6 mb-6">
+        <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Quick tags</p>
         <div className="flex flex-wrap gap-2">
           {quickTags.map(tag => (
-            <button key={tag} onClick={() => setTags(t => t.includes(tag) ? t.filter(x => x !== tag) : [...t, tag])}
-              className={`px-3 py-1.5 rounded-full text-sm border transition-all ${tags.includes(tag) ? 'bg-[#4ADE80]/20 border-[#4ADE80]/60 text-[#4ADE80]' : 'bg-white/5 border-white/20 text-white/60'}`}>
+            <button
+              key={tag}
+              onClick={() => toggleTag(tag)}
+              className={`px-3 py-1.5 rounded-xl border text-sm transition-all ${
+                tags.includes(tag) ? 'border-[#00B4B4] bg-[#00B4B4]/20 text-[#4ADE80]' : 'border-white/15 text-white/50 hover:border-white/30'
+              }`}
+            >
               {tag}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Analysis */}
-      {analysis && (
-        <div className="px-5 mb-6 space-y-3">
+      {error && <p className="px-6 text-red-400 text-sm mb-4">{error}</p>}
+
+      {/* Analysis results */}
+      {analysing && (
+        <div className="px-6 mb-6">
+          <Card className="text-center py-6">
+            <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin mx-auto mb-3"/>
+            <p className="text-white/50 text-sm">Analysing your gut health...</p>
+          </Card>
+        </div>
+      )}
+
+      {analysis && !analysing && (
+        <div className="px-6 mb-6 space-y-4">
           <Card glow className="flex items-center gap-4">
-            <GutScore score={analysis.gutScore} size="sm"/>
+            <GutScore score={analysis.gutScore} size="lg" />
             <div>
-              <p className="text-sm text-white/50">Gut score for this log</p>
-              <p className="font-semibold">{analysis.gutScore}/10</p>
+              <p className="text-white/40 text-xs mb-1">Gut score for this log</p>
+              <p className="text-sm text-white/80">{analysis.summary}</p>
             </div>
           </Card>
           {analysis.insights.length > 0 && (
             <Card>
-              <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">Insights</p>
-              <ul className="space-y-1.5">
-                {analysis.insights.map((i, idx) => <li key={idx} className="text-sm text-white/80 flex gap-2"><span className="text-[#4ADE80]">-</span>{i}</li>)}
+              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Insights</p>
+              <ul className="space-y-2">
+                {analysis.insights.map((insight, i) => (
+                  <li key={i} className="flex gap-2 text-sm text-white/70">
+                    <span className="text-[#4ADE80] mt-0.5">•</span>{insight}
+                  </li>
+                ))}
               </ul>
             </Card>
           )}
-          {analysis.recommendations.length > 0 && (
-            <Card>
-              <p className="text-xs text-white/40 mb-2 uppercase tracking-wider">Recommendations</p>
-              <ul className="space-y-1.5">
-                {analysis.recommendations.map((r, idx) => <li key={idx} className="text-sm text-white/80 flex gap-2"><span className="text-[#00B4B4]">+</span>{r}</li>)}
-              </ul>
+          {analysis.flagged && (
+            <Card className="border-amber-500/30 bg-amber-500/5">
+              <p className="text-amber-400 text-sm">⚠️ Some symptoms you mentioned may benefit from a chat with your doctor.</p>
             </Card>
           )}
         </div>
       )}
 
-      {/* Actions */}
-      <div className="px-5 flex gap-3">
-        {!analysis && (text.trim() || tags.length > 0) && (
-          <Button variant="outline" onClick={analyse} loading={analysing} className="flex-1">Analyse</Button>
-        )}
-        <Button onClick={save} loading={saving} disabled={!text.trim() && tags.length === 0} className="flex-1">Save log</Button>
-      </div>
+      {/* Save button */}
+      {transcript && (
+        <div className="px-6 pb-4">
+          <Button onClick={save} loading={saving} className="w-full" size="lg">Save log</Button>
+        </div>
+      )}
 
-      <Navigation/>
+      <Navigation />
     </div>
   )
 }

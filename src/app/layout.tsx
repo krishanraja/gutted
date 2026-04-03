@@ -5,29 +5,31 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'gutted. - Know your gut',
+  title: 'gutted. - Know your gut.',
   description: 'Voice-log your symptoms. Upload your tests. Get a meal plan that actually fits your gut.',
   manifest: '/manifest.json',
-  icons: { icon: '/icon.png', apple: '/icon.png' },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/icon.png',
+  },
   openGraph: {
-    title: 'gutted.',
-    description: 'Know your gut.',
-    siteName: 'gutted.',
+    title: 'gutted. - Know your gut.',
+    description: 'AI-powered gut health companion.',
+    type: 'website',
   },
 }
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false,
+  themeColor: '#000000',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-black text-white antialiased`}>
+    <html lang="en" className="bg-black">
+      <body className={`${inter.className} bg-black text-white min-h-screen`}>
         {children}
       </body>
     </html>

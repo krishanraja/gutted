@@ -4,47 +4,47 @@ import { Button } from '@/components/ui/Button'
 
 const features = [
   {
-    icon: '🎤',
+    emoji: '🎤',
     title: 'Voice logging',
-    desc: 'Speak your symptoms, meals, and mood. Whisper AI transcribes instantly. No typing required.',
+    desc: 'Speak your symptoms, meals, and energy levels. Whisper AI transcribes instantly.',
   },
   {
-    icon: '🧬',
+    emoji: '🧬',
     title: 'Document intelligence',
-    desc: 'Upload Viome, GI-MAP, or doctor reports. Get plain-English summaries and actionable insights.',
+    desc: 'Upload Viome, GI-MAP, or any gut test. Get plain-English interpretation and a personalised plan.',
   },
   {
-    icon: '🍽️',
+    emoji: '🍽️',
     title: 'Personalised meal plans',
-    desc: 'Weekly plans built around your specific gut profile, test results, and dietary restrictions.',
+    desc: 'AI builds your weekly meal plan based on your actual gut profile - not generic advice.',
   },
 ]
 
-const pricing = [
+const plans = [
   {
     name: 'Free',
-    price: 0,
-    desc: 'Start understanding your gut',
+    price: '$0',
+    period: '',
     features: ['3 voice logs', '1 document upload', '7-day history', 'Basic gut score'],
-    cta: 'Get started',
+    cta: 'Start free',
     href: '/auth/signup',
     highlight: false,
   },
   {
     name: 'Core',
-    price: 9,
-    desc: 'For daily gut health tracking',
-    features: ['Unlimited voice logging', '3 document uploads/mo', 'Weekly AI meal plan', 'Full history + trends'],
-    cta: 'Start free trial',
+    price: '$9',
+    period: '/mo',
+    features: ['Unlimited voice logging', '3 document uploads/mo', 'Weekly AI meal plan', 'Gut health trends'],
+    cta: 'Get Core',
     href: '/auth/signup?plan=core',
     highlight: true,
   },
   {
     name: 'Pro',
-    price: 19,
-    desc: 'Deep gut intelligence',
-    features: ['Everything in Core', 'Unlimited uploads', 'AI gut health coach', 'PDF health reports', 'Email meal plans'],
-    cta: 'Go Pro',
+    price: '$19',
+    period: '/mo',
+    features: ['Everything in Core', 'Unlimited uploads', 'PDF health reports', 'Priority AI analysis', 'Weekly email meal plans'],
+    cta: 'Get Pro',
     href: '/auth/signup?plan=pro',
     highlight: false,
   },
@@ -52,94 +52,80 @@ const pricing = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black text-white">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-5 py-4 max-w-md mx-auto">
-        <Image src="/logo.png" alt="gutted." width={100} height={32} className="h-8 w-auto"/>
-        <Link href="/auth/login" className="text-white/60 text-sm hover:text-white transition-colors">Log in</Link>
+      <nav className="flex items-center justify-between px-6 py-4 max-w-4xl mx-auto">
+        <Image src="/logo.png" alt="gutted." width={100} height={32} className="h-8 w-auto" />
+        <div className="flex gap-3">
+          <Link href="/auth/login">
+            <Button variant="ghost" size="sm">Sign in</Button>
+          </Link>
+          <Link href="/auth/signup">
+            <Button size="sm">Start free</Button>
+          </Link>
+        </div>
       </nav>
 
       {/* Hero */}
-      <section className="flex flex-col items-center text-center px-5 pt-12 pb-16 max-w-md mx-auto">
-        <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-8">
+      <section className="px-6 py-20 text-center max-w-2xl mx-auto">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm text-white/60 mb-8">
           <span className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse"/>
-          <span className="text-xs text-white/70">AI-powered gut health</span>
+          AI-powered gut health
         </div>
-        <h1 className="text-5xl font-bold leading-tight mb-4">
+        <h1 className="text-5xl sm:text-6xl font-bold leading-tight mb-6">
           <span className="gradient-text">Know your gut.</span>
         </h1>
-        <p className="text-white/60 text-lg leading-relaxed mb-10">
-          Voice-log your symptoms. Upload your tests. Get a meal plan that actually fits your gut.
+        <p className="text-lg text-white/60 mb-10 leading-relaxed">
+          Voice-log your symptoms. Upload your tests. Get a meal plan that actually fits your gut - not a generic one-size-fits-all template.
         </p>
-        <Link href="/auth/signup" className="w-full">
-          <Button size="lg" className="w-full text-black font-bold">Start free - no card needed</Button>
-        </Link>
-        <p className="text-white/30 text-xs mt-3">Free forever. Upgrade when you're ready.</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/auth/signup">
+            <Button size="lg">Start free - no card needed</Button>
+          </Link>
+          <Link href="#how-it-works">
+            <Button variant="outline" size="lg">See how it works</Button>
+          </Link>
+        </div>
       </section>
 
       {/* Features */}
-      <section className="px-5 pb-16 max-w-md mx-auto space-y-4">
-        {features.map(f => (
-          <div key={f.title} className="bg-white/5 border border-white/10 rounded-2xl p-5 flex gap-4">
-            <span className="text-3xl flex-shrink-0">{f.icon}</span>
-            <div>
-              <h3 className="font-semibold text-white mb-1">{f.title}</h3>
+      <section id="how-it-works" className="px-6 py-16 max-w-4xl mx-auto">
+        <h2 className="text-2xl font-bold text-center mb-12 gradient-text">Built for real gut health</h2>
+        <div className="grid sm:grid-cols-3 gap-6">
+          {features.map(f => (
+            <div key={f.title} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-[#00B4B4]/30 transition-colors">
+              <div className="text-3xl mb-4">{f.emoji}</div>
+              <h3 className="font-semibold text-white mb-2">{f.title}</h3>
               <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      {/* How it works */}
-      <section className="px-5 pb-16 max-w-md mx-auto">
-        <h2 className="text-2xl font-bold text-center mb-8">How it works</h2>
-        <div className="space-y-6">
-          {[
-            { step: '01', title: 'Tell us about your gut', desc: 'Quick onboarding — your goals, restrictions, and current gut health.' },
-            { step: '02', title: 'Log daily', desc: 'Tap the mic. Speak your symptoms, meals, and energy. Takes 30 seconds.' },
-            { step: '03', title: 'Upload your tests', desc: 'Snap a photo of any gut health test. AI reads and explains it in plain English.' },
-            { step: '04', title: 'Get your meal plan', desc: 'A personalised 7-day plan every week, built around your unique gut profile.' },
-          ].map(s => (
-            <div key={s.step} className="flex gap-4">
-              <span className="gradient-text text-2xl font-bold flex-shrink-0 w-10">{s.step}</span>
-              <div>
-                <h3 className="font-semibold mb-1">{s.title}</h3>
-                <p className="text-white/50 text-sm">{s.desc}</p>
-              </div>
             </div>
           ))}
         </div>
       </section>
 
       {/* Pricing */}
-      <section className="px-5 pb-20 max-w-md mx-auto">
-        <h2 className="text-2xl font-bold text-center mb-2">Simple pricing</h2>
-        <p className="text-white/50 text-center text-sm mb-8">Start free. No credit card required.</p>
-        <div className="space-y-4">
-          {pricing.map(plan => (
-            <div key={plan.name} className={`rounded-2xl p-5 border ${plan.highlight ? 'border-[#4ADE80]/50 bg-[#4ADE80]/5' : 'border-white/10 bg-white/5'}`}>
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-lg">{plan.name}</h3>
-                    {plan.highlight && <span className="text-xs bg-[#4ADE80]/20 text-[#4ADE80] border border-[#4ADE80]/30 px-2 py-0.5 rounded-full">Popular</span>}
-                  </div>
-                  <p className="text-white/50 text-sm">{plan.desc}</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-2xl font-bold">{plan.price === 0 ? 'Free' : `$${plan.price}`}</span>
-                  {plan.price > 0 && <span className="text-white/40 text-sm">/mo</span>}
-                </div>
+      <section className="px-6 py-16 max-w-4xl mx-auto">
+        <h2 className="text-2xl font-bold text-center mb-4">Simple pricing</h2>
+        <p className="text-white/50 text-center mb-12">Start free. Upgrade when you see results.</p>
+        <div className="grid sm:grid-cols-3 gap-6">
+          {plans.map(p => (
+            <div key={p.name} className={`rounded-2xl p-6 border transition-all ${p.highlight ? 'border-[#00B4B4] bg-[#00B4B4]/5 shadow-lg shadow-[#00B4B4]/10' : 'border-white/10 bg-white/5'}`}>
+              {p.highlight && (
+                <div className="text-xs font-semibold text-[#4ADE80] mb-3 uppercase tracking-wide">Most popular</div>
+              )}
+              <div className="mb-4">
+                <span className="text-3xl font-bold">{p.price}</span>
+                <span className="text-white/40">{p.period}</span>
               </div>
-              <ul className="space-y-1.5 mb-4">
-                {plan.features.map(f => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-white/70">
+              <p className="font-semibold mb-4">{p.name}</p>
+              <ul className="space-y-2 mb-6">
+                {p.features.map(f => (
+                  <li key={f} className="flex items-center gap-2 text-sm text-white/60">
                     <span className="text-[#4ADE80]">✓</span> {f}
                   </li>
                 ))}
               </ul>
-              <Link href={plan.href} className="block">
-                <Button variant={plan.highlight ? 'gradient' : 'outline'} className="w-full">{plan.cta}</Button>
+              <Link href={p.href}>
+                <Button variant={p.highlight ? 'gradient' : 'outline'} className="w-full">{p.cta}</Button>
               </Link>
             </div>
           ))}
@@ -147,9 +133,9 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 px-5 py-8 text-center max-w-md mx-auto">
-        <Image src="/logo.png" alt="gutted." width={80} height={24} className="h-6 w-auto mx-auto mb-3"/>
-        <p className="text-white/30 text-xs">Your gut health data stays private and secure.</p>
+      <footer className="px-6 py-8 border-t border-white/10 text-center text-white/30 text-sm max-w-4xl mx-auto">
+        <p>gutted. is not a medical service. Always consult a healthcare professional for medical advice.</p>
+        <p className="mt-2">© 2026 gutted. All rights reserved.</p>
       </footer>
     </div>
   )

@@ -3,8 +3,8 @@ import { openai } from '@/lib/openai'
 
 export async function POST(req: NextRequest) {
   try {
-    const form = await req.formData()
-    const audio = form.get('audio') as File
+    const fd = await req.formData()
+    const audio = fd.get('audio') as File
     if (!audio) return NextResponse.json({ error: 'No audio file' }, { status: 400 })
 
     const transcription = await openai.audio.transcriptions.create({
@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ text: transcription.text })
-  } catch (err) {
-    console.error('Transcribe error:', err)
+  } catch (e: unknown) {
+    console.error('Transcribe error:', e)
     return NextResponse.json({ error: 'Transcription failed' }, { status: 500 })
   }
 }

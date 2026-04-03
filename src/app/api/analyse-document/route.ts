@@ -1,52 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@/lib/openai'
-
-const systemPrompts: Record<string, string> = {
-  gut_test: `You are a gut health specialist AI. Analyse this gut test result and return JSON with:
-- summary (string): plain English explanation of what this test shows, 2-3 sentences
-- biomarkers (object): key biomarker name -> value pairs found in the test
-- recommendations (array of 4-5 strings): specific dietary and lifestyle actions based on results
-- keyFindings (array of 2-3 strings): most important things the user should know
-Focus on actionable insights. Avoid medical diagnoses. Return ONLY valid JSON.`,
-  doctor_report: `You are a health document AI. Analyse this medical document and return JSON with:
-- summary (string): plain English summary of the key findings, 2-3 sentences
-- biomarkers (object): any measurable values found (e.g. inflammation markers, test results)
-- recommendations (array of 3-4 strings): what the user should discuss with their doctor or do next
-- keyFindings (array of 2-3 strings): most important takeaways
-Return ONLY valid JSON.`,
-  food_label: `You are a gut health nutrition AI. Analyse this food label or ingredient list and return JSON with:
-- summary (string): gut health assessment of this food, 2 sentences
-- biomarkers (object): key nutritional values (fibre, sugar, protein, etc.)
-- recommendations (array of 2-3 strings): is this good for gut health? why / why not?
-- keyFindings (array of 2 strings): top gut health signals in this food
-Return ONLY valid JSON.`,
-}
+import { createServiceClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const { fileUrl, documentType } = await req.json()
-    const systemPrompt = systemPrompts[documentType] || systemPrompts.doctor_report
+    const fd = await req.formData()
+    const file = fd.get('file') as File
+    const type = fd.get('type') as string
 
+    if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+
+    // Upload to Supabase Storage
+    const supabase = await createServiceClient()
+    const ext = file.name.split('.').pop() || 'bin'
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const bytes = await file.arrayBuffer()
+
+    const { error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(path, Buffer.from(bytes), { contentType: file.type })
+
+    if (uploadError) throw uploadError
+
+    const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
+
+    // Build type-specific prompt
+    const typePrompts: Record<string, string> = {
+      gut_test: `This is a gut health test result (e.g. Viome, GI-MAP, Thryve, SIBO test). Extract all biomarkers, scores, and findings. Explain what they mean in plain English for someone without a medical background. Focus on actionable dietary and lifestyle insights.`,
+      doctor_report: `This is a doctor's report, prescription, or medical scan related to gut/digestive health. Extract key findings and explain them clearly. Do not diagnose - help the user understand what their doctor has said.`,
+      food_label: `This is a food label, ingredient list, or nutrition panel. Analyse the ingredients for gut health impact. Flag any common gut irritants (gluten, dairy, artificial sweeteners, FODMAPs, preservatives). Rate the overall gut health friendliness.`,
+    }
+
+    const prompt = typePrompts[type] || typePrompts.doctor_report
+
+    // Use GPT-4o Vision
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
-      max_tokens: 1500,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Please analyse this document:' },
-            { type: 'image_url', image_url: { url: fileUrl, detail: 'high' } },
-          ],
-        },
-      ],
+      max_tokens: 2048,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image_url',
+            image_url: { url: publicUrl, detail: 'high' },
+          },
+          {
+            type: 'text',
+            text: `${prompt}
+
+Return exactly this JSON:
+{
+  "summary": "<plain English explanation, 3-5 sentences, what this means for the user's gut health>",
+  "biomarkers": {"<marker name>": "<value and what it means>"},
+  "recommendations": ["<specific actionable recommendation 1>", "<recommendation 2>", "<recommendation 3>"],
+  "gutFriendlyRating": <1-10 if food label, else null>,
+  "flags": ["<any concerning findings that warrant medical attention>"]
+}`,
+          },
+        ],
+      }],
     })
 
-    const raw = response.choices[0].message.content || '{}'
-    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim())
-    return NextResponse.json(result)
-  } catch (err) {
-    console.error('Analyse document error:', err)
-    return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
+    const content = response.choices[0].message.content || ''
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('Invalid AI response')
+    const parsed = JSON.parse(jsonMatch[0])
+
+    return NextResponse.json({ ...parsed, fileUrl: publicUrl })
+  } catch (e: unknown) {
+    console.error('Analyse document error:', e)
+    return NextResponse.json({ error: 'Analysis failed. Please try again.' }, { status: 500 })
   }
 }

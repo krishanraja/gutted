@@ -1,150 +1,125 @@
 'use client'
 import { useState } from 'react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 
-const goals = ['Reduce bloating', 'Improve digestion', 'Understand my test results', 'Lose weight', 'Increase energy', 'Reduce pain']
-const restrictions = ['Gluten-free', 'Dairy-free', 'Vegan', 'Vegetarian', 'Low-FODMAP', 'Keto', 'Paleo', 'None']
-const conditions = ['IBS', 'SIBO', "Crohn's", 'Colitis', 'Celiac', 'GERD', 'Leaky gut', 'None', 'Prefer not to say']
-
-function ToggleChip({ label, selected, onToggle }: { label: string; selected: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button" onClick={onToggle}
-      className={`px-4 py-2 rounded-full text-sm font-medium border transition-all active:scale-95 ${
-        selected ? 'bg-[#4ADE80]/20 border-[#4ADE80]/60 text-[#4ADE80]' : 'bg-white/5 border-white/20 text-white/70'
-      }`}
-    >
-      {label}
-    </button>
-  )
-}
+const steps = [
+  {
+    q: "What are your gut health goals?",
+    key: 'goals',
+    multi: true,
+    options: ['Reduce bloating', 'Improve digestion', 'Understand my test results', 'Lose weight', 'Increase energy', 'Better sleep'],
+  },
+  {
+    q: "Any dietary restrictions?",
+    key: 'restrictions',
+    multi: true,
+    options: ['Gluten-free', 'Dairy-free', 'Vegan', 'Vegetarian', 'Low-FODMAP', 'Keto', 'None'],
+  },
+  {
+    q: "Any diagnosed conditions?",
+    key: 'conditions',
+    multi: true,
+    options: ['IBS', 'SIBO', "Crohn's", 'Colitis', 'Celiac', 'GERD', 'None', 'Prefer not to say'],
+  },
+]
 
 export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [data, setData] = useState({
-    name: '',
-    goals: [] as string[],
-    restrictions: [] as string[],
-    conditions: [] as string[],
-    currentScore: 5,
-  })
+  const [answers, setAnswers] = useState<Record<string, string[]>>({})
+  const [gutScore, setGutScore] = useState(5)
+  const [saving, setSaving] = useState(false)
 
-  const toggle = (field: 'goals' | 'restrictions' | 'conditions', val: string) => {
-    setData(d => ({
-      ...d,
-      [field]: d[field].includes(val) ? d[field].filter(x => x !== val) : [...d[field], val],
-    }))
+  const totalSteps = steps.length + 1 // +1 for gut score step
+  const progress = ((step) / totalSteps) * 100
+
+  const toggle = (key: string, val: string) => {
+    setAnswers(prev => {
+      const arr = prev[key] || []
+      return { ...prev, [key]: arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val] }
+    })
   }
 
-  const steps = [
-    {
-      title: "What's your name?",
-      content: (
-        <input
-          type="text" value={data.name} onChange={e => setData(d => ({ ...d, name: e.target.value }))}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-lg placeholder-white/30 focus:outline-none focus:border-[#4ADE80]/50"
-          placeholder="First name"
-          autoFocus
-        />
-      ),
-    },
-    {
-      title: 'What are your gut health goals?',
-      content: (
-        <div className="flex flex-wrap gap-2">
-          {goals.map(g => <ToggleChip key={g} label={g} selected={data.goals.includes(g)} onToggle={() => toggle('goals', g)}/>)}
-        </div>
-      ),
-    },
-    {
-      title: 'Any dietary restrictions?',
-      content: (
-        <div className="flex flex-wrap gap-2">
-          {restrictions.map(r => <ToggleChip key={r} label={r} selected={data.restrictions.includes(r)} onToggle={() => toggle('restrictions', r)}/>)}
-        </div>
-      ),
-    },
-    {
-      title: 'Any diagnosed conditions?',
-      content: (
-        <div className="flex flex-wrap gap-2">
-          {conditions.map(c => <ToggleChip key={c} label={c} selected={data.conditions.includes(c)} onToggle={() => toggle('conditions', c)}/>)}
-        </div>
-      ),
-    },
-    {
-      title: 'Rate your current gut health',
-      subtitle: '1 = very poor, 10 = excellent',
-      content: (
-        <div className="text-center space-y-6">
-          <div className="text-7xl font-bold gradient-text">{data.currentScore}</div>
-          <input
-            type="range" min={1} max={10} value={data.currentScore}
-            onChange={e => setData(d => ({ ...d, currentScore: Number(e.target.value) }))}
-            className="w-full accent-[#4ADE80]"
-          />
-          <div className="flex justify-between text-white/30 text-xs">
-            <span>Very poor</span><span>Excellent</span>
-          </div>
-        </div>
-      ),
-    },
-  ]
-
-  const isLast = step === steps.length - 1
-  const canNext = step === 0 ? data.name.trim().length > 0 : true
+  const isLastStep = step === steps.length
+  const currentStep = steps[step]
 
   const next = async () => {
-    if (!isLast) { setStep(s => s + 1); return }
-    setLoading(true)
+    if (!isLastStep) { setStep(s => s + 1); return }
+    setSaving(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      await supabase.from('profiles').update({
-        name: data.name,
-        onboarding_complete: true,
-        gut_profile: {
-          goals: data.goals,
-          restrictions: data.restrictions,
-          conditions: data.conditions,
-          baselineScore: data.currentScore,
-        },
-      }).eq('id', user.id)
-    }
+    if (!user) { router.push('/auth/login'); return }
+    await supabase.from('profiles').update({
+      gut_profile: { ...answers, currentGutScore: gutScore },
+      onboarding_complete: true,
+    }).eq('id', user.id)
     router.push('/dashboard')
   }
 
-  const current = steps[step]
-  const progress = ((step + 1) / steps.length) * 100
-
   return (
-    <div className="min-h-screen flex flex-col px-5 max-w-md mx-auto py-8">
-      <div className="flex items-center gap-3 mb-10">
-        <Image src="/logo.png" alt="gutted." width={80} height={24} className="h-6 w-auto"/>
-        <div className="flex-1 bg-white/10 rounded-full h-1 overflow-hidden">
-          <div className="bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] h-full rounded-full transition-all duration-500" style={{ width: `${progress}%` }}/>
-        </div>
-        <span className="text-white/30 text-xs">{step + 1}/{steps.length}</span>
+    <div className="min-h-screen bg-black flex flex-col px-6">
+      <div className="pt-8 pb-4 flex justify-center">
+        <Image src="/logo.png" alt="gutted." width={100} height={32} className="h-8 w-auto" />
       </div>
 
-      <div className="flex-1">
-        <h1 className="text-2xl font-bold mb-2">{current.title}</h1>
-        {'subtitle' in current && current.subtitle && <p className="text-white/50 mb-6 text-sm">{current.subtitle}</p>}
-        {!('subtitle' in current) && <div className="mb-6"/>}
-        {current.content}
+      {/* Progress bar */}
+      <div className="w-full bg-white/10 rounded-full h-1 mb-8 max-w-sm mx-auto">
+        <div
+          className="h-1 rounded-full bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
-      <div className="flex gap-3 mt-8 pb-6">
-        {step > 0 && (
-          <Button variant="outline" onClick={() => setStep(s => s - 1)} className="flex-1">Back</Button>
+      <div className="flex-1 flex flex-col max-w-sm mx-auto w-full">
+        <p className="text-white/40 text-sm mb-2">Step {step + 1} of {totalSteps}</p>
+
+        {!isLastStep ? (
+          <>
+            <h2 className="text-2xl font-bold mb-8">{currentStep.q}</h2>
+            <div className="flex flex-wrap gap-3 flex-1">
+              {currentStep.options.map(opt => {
+                const selected = (answers[currentStep.key] || []).includes(opt)
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => toggle(currentStep.key, opt)}
+                    className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                      selected
+                        ? 'border-[#00B4B4] bg-[#00B4B4]/20 text-[#4ADE80]'
+                        : 'border-white/20 text-white/60 hover:border-white/40'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="text-2xl font-bold mb-4">How is your gut health right now?</h2>
+            <p className="text-white/40 text-sm mb-10">Rate from 1 (rough) to 10 (great)</p>
+            <div className="flex flex-col items-center gap-6">
+              <div className="text-6xl font-bold gradient-text">{gutScore}</div>
+              <input
+                type="range" min={1} max={10} value={gutScore}
+                onChange={e => setGutScore(Number(e.target.value))}
+                className="w-full accent-[#00B4B4]"
+              />
+              <div className="flex justify-between w-full text-white/30 text-xs">
+                <span>Rough</span><span>Great</span>
+              </div>
+            </div>
+          </>
         )}
-        <Button onClick={next} disabled={!canNext} loading={loading} className={`flex-1 ${isLast ? '' : ''}`}>
-          {isLast ? 'Take me to my dashboard' : 'Continue'}
+      </div>
+
+      <div className="pb-8 pt-4 max-w-sm mx-auto w-full">
+        <Button onClick={next} loading={saving} className="w-full" size="lg">
+          {isLastStep ? 'Build my gut profile' : 'Continue'}
         </Button>
       </div>
     </div>
