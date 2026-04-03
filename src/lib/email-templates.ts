@@ -136,6 +136,42 @@ export const emailTemplates = {
 </html>`
   }),
 
+  dailyReminder: (name: string) => ({
+    subject: "How's your gut today? Time for a quick log",
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Daily Gut Check-In</title>
+</head>
+<body style="margin:0;padding:0;background-color:#000000;font-family:Inter,system-ui,sans-serif;color:#ffffff;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <img src="https://gutted.app/icon.png" alt="gutted." style="height:40px;">
+    </div>
+
+    <div style="text-align:center;margin-bottom:40px;">
+      <h1 style="color:#ffffff;font-size:28px;font-weight:bold;margin:0 0 8px 0;">
+        Hey ${name}, how's your gut today?
+      </h1>
+      <p style="color:#a3a3a3;margin:0;font-size:16px;">A quick 30-second log keeps your streak alive and helps us spot patterns.</p>
+    </div>
+
+    <div style="text-align:center;margin-bottom:32px;">
+      <a href="https://gutted.app/dashboard/log" style="background:linear-gradient(to right, #00B4B4, #4ADE80);color:#000000;text-decoration:none;padding:12px 32px;border-radius:12px;font-weight:600;display:inline-block;">
+        Log now →
+      </a>
+    </div>
+
+    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:24px;text-align:center;">
+      <p style="color:#525252;font-size:12px;margin:0;">You're receiving this because you enabled daily reminders. <a href="https://gutted.app/dashboard/settings" style="color:#525252;text-decoration:underline;">Manage preferences</a></p>
+    </div>
+  </div>
+</body>
+</html>`
+  }),
+
   upgrade: (name: string, plan: string) => ({
     subject: `🎉 Welcome to gutted. ${plan}!`,
     html: `
