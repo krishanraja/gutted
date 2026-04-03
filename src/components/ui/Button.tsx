@@ -1,5 +1,6 @@
 'use client'
 import { ReactNode, ButtonHTMLAttributes } from 'react'
+import { haptic } from '@/lib/haptics'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'gradient' | 'outline' | 'ghost' | 'danger'
@@ -17,8 +18,13 @@ export function Button({ variant = 'gradient', size = 'md', loading, children, c
     ghost: 'text-white/70 hover:text-white hover:bg-white/5 active:scale-95',
     danger: 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 active:scale-95',
   }
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (variant === 'gradient') haptic.light()
+    props.onClick?.(e)
+  }
+
   return (
-    <button {...props} disabled={disabled || loading} className={`${base} ${sizes[size]} ${variants[variant]} ${className}`}>
+    <button {...props} onClick={handleClick} disabled={disabled || loading} className={`${base} ${sizes[size]} ${variants[variant]} ${className}`}>
       {loading ? (
         <span className="flex items-center gap-2">
           <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">

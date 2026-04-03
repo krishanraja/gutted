@@ -3,7 +3,7 @@ import { useState, useRef, DragEvent } from 'react'
 
 interface DocumentUploaderProps {
   type: 'gut_test' | 'doctor_report' | 'food_label'
-  onAnalysed: (result: { summary: string; biomarkers?: Record<string, string>; recommendations: string[] }) => void
+  onAnalysed: (result: { summary: string; biomarkers?: Record<string, string>; recommendations: string[]; fileName?: string }) => void
   onError?: (msg: string) => void
 }
 
@@ -45,7 +45,7 @@ export function DocumentUploader({ type, onAnalysed, onError }: DocumentUploader
       setProgress(100)
       const data = await res.json()
       if (data.error) throw new Error(data.error)
-      onAnalysed(data)
+      onAnalysed({ ...data, fileName: file.name })
     } catch (e: unknown) {
       onError?.((e as Error).message || 'Analysis failed. Please try again.')
     } finally {

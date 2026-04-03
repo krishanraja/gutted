@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -8,9 +8,11 @@ import { Navigation } from '@/components/Navigation'
 import { GutScore } from '@/components/GutScore'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { DashboardSkeleton } from '@/components/ui/Skeleton'
 
 interface Profile { name: string; plan: string; gut_profile: Record<string, unknown> }
 interface Log { id: string; type: string; content: string; gut_score: number; logged_at: string }
+interface Pattern { trigger: string; effect: string; confidence: string; detail: string }
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -18,43 +20,104 @@ export default function DashboardPage() {
   const [logs, setLogs] = useState<Log[]>([])
   const [todayScore, setTodayScore] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [streak, setStreak] = useState(0)
+  const [dailyInsight, setDailyInsight] = useState<{ insight: string; type: string } | null>(null)
+  const [patterns, setPatterns] = useState<Pattern[]>([])
+  const [hasLoggedToday, setHasLoggedToday] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    const load = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/auth/login'; return }
+  const load = useCallback(async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { window.location.href = '/auth/login'; return }
 
-      const [{ data: p }, { data: l }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('logs').select('*').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(10),
-      ])
+    const [{ data: p }, { data: l }] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', user.id).single(),
+      supabase.from('logs').select('*').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(30),
+    ])
 
-      setProfile(p)
-      setLogs(l || [])
-      const scores = (l || []).filter(log => log.gut_score).map(log => log.gut_score)
-      setTodayScore(scores.length ? Math.round(scores.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(scores.length, 3)) : 0)
-      setLoading(false)
+    setProfile(p)
+    const allLogs = l || []
+    setLogs(allLogs)
+
+    // Calculate today's score (avg of last 3 scored logs)
+    const scores = allLogs.filter(log => log.gut_score).map(log => log.gut_score)
+    setTodayScore(scores.length ? Math.round(scores.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(scores.length, 3)) : 0)
+
+    // Check if logged today
+    const today = new Date().toDateString()
+    setHasLoggedToday(allLogs.some(log => new Date(log.logged_at).toDateString() === today))
+
+    // Calculate streak
+    const logDates = [...new Set(allLogs.map(log => new Date(log.logged_at).toDateString()))]
+    let streakCount = 0
+    const now = new Date()
+    for (let i = 0; i < 365; i++) {
+      const checkDate = new Date(now)
+      checkDate.setDate(checkDate.getDate() - i)
+      if (logDates.includes(checkDate.toDateString())) {
+        streakCount++
+      } else if (i > 0) {
+        break
+      }
     }
-    load()
+    setStreak(streakCount)
+
+    setLoading(false)
+
+    // Fetch AI insights in background (non-blocking)
+    if (allLogs.length >= 2) {
+      fetch('/api/daily-insight', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => { if (data.insight) setDailyInsight(data) })
+        .catch(() => {})
+    }
+    if (allLogs.length >= 5) {
+      fetch('/api/patterns', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => { if (data.patterns?.length) setPatterns(data.patterns) })
+        .catch(() => {})
+    }
   }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const refresh = async () => {
+    setRefreshing(true)
+    await load()
+    setRefreshing(false)
+  }
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
-  if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin"/>
-    </div>
-  )
+  // Determine proactive nudge
+  const getNudge = () => {
+    if (!hasLoggedToday) return { text: "You haven't logged today  - how's your gut feeling?", action: '/dashboard/log', cta: 'Log now' }
+    const recentScores = logs.slice(0, 5).filter(l => l.gut_score).map(l => l.gut_score)
+    const avgRecent = recentScores.length ? recentScores.reduce((a, b) => a + b, 0) / recentScores.length : 0
+    if (avgRecent > 0 && avgRecent < 4) return { text: "Your scores have been low this week. Let's look at what might be causing it.", action: '/dashboard/history', cta: 'View history' }
+    return null
+  }
+  const nudge = getNudge()
+
+  const insightIcons: Record<string, string> = { tip: '💡', pattern: '🔍', encouragement: '🌟', warning: '⚠️' }
+
+  if (loading) return <DashboardSkeleton />
 
   return (
-    <div className="min-h-screen bg-black pb-24">
+    <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
       {/* Header */}
       <div className="px-6 pt-12 pb-6">
         <div className="flex items-center justify-between mb-6">
           <Image src="/icon.png" alt="gutted." width={32} height={32} className="h-8 w-8" />
           <div className="flex items-center gap-2">
+            {streak > 1 && (
+              <div className="flex items-center gap-1 bg-orange-500/10 border border-orange-500/20 rounded-lg px-2.5 py-1">
+                <span className="text-sm">🔥</span>
+                <span className="text-xs font-semibold text-orange-400">{streak}</span>
+              </div>
+            )}
             {profile?.plan !== 'free' && (
               <Badge variant="teal">{profile?.plan}</Badge>
             )}
@@ -67,78 +130,188 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold mt-0.5">{profile?.name || 'friend'}</h1>
       </div>
 
-      {/* Gut score card */}
-      <div className="px-6 mb-6">
-        <Card glow className="flex items-center gap-6 py-6">
-          <GutScore score={todayScore} size="lg" />
-          <div>
-            <p className="text-white/40 text-sm mb-1">Today's gut score</p>
-            <p className="text-lg font-semibold">
-              {todayScore === 0 ? 'Log your first entry' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day - take it easy'}
-            </p>
-            {todayScore === 0 && <p className="text-white/30 text-xs mt-1">Tap "Log now" to get your score</p>}
-          </div>
-        </Card>
-      </div>
-
-      {/* Quick actions */}
-      <div className="px-6 mb-6">
-        <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Quick actions</p>
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { href: '/dashboard/log', emoji: '🎤', label: 'Log now' },
-            { href: '/dashboard/upload', emoji: '📄', label: 'Upload test' },
-            { href: '/dashboard/meal-plan', emoji: '🍽️', label: 'Meal plan' },
-          ].map(({ href, emoji, label }) => (
-            <Link key={href} href={href}>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center hover:border-[#00B4B4]/30 transition-colors active:scale-95">
-                <div className="text-2xl mb-1">{emoji}</div>
-                <p className="text-xs text-white/60">{label}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Recent logs */}
-      <div className="px-6">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-white/40 text-xs uppercase tracking-wide">Recent logs</p>
-          <Link href="/dashboard/history" className="text-[#4ADE80] text-xs">View all</Link>
-        </div>
-        {logs.length === 0 ? (
-          <Card className="text-center py-8">
-            <p className="text-2xl mb-2">🎤</p>
-            <p className="text-white/50 text-sm">No logs yet. Start by recording how you feel.</p>
-            <Link href="/dashboard/log" className="inline-block mt-3 text-[#4ADE80] text-sm">Log now</Link>
+      {/* Desktop: 2-column layout, Mobile: single column */}
+      <div className="px-6 md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+        {/* Column 1: Score + AI Insights */}
+        <div className="space-y-4 mb-6 md:mb-0">
+          {/* Gut score card */}
+          <Card glow className="flex items-center gap-6 py-6">
+            <GutScore score={todayScore} size="lg" />
+            <div>
+              <p className="text-white/40 text-sm mb-1">Today&apos;s gut score</p>
+              <p className="text-lg font-semibold">
+                {todayScore === 0 ? 'Log your first entry' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day - take it easy'}
+              </p>
+              {todayScore === 0 && <p className="text-white/30 text-xs mt-1">Tap &ldquo;Log now&rdquo; to get your score</p>}
+            </div>
           </Card>
-        ) : (
-          <div className="space-y-3">
-            {logs.slice(0, 3).map(log => (
-              <Card key={log.id}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm">{log.type === 'voice' ? '🎤' : '✏️'}</span>
-                      <span className="text-white/30 text-xs">{new Date(log.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                    <p className="text-sm text-white/70 truncate">{log.content}</p>
-                  </div>
-                  {log.gut_score > 0 && (
-                    <Badge variant={log.gut_score >= 7 ? 'green' : log.gut_score >= 4 ? 'amber' : 'red'}>
-                      {log.gut_score}/10
-                    </Badge>
-                  )}
+
+          {/* Proactive nudge */}
+          {nudge && (
+            <Card className="border-[#00B4B4]/20 bg-[#00B4B4]/5">
+              <div className="flex items-start gap-3">
+                <span className="text-lg">💬</span>
+                <div className="flex-1">
+                  <p className="text-sm text-white/70">{nudge.text}</p>
+                  <Link href={nudge.action} className="text-[#4ADE80] text-xs mt-2 inline-block hover:underline">{nudge.cta} →</Link>
                 </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Daily AI insight */}
+          {dailyInsight && (
+            <Card className="border-[#4ADE80]/20 bg-[#4ADE80]/5">
+              <div className="flex items-start gap-3">
+                <span className="text-lg">{insightIcons[dailyInsight.type] || '💡'}</span>
+                <div>
+                  <p className="text-white/40 text-xs uppercase tracking-wide mb-1">Daily insight</p>
+                  <p className="text-sm text-white/70 leading-relaxed">{dailyInsight.insight}</p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Patterns */}
+          {patterns.length > 0 && (
+            <Card>
+              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Patterns detected</p>
+              <div className="space-y-3">
+                {patterns.map((p, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="text-[#00B4B4] shrink-0 mt-0.5">🔍</span>
+                    <div>
+                      <p className="text-sm text-white/70">{p.detail}</p>
+                      <div className="flex gap-2 mt-1">
+                        <Badge variant={p.confidence === 'high' ? 'green' : 'amber'}>{p.confidence}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
+
+        {/* Column 2: Quick actions + Recent logs */}
+        <div className="space-y-4 mb-6 md:mb-0">
+          {/* Quick actions */}
+          <div>
+            <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Quick actions</p>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { href: '/dashboard/log', emoji: '🎤', label: 'Log now' },
+                { href: '/dashboard/upload', emoji: '📄', label: 'Upload test' },
+                { href: '/dashboard/meal-plan', emoji: '🍽️', label: 'Meal plan' },
+              ].map(({ href, emoji, label }) => (
+                <Link key={href} href={href}>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center hover:border-[#00B4B4]/30 transition-colors active:scale-95">
+                    <div className="text-2xl mb-1">{emoji}</div>
+                    <p className="text-xs text-white/60">{label}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent logs */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white/40 text-xs uppercase tracking-wide">Recent logs</p>
+              <Link href="/dashboard/history" className="text-[#4ADE80] text-xs">View all</Link>
+            </div>
+            {logs.length === 0 ? (
+              <Card className="text-center py-8">
+                <p className="text-2xl mb-2">🎤</p>
+                <p className="text-white/50 text-sm">No logs yet. Start by recording how you feel.</p>
+                <Link href="/dashboard/log" className="inline-block mt-3 text-[#4ADE80] text-sm">Log now</Link>
               </Card>
-            ))}
+            ) : (
+              <div className="space-y-3">
+                {logs.slice(0, 5).map(log => (
+                  <Card key={log.id}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm">{log.type === 'voice' ? '🎤' : '✏️'}</span>
+                          <span className="text-white/30 text-xs">{new Date(log.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p className="text-sm text-white/70 truncate">{log.content}</p>
+                      </div>
+                      {log.gut_score > 0 && (
+                        <Badge variant={log.gut_score >= 7 ? 'green' : log.gut_score >= 4 ? 'amber' : 'red'}>
+                          {log.gut_score}/10
+                        </Badge>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Column 3 (desktop lg only): Streak + Upsell */}
+        <div className="space-y-4 hidden lg:block">
+          {/* Streak card */}
+          {streak > 0 && (
+            <Card className="text-center py-6">
+              <div className="text-4xl mb-2">{streak >= 7 ? '🔥' : streak >= 3 ? '✨' : '📝'}</div>
+              <p className="text-3xl font-bold gradient-text mb-1">{streak}</p>
+              <p className="text-white/40 text-sm">day{streak !== 1 ? 's' : ''} logging streak</p>
+              {streak >= 7 && <p className="text-[#4ADE80] text-xs mt-2">Amazing consistency!</p>}
+              {streak >= 3 && streak < 7 && <p className="text-[#4ADE80] text-xs mt-2">Keep it going!</p>}
+            </Card>
+          )}
+
+          {/* Upsell if free */}
+          {profile?.plan === 'free' && (
+            <div className="bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border border-[#00B4B4]/20 rounded-2xl p-4">
+              <p className="font-semibold mb-1">Unlock your full gut profile</p>
+              <p className="text-white/50 text-sm mb-3">Upload a gut test and get a personalised weekly meal plan.</p>
+              <button
+                onClick={async () => {
+                  const res = await fetch('/api/stripe/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan: 'core' }),
+                  })
+                  const { url } = await res.json()
+                  if (url) window.location.href = url
+                }}
+                className="text-[#4ADE80] text-sm font-medium hover:underline"
+              >Upgrade to Core - $9/mo →</button>
+            </div>
+          )}
+
+          {/* Pull to refresh indicator (desktop) */}
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="w-full text-center text-white/20 text-xs hover:text-white/40 transition-colors py-2"
+          >
+            {refreshing ? 'Refreshing...' : 'Refresh dashboard'}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile-only: Streak + Upsell (below main content) */}
+      <div className="px-6 lg:hidden">
+        {/* Streak badge (inline on mobile) */}
+        {streak > 1 && (
+          <div className="mb-4">
+            <Card className="flex items-center gap-4 py-3">
+              <div className="text-2xl">{streak >= 7 ? '🔥' : streak >= 3 ? '✨' : '📝'}</div>
+              <div>
+                <p className="font-semibold">{streak}-day streak</p>
+                <p className="text-white/40 text-xs">{streak >= 7 ? 'Amazing consistency!' : 'Keep it going!'}</p>
+              </div>
+            </Card>
           </div>
         )}
-      </div>
 
-      {/* Upsell if free */}
-      {profile?.plan === 'free' && (
-        <div className="px-6 mt-6">
+        {/* Upsell if free (mobile) */}
+        {profile?.plan === 'free' && (
           <div className="bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border border-[#00B4B4]/20 rounded-2xl p-4">
             <p className="font-semibold mb-1">Unlock your full gut profile</p>
             <p className="text-white/50 text-sm mb-3">Upload a gut test and get a personalised weekly meal plan.</p>
@@ -155,8 +328,8 @@ export default function DashboardPage() {
               className="text-[#4ADE80] text-sm font-medium hover:underline"
             >Upgrade to Core - $9/mo →</button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <Navigation />
     </div>

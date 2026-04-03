@@ -1,11 +1,14 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Navigation } from '@/components/Navigation'
 import { DocumentUploader } from '@/components/DocumentUploader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { getPlanLimits } from '@/lib/plan-limits'
+import { useToast } from '@/components/ToastProvider'
 
 type DocType = 'gut_test' | 'doctor_report' | 'food_label'
 
@@ -16,29 +19,58 @@ interface AnalysisResult {
   gutFriendlyRating?: number
   flags?: string[]
   fileUrl?: string
+  fileName?: string
 }
 
 export default function UploadPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [activeType, setActiveType] = useState<DocType>('gut_test')
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [plan, setPlan] = useState('free')
+  const [monthUploadCount, setMonthUploadCount] = useState(0)
+  const [userId, setUserId] = useState<string | null>(null)
+
+  const limits = getPlanLimits(plan)
+  const atLimit = monthUploadCount >= limits.maxUploadsPerMonth
+
+  useEffect(() => {
+    const loadContext = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/auth/login'); return }
+      setUserId(user.id)
+
+      const monthStart = new Date()
+      monthStart.setDate(1)
+      monthStart.setHours(0, 0, 0, 0)
+
+      const [{ data: profile }, { count }] = await Promise.all([
+        supabase.from('profiles').select('plan').eq('id', user.id).single(),
+        supabase.from('documents').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('uploaded_at', monthStart.toISOString()),
+      ])
+      setPlan(profile?.plan || 'free')
+      setMonthUploadCount(count || 0)
+    }
+    loadContext()
+  }, [router])
 
   const save = async () => {
-    if (!result) return
+    if (!result || !userId) return
     setSaving(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/auth/login'); return }
     await supabase.from('documents').insert({
-      user_id: user.id,
+      user_id: userId,
       type: activeType,
       file_url: result.fileUrl,
+      file_name: result.fileName || 'untitled',
       ai_interpretation: result.summary,
       biomarkers: result.biomarkers || {},
       recommendations: result.recommendations,
     })
+    toast('Document saved to profile', 'success')
     router.push('/dashboard')
   }
 
@@ -49,7 +81,7 @@ export default function UploadPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-black pb-24">
+    <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
       <div className="px-6 pt-12 pb-6">
         <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
@@ -81,11 +113,20 @@ export default function UploadPage() {
 
       {/* Uploader */}
       <div className="px-6 mb-6">
-        <DocumentUploader
-          type={activeType}
-          onAnalysed={r => { setResult(r); setError('') }}
-          onError={setError}
-        />
+        {atLimit ? (
+          <Card className="text-center py-8">
+            <p className="text-2xl mb-3">📄</p>
+            <p className="font-semibold mb-1">Upload limit reached</p>
+            <p className="text-white/50 text-sm mb-3">Free plan includes {limits.maxUploadsPerMonth} upload per month. Upgrade for more.</p>
+            <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade now →</Link>
+          </Card>
+        ) : (
+          <DocumentUploader
+            type={activeType}
+            onAnalysed={r => { setResult(r); setError('') }}
+            onError={setError}
+          />
+        )}
       </div>
 
       {error && <p className="px-6 text-red-400 text-sm mb-4">{error}</p>}

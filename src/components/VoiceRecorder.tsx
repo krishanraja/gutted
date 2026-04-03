@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useCallback } from 'react'
+import { haptic } from '@/lib/haptics'
 
 interface VoiceRecorderProps {
   onTranscription: (text: string) => void
@@ -46,6 +47,7 @@ export function VoiceRecorder({ onTranscription, onError }: VoiceRecorderProps) 
           const res = await fetch('/api/transcribe', { method: 'POST', body: fd })
           const { text, error } = await res.json()
           if (error) throw new Error(error)
+          haptic.success()
           onTranscription(text)
         } catch (e: unknown) {
           onError?.((e as Error).message || 'Transcription failed')
@@ -56,6 +58,7 @@ export function VoiceRecorder({ onTranscription, onError }: VoiceRecorderProps) 
       mr.start()
       mediaRef.current = mr
       setState('recording')
+      haptic.heavy()
       animRef.current = requestAnimationFrame(animateBars)
     } catch {
       onError?.('Microphone access denied. Please allow microphone access and try again.')

@@ -1,6 +1,8 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { DesktopSidebar } from '@/components/DesktopLayout'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: (
@@ -32,8 +34,12 @@ const navItems = [
 
 export function Navigation() {
   const pathname = usePathname()
+  useKeyboardShortcuts()
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-xl border-t border-white/10 pb-safe">
+    <>
+    <DesktopSidebar />
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-xl border-t border-white/10 pb-safe md:hidden">
       <div className="flex items-center justify-around px-2 py-2 max-w-lg mx-auto">
         {navItems.map(({ href, label, icon }) => {
           const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
@@ -46,5 +52,6 @@ export function Navigation() {
         })}
       </div>
     </nav>
+    </>
   )
 }

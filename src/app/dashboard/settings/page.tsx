@@ -52,7 +52,7 @@ export default function SettingsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-black pb-24">
+    <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
       <div className="px-6 pt-12 pb-6">
         <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
@@ -88,6 +88,32 @@ export default function SettingsPage() {
               </button>
             )}
           </div>
+        </Card>
+
+        {/* Export data (desktop) */}
+        <Card className="hidden md:block">
+          <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Your data</p>
+          <button
+            onClick={async () => {
+              const supabase = createClient()
+              const { data: { user } } = await supabase.auth.getUser()
+              if (!user) return
+              const [{ data: logs }, { data: docs }, { data: plans }] = await Promise.all([
+                supabase.from('logs').select('*').eq('user_id', user.id),
+                supabase.from('documents').select('*').eq('user_id', user.id),
+                supabase.from('meal_plans').select('*').eq('user_id', user.id),
+              ])
+              const exportData = { profile, logs, documents: docs, mealPlans: plans, exportedAt: new Date().toISOString() }
+              const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+              const a = document.createElement('a')
+              a.href = URL.createObjectURL(blob)
+              a.download = `gutted-export-${new Date().toISOString().split('T')[0]}.json`
+              a.click()
+            }}
+            className="text-[#4ADE80] text-sm font-medium hover:underline"
+          >
+            Export all my data (JSON)
+          </button>
         </Card>
 
         {/* Sign out */}
