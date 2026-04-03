@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { DesktopSidebar } from '@/components/DesktopLayout'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { haptic } from '@/lib/haptics'
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: (
@@ -44,9 +45,17 @@ export function Navigation() {
         {navItems.map(({ href, label, icon }) => {
           const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
           return (
-            <Link key={href} href={href} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${active ? 'text-[#4ADE80]' : 'text-white/40 hover:text-white/70'}`}>
+            <Link
+              key={href}
+              href={href}
+              onClick={() => haptic.tap()}
+              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${active ? 'text-[#4ADE80] scale-110' : 'text-white/40 hover:text-white/70 scale-100'} transition-transform duration-200`}
+            >
               {icon}
               <span className="text-[10px] font-medium">{label}</span>
+              {active && (
+                <div className="w-1 h-1 rounded-full bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] -mt-0.5" />
+              )}
             </Link>
           )
         })}
