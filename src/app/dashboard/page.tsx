@@ -29,6 +29,8 @@ export default function DashboardPage() {
   const [beneficialFoods, setBeneficialFoods] = useState<BeneficialFood[]>([])
   const [hasLoggedToday, setHasLoggedToday] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [profileCompleteness, setProfileCompleteness] = useState(0)
+  const [completenessItems, setCompletenessItems] = useState<{ label: string; done: boolean; href: string }[]>([])
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -66,6 +68,22 @@ export default function DashboardPage() {
       }
     }
     setStreak(streakCount)
+
+    // Calculate profile completeness
+    const gutProfile = p?.gut_profile || {} as Record<string, unknown>
+    const { count: docCount } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    const items = [
+      { label: 'Complete onboarding', done: !!p?.onboarding_complete, href: '/onboarding' },
+      { label: 'Log at least 5 entries', done: allLogs.length >= 5, href: '/dashboard/log' },
+      { label: 'Upload a gut test', done: (docCount || 0) > 0, href: '/dashboard/upload' },
+      { label: 'Generate a meal plan', done: false, href: '/dashboard/meal-plan' },
+      { label: 'Set dietary restrictions', done: !!(gutProfile as Record<string, unknown>).restrictions, href: '/onboarding' },
+    ]
+    // Check meal plan
+    const { count: mealCount } = await supabase.from('meal_plans').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    items[3].done = (mealCount || 0) > 0
+    setCompletenessItems(items)
+    setProfileCompleteness(Math.round((items.filter(i => i.done).length / items.length) * 100))
 
     setLoading(false)
 
@@ -153,6 +171,30 @@ export default function DashboardPage() {
               {todayScore === 0 && <p className="text-white/30 text-xs mt-1">Tap &ldquo;Log now&rdquo; to get your score</p>}
             </div>
           </Card>
+
+          {/* Profile completeness */}
+          {profileCompleteness < 100 && (
+            <Card>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-white/40 text-xs uppercase tracking-wide">Gut profile</p>
+                <span className="text-[#4ADE80] text-xs font-medium">{profileCompleteness}%</span>
+              </div>
+              <div className="w-full bg-white/5 rounded-full h-2 mb-3">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] transition-all"
+                  style={{ width: `${profileCompleteness}%` }}
+                />
+              </div>
+              <div className="space-y-1.5">
+                {completenessItems.filter(i => !i.done).slice(0, 2).map((item) => (
+                  <Link key={item.label} href={item.href} className="flex items-center gap-2 text-sm text-white/50 hover:text-white/70 transition-colors">
+                    <span className="w-4 h-4 rounded border border-white/20 shrink-0" />
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {/* Proactive nudge */}
           {nudge && (
