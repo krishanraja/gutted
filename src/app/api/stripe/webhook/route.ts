@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
         try {
           await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://gutted.app'}/api/send-email`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.SUPABASE_SERVICE_ROLE_KEY || '' },
             body: JSON.stringify({
               type: 'upgrade',
               to: profile.email,

@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { emailTemplates } from '@/lib/email-templates'
+import { createClient } from '@/lib/supabase/server'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   try {
+    // Allow internal calls (from webhook) via secret header, otherwise require auth
+    const internalSecret = req.headers.get('x-internal-secret')
+    if (internalSecret !== process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
     const { type, to, data } = await req.json()
     
     let emailData

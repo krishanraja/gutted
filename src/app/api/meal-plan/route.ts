@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { anthropic } from '@/lib/anthropic'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
     const { userProfile, documents, recentLogs } = await req.json()
 
     const prompt = `You are a gut health nutritionist AI. Create a personalised 7-day meal plan based on the user's gut health profile, test results, and recent logs.

@@ -1,10 +1,14 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Navigation } from '@/components/Navigation'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { getPlanLimits } from '@/lib/plan-limits'
+import { haptic } from '@/lib/haptics'
+import { MealPlanSkeleton } from '@/components/ui/Skeleton'
 
 interface Meal { name: string; description: string; gutBenefits: string; prepTime: string }
 interface Day { day: string; breakfast: Meal; lunch: Meal; dinner: Meal; snacks: string[] }
@@ -17,6 +21,11 @@ export default function MealPlanPage() {
   const [generating, setGenerating] = useState(false)
   const [activeDay, setActiveDay] = useState(0)
   const [error, setError] = useState('')
+
+  const [userPlan, setUserPlan] = useState('free')
+  const [planAge, setPlanAge] = useState(0)
+  const touchStartRef = useRef(0)
+  const limits = getPlanLimits(userPlan)
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
@@ -31,8 +40,16 @@ export default function MealPlanPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data } = await supabase.from('meal_plans').select('*').eq('user_id', user.id).order('generated_at', { ascending: false }).limit(1).single()
-    if (data?.plan) setPlan(data.plan)
+    const [{ data: profile }, { data }] = await Promise.all([
+      supabase.from('profiles').select('plan').eq('id', user.id).single(),
+      supabase.from('meal_plans').select('*').eq('user_id', user.id).order('generated_at', { ascending: false }).limit(1).single(),
+    ])
+    setUserPlan(profile?.plan || 'free')
+    if (data?.plan) {
+      setPlan(data.plan)
+      const age = Math.floor((Date.now() - new Date(data.generated_at).getTime()) / (1000 * 60 * 60 * 24))
+      setPlanAge(age)
+    }
     setLoading(false)
   }
 
@@ -71,16 +88,12 @@ export default function MealPlanPage() {
     }
   }
 
-  if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin"/>
-    </div>
-  )
+  if (loading) return <MealPlanSkeleton />
 
   const currentDay = plan?.days[activeDay]
 
   return (
-    <div className="min-h-screen bg-black pb-24">
+    <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
       <div className="px-6 pt-12 pb-4">
         <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
@@ -92,16 +105,37 @@ export default function MealPlanPage() {
 
       {!plan ? (
         <div className="px-6">
-          <Card className="text-center py-10">
-            <div className="text-4xl mb-4">🍽️</div>
-            <p className="font-semibold mb-2">No meal plan yet</p>
-            <p className="text-white/40 text-sm mb-6">Upload a gut test or log a few days to generate your personalised plan.</p>
-            <Button onClick={generate} loading={generating} className="mx-auto">Generate my meal plan</Button>
-          </Card>
+          {!limits.mealPlan ? (
+            <Card className="text-center py-10">
+              <div className="text-4xl mb-4">🍽️</div>
+              <p className="font-semibold mb-2">Unlock personalised meal plans</p>
+              <p className="text-white/40 text-sm mb-6">Upgrade to Core or Pro to get AI-generated weekly meal plans tailored to your gut profile.</p>
+              <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade now →</Link>
+            </Card>
+          ) : (
+            <Card className="text-center py-10">
+              <div className="text-4xl mb-4">🍽️</div>
+              <p className="font-semibold mb-2">No meal plan yet</p>
+              <p className="text-white/40 text-sm mb-6">Upload a gut test or log a few days to generate your personalised plan.</p>
+              <Button onClick={generate} loading={generating} className="mx-auto">Generate my meal plan</Button>
+            </Card>
+          )}
           {error && <p className="text-red-400 text-sm mt-4 text-center">{error}</p>}
         </div>
       ) : (
         <>
+          {/* Stale plan banner */}
+          {planAge >= 7 && (
+            <div className="px-6 mb-4">
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-center justify-between">
+                <p className="text-amber-300 text-sm">This plan is {planAge} days old</p>
+                <button onClick={generate} disabled={generating} className="text-[#4ADE80] text-sm font-medium hover:underline shrink-0 ml-2">
+                  {generating ? 'Generating...' : 'Refresh →'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Week summary */}
           <div className="px-6 mb-4">
             <Card className="bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border-[#00B4B4]/20">
@@ -130,9 +164,19 @@ export default function MealPlanPage() {
             </div>
           </div>
 
-          {/* Meals */}
+          {/* Meals (swipeable) */}
           {currentDay && (
-            <div className="px-6 space-y-3 mb-4">
+            <div
+              className="px-6 space-y-3 mb-4"
+              onTouchStart={e => { touchStartRef.current = e.touches[0].clientX }}
+              onTouchEnd={e => {
+                const diff = e.changedTouches[0].clientX - touchStartRef.current
+                if (Math.abs(diff) > 60) {
+                  const next = diff < 0 ? Math.min(activeDay + 1, 6) : Math.max(activeDay - 1, 0)
+                  if (next !== activeDay) { setActiveDay(next); haptic.light() }
+                }
+              }}
+            >
               {(['breakfast', 'lunch', 'dinner'] as const).map(meal => {
                 const m = currentDay[meal]
                 return (
@@ -180,6 +224,13 @@ export default function MealPlanPage() {
 
           <div className="px-6 flex gap-3">
             <Button onClick={generate} loading={generating} variant="outline" className="flex-1">Regenerate</Button>
+            <Button
+              variant="outline"
+              className="hidden md:flex flex-1"
+              onClick={() => window.print()}
+            >
+              Print plan
+            </Button>
           </div>
         </>
       )}

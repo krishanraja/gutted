@@ -37,3 +37,20 @@ body {
 
 /* Disable pull-to-refresh */
 html { overscroll-behavior-y: none; }
+
+/* Toast slide-in animation */
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-in { animation: slide-in 0.2s ease-out; }
+
+/* Hide scrollbar utility */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Print styles */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; color: black; }
+}

@@ -32,6 +32,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
+  // Redirect to onboarding if not completed (only for dashboard routes)
+  if (user && pathname.startsWith('/dashboard')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_complete')
+      .eq('id', user.id)
+      .single()
+    if (profile && profile.onboarding_complete === false) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
+  }
+
   return supabaseResponse
 }
 

@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
           email: user.email,
           name,
         })
-        // New user — send to onboarding
+        // New user - send to onboarding
         return NextResponse.redirect(`${requestUrl.origin}/onboarding`)
       }
     }

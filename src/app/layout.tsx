@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { AuthProvider } from '@/components/AuthProvider'
+import { ToastProvider } from '@/components/ToastProvider'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'gutted. - Know your gut.',
@@ -29,8 +29,19 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="bg-black">
-      <body className={`${inter.className} bg-black text-white min-h-screen`}>
-        {children}
+      <body className="bg-black text-white min-h-screen">
+        <ErrorBoundary>
+          <AuthProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </AuthProvider>
+        </ErrorBoundary>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js')})}`,
+          }}
+        />
       </body>
     </html>
   )

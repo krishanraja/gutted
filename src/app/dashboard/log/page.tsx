@@ -1,12 +1,16 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 import { Navigation } from '@/components/Navigation'
 import { VoiceRecorder } from '@/components/VoiceRecorder'
 import { GutScore } from '@/components/GutScore'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { getPlanLimits } from '@/lib/plan-limits'
+import { useToast } from '@/components/ToastProvider'
+import { haptic } from '@/lib/haptics'
 
 const quickTags = ['🫧 Bloated', '😫 Cramps', '💩 Irregular', '😴 Fatigue', '✨ Feeling good', '🔥 Heartburn', '🤢 Nausea', '💧 Well hydrated']
 
@@ -20,6 +24,7 @@ interface Analysis {
 
 export default function LogPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [transcript, setTranscript] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [analysing, setAnalysing] = useState(false)
@@ -28,8 +33,40 @@ export default function LogPage() {
   const [error, setError] = useState('')
   const [mode, setMode] = useState<'voice' | 'text'>('voice')
   const [tagsChanged, setTagsChanged] = useState(false)
+  const [userProfile, setUserProfile] = useState<Record<string, unknown> | null>(null)
+  const [recentLogs, setRecentLogs] = useState<{ content: string; gut_score: number }[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
+  const [plan, setPlan] = useState('free')
+  const [todayLogCount, setTodayLogCount] = useState(0)
+
+  const limits = getPlanLimits(plan)
+  const atLimit = todayLogCount >= limits.maxLogsPerDay
+
+  useEffect(() => {
+    const loadContext = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/auth/login'); return }
+      setUserId(user.id)
+
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
+
+      const [{ data: profile }, { data: logs }, { count }] = await Promise.all([
+        supabase.from('profiles').select('gut_profile, plan').eq('id', user.id).single(),
+        supabase.from('logs').select('content, gut_score').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(5),
+        supabase.from('logs').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', todayStart.toISOString()),
+      ])
+      setPlan(profile?.plan || 'free')
+      setUserProfile(profile?.gut_profile || null)
+      setRecentLogs(logs || [])
+      setTodayLogCount(count || 0)
+    }
+    loadContext()
+  }, [router])
 
   const toggleTag = (tag: string) => {
+    haptic.light()
     setTags(p => p.includes(tag) ? p.filter(t => t !== tag) : [...p, tag])
     if (analysis) setTagsChanged(true)
   }
@@ -47,7 +84,11 @@ export default function LogPage() {
       const res = await fetch('/api/analyse-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text + (tags.length ? ` Tags: ${tags.join(', ')}` : '') }),
+        body: JSON.stringify({
+          text: text + (tags.length ? ` Tags: ${tags.join(', ')}` : ''),
+          userProfile,
+          recentLogs,
+        }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
@@ -61,23 +102,23 @@ export default function LogPage() {
   }
 
   const save = async () => {
-    if (!transcript.trim()) return
+    if (!transcript.trim() || !userId) return
     setSaving(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/auth/login'); return }
     await supabase.from('logs').insert({
-      user_id: user.id,
+      user_id: userId,
       type: mode,
       content: transcript,
       gut_score: analysis?.gutScore || 0,
       ai_analysis: analysis,
     })
+    haptic.success()
+    toast('Log saved successfully', 'success')
     router.push('/dashboard')
   }
 
   return (
-    <div className="min-h-screen bg-black pb-24">
+    <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
       <div className="px-6 pt-12 pb-6">
         <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
@@ -213,7 +254,15 @@ export default function LogPage() {
       {/* Save button */}
       {transcript && (
         <div className="px-6 pb-4">
-          <Button onClick={save} loading={saving} className="w-full" size="lg">Save log</Button>
+          {atLimit ? (
+            <div className="bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border border-[#00B4B4]/20 rounded-2xl p-4 text-center">
+              <p className="font-semibold mb-1">Daily log limit reached</p>
+              <p className="text-white/50 text-sm mb-3">Free plan includes {limits.maxLogsPerDay} logs per day. Upgrade for unlimited logging.</p>
+              <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade now →</Link>
+            </div>
+          ) : (
+            <Button onClick={save} loading={saving} className="w-full" size="lg">Save log</Button>
+          )}
         </div>
       )}
 
