@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { haptic } from '@/lib/haptics'
 
 interface GutScoreProps {
   score: number
@@ -10,20 +11,34 @@ interface GutScoreProps {
 export function GutScore({ score, size = 'lg', animate = true }: GutScoreProps) {
   const [displayed, setDisplayed] = useState(animate ? 0 : score)
   const [progress, setProgress] = useState(animate ? 0 : score / 10)
+  const [revealed, setRevealed] = useState(!animate)
+  const hapticFired = useRef(false)
 
   useEffect(() => {
     if (!animate) return
-    let start = 0
+    hapticFired.current = false
     const duration = 1200
     const startTime = performance.now()
     const tick = (now: number) => {
       const elapsed = now - startTime
       const t = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - t, 3)
+      // Elastic overshoot easing — goes to 1.03 then settles to 1
+      const eased = t < 1
+        ? 1 - Math.pow(1 - t, 3) + Math.sin(t * Math.PI) * 0.03
+        : 1
       const current = Math.round(eased * score)
-      setDisplayed(current)
-      setProgress(eased * (score / 10))
-      if (t < 1) requestAnimationFrame(tick)
+      setDisplayed(Math.min(current, score))
+      setProgress(Math.min(eased, 1) * (score / 10))
+      if (t < 1) {
+        requestAnimationFrame(tick)
+      } else {
+        // Animation complete — fire haptic and mark revealed
+        if (!hapticFired.current && score > 0) {
+          hapticFired.current = true
+          haptic.scoreReveal()
+        }
+        setRevealed(true)
+      }
     }
     requestAnimationFrame(tick)
   }, [score, animate])
@@ -36,7 +51,7 @@ export function GutScore({ score, size = 'lg', animate = true }: GutScoreProps) 
   const offset = circ * (1 - progress)
 
   return (
-    <div className="relative inline-flex items-center justify-center">
+    <div className={`relative inline-flex items-center justify-center rounded-full ${revealed && size === 'lg' ? 'animate-score-glow' : ''}`}>
       <svg width={dim} height={dim} style={{ transform: 'rotate(-90deg)' }}>
         <circle cx={dim/2} cy={dim/2} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={strokeW}/>
         <circle
@@ -48,7 +63,7 @@ export function GutScore({ score, size = 'lg', animate = true }: GutScoreProps) 
           style={{ transition: 'stroke 0.3s ease' }}
         />
       </svg>
-      <div className="absolute flex flex-col items-center">
+      <div className={`absolute flex flex-col items-center ${revealed && size === 'lg' ? 'animate-score-pulse' : ''}`}>
         <span className={`font-bold leading-none ${size === 'lg' ? 'text-3xl' : 'text-lg'}`} style={{ color }}>
           {displayed}
         </span>

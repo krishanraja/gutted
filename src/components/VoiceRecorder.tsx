@@ -97,7 +97,7 @@ export function VoiceRecorder({ onTranscription, onError }: VoiceRecorderProps) 
             ? 'bg-red-500 scale-110 shadow-lg shadow-red-500/40'
             : state === 'transcribing'
             ? 'bg-white/10 cursor-not-allowed'
-            : 'bg-gradient-to-br from-[#00B4B4] to-[#4ADE80] hover:scale-105 shadow-lg shadow-[#00B4B4]/30'
+            : 'bg-gradient-to-br from-[#00B4B4] to-[#4ADE80] hover:scale-105 shadow-lg shadow-[#00B4B4]/30 animate-glow-pulse'
         }`}
       >
         {state === 'recording' && (
