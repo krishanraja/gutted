@@ -13,7 +13,8 @@ import { useToast } from '@/components/ToastProvider'
 
 interface Meal { name: string; description: string; gutBenefits: string; prepTime: string }
 interface Day { day: string; breakfast: Meal; lunch: Meal; dinner: Meal; snacks: string[] }
-interface Plan { weekSummary: string; days: Day[]; gutTips: string[] }
+interface GroceryCategory { category: string; items: string[] }
+interface Plan { weekSummary: string; days: Day[]; gutTips: string[]; groceryList?: GroceryCategory[] }
 
 export default function MealPlanPage() {
   const router = useRouter()
@@ -26,6 +27,7 @@ export default function MealPlanPage() {
   const [userPlan, setUserPlan] = useState('free')
   const [planAge, setPlanAge] = useState(0)
   const [emailing, setEmailing] = useState(false)
+  const [showGroceryList, setShowGroceryList] = useState(false)
   const touchStartRef = useRef(0)
   const { toast } = useToast()
   const limits = getPlanLimits(userPlan)
@@ -172,7 +174,7 @@ export default function MealPlanPage() {
           </div>
 
           {/* Day tabs */}
-          <div className="px-6 mb-4">
+          {!showGroceryList && <div className="px-6 mb-4">
             <div className="flex gap-1.5 overflow-x-auto pb-1 hide-scrollbar">
               {days.map((d, i) => (
                 <button
@@ -190,10 +192,10 @@ export default function MealPlanPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* Meals (swipeable) */}
-          {currentDay && (
+          {!showGroceryList && currentDay && (
             <div
               className="px-6 space-y-3 mb-4"
               onTouchStart={e => { touchStartRef.current = e.touches[0].clientX }}
@@ -236,8 +238,58 @@ export default function MealPlanPage() {
             </div>
           )}
 
+          {/* View toggle: Meals / Grocery List */}
+          {plan.groceryList && plan.groceryList.length > 0 && (
+            <div className="px-6 mb-4">
+              <div className="flex bg-white/5 rounded-xl p-1 max-w-xs">
+                <button
+                  onClick={() => setShowGroceryList(false)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${!showGroceryList ? 'bg-white/10 text-white' : 'text-white/40'}`}
+                >
+                  Meals
+                </button>
+                <button
+                  onClick={() => setShowGroceryList(true)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${showGroceryList ? 'bg-white/10 text-white' : 'text-white/40'}`}
+                >
+                  Grocery List
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Grocery list */}
+          {showGroceryList && plan.groceryList && (
+            <div className="px-6 space-y-3 mb-4">
+              {plan.groceryList.map((cat) => (
+                <Card key={cat.category}>
+                  <p className="text-white/40 text-xs uppercase tracking-wide mb-2">{cat.category}</p>
+                  <ul className="space-y-1.5">
+                    {cat.items.map((item, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-white/70">
+                        <span className="w-4 h-4 rounded border border-white/20 shrink-0" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              ))}
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  const text = plan.groceryList!.map(c => `${c.category}:\n${c.items.map(i => `  - ${i}`).join('\n')}`).join('\n\n')
+                  navigator.clipboard.writeText(text)
+                  toast('Grocery list copied to clipboard', 'success')
+                }}
+              >
+                Copy list to clipboard
+              </Button>
+            </div>
+          )}
+
           {/* Gut tips */}
-          {plan.gutTips?.length > 0 && (
+          {plan.gutTips?.length > 0 && !showGroceryList && (
             <div className="px-6 mb-4">
               <p className="text-white/40 text-xs uppercase tracking-wide mb-3">This week's gut tips</p>
               <div className="space-y-2">
