@@ -23,6 +23,22 @@ export default function SignupPage() {
     if (error) { setError(error.message); setLoading(false); return }
     if (data.user) {
       await supabase.from('profiles').upsert({ id: data.user.id, email, name })
+      
+      // Send welcome email
+      try {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'welcome',
+            to: email,
+            data: { name }
+          })
+        })
+      } catch (e) {
+        console.log('Welcome email failed:', e)
+      }
+      
       router.push('/onboarding')
     }
   }

@@ -22,11 +22,36 @@ export async function POST(req: NextRequest) {
     const session = event.data.object
     const { userId, plan } = session.metadata || {}
     if (userId && plan) {
+      // Update user plan
       await supabase.from('profiles').update({
         plan,
         stripe_customer_id: session.customer,
         stripe_subscription_id: session.subscription,
       }).eq('id', userId)
+
+      // Get user details for email
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name, email')
+        .eq('id', userId)
+        .single()
+
+      // Send upgrade email
+      if (profile) {
+        try {
+          await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://gutted.app'}/api/send-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'upgrade',
+              to: profile.email,
+              data: { name: profile.name, plan: plan.charAt(0).toUpperCase() + plan.slice(1) }
+            })
+          })
+        } catch (e) {
+          console.log('Upgrade email failed:', e)
+        }
+      }
     }
   }
 
