@@ -299,14 +299,31 @@ export default function DashboardPage() {
 
         {/* Column 3 (desktop lg only): Streak + Upsell */}
         <div className="space-y-4 hidden lg:block">
-          {/* Streak card */}
+          {/* Streak card with milestones */}
           {streak > 0 && (
             <Card className="text-center py-6">
-              <div className="text-4xl mb-2">{streak >= 7 ? '🔥' : streak >= 3 ? '✨' : '📝'}</div>
+              <div className="text-4xl mb-2">{streak >= 90 ? '🏆' : streak >= 30 ? '💎' : streak >= 7 ? '🔥' : streak >= 3 ? '✨' : '📝'}</div>
               <p className="text-3xl font-bold gradient-text mb-1">{streak}</p>
               <p className="text-white/40 text-sm">day{streak !== 1 ? 's' : ''} logging streak</p>
-              {streak >= 7 && <p className="text-[#4ADE80] text-xs mt-2">Amazing consistency!</p>}
+              {streak >= 90 && <p className="text-[#4ADE80] text-xs mt-2">Gut health master! 90+ days</p>}
+              {streak >= 30 && streak < 90 && <p className="text-[#4ADE80] text-xs mt-2">Incredible! 30+ day streak</p>}
+              {streak >= 7 && streak < 30 && <p className="text-[#4ADE80] text-xs mt-2">Amazing consistency!</p>}
               {streak >= 3 && streak < 7 && <p className="text-[#4ADE80] text-xs mt-2">Keep it going!</p>}
+
+              {/* Milestone progress */}
+              <div className="mt-4 px-4">
+                <div className="flex justify-between text-xs text-white/30 mb-1">
+                  {[7, 30, 90].map(m => (
+                    <span key={m} className={streak >= m ? 'text-[#4ADE80]' : ''}>{m}d{streak >= m ? ' ✓' : ''}</span>
+                  ))}
+                </div>
+                <div className="w-full bg-white/5 rounded-full h-1.5">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] transition-all"
+                    style={{ width: `${Math.min((streak / 90) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
             </Card>
           )}
 
@@ -347,10 +364,17 @@ export default function DashboardPage() {
         {streak > 1 && (
           <div className="mb-4">
             <Card className="flex items-center gap-4 py-3">
-              <div className="text-2xl">{streak >= 7 ? '🔥' : streak >= 3 ? '✨' : '📝'}</div>
-              <div>
+              <div className="text-2xl">{streak >= 90 ? '🏆' : streak >= 30 ? '💎' : streak >= 7 ? '🔥' : streak >= 3 ? '✨' : '📝'}</div>
+              <div className="flex-1">
                 <p className="font-semibold">{streak}-day streak</p>
-                <p className="text-white/40 text-xs">{streak >= 7 ? 'Amazing consistency!' : 'Keep it going!'}</p>
+                <p className="text-white/40 text-xs">
+                  {streak >= 90 ? 'Gut health master!' : streak >= 30 ? 'Incredible! 30+ days' : streak >= 7 ? 'Amazing consistency!' : 'Keep it going!'}
+                </p>
+                <div className="flex gap-1 mt-1.5">
+                  {[7, 30, 90].map(m => (
+                    <span key={m} className={`text-[10px] px-1.5 py-0.5 rounded ${streak >= m ? 'bg-[#4ADE80]/20 text-[#4ADE80]' : 'bg-white/5 text-white/20'}`}>{m}d</span>
+                  ))}
+                </div>
               </div>
             </Card>
           </div>
