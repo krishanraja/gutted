@@ -15,7 +15,9 @@ import { haptic } from '@/lib/haptics'
 
 interface Profile { name: string; plan: string; gut_profile: Record<string, unknown> }
 interface Log { id: string; type: string; content: string; gut_score: number; logged_at: string }
-interface Pattern { trigger: string; effect: string; confidence: string; detail: string }
+interface Pattern { trigger: string; effect: string; confidence: string; detail: string; occurrences?: number }
+interface TriggerFood { food: string; avgScoreAfter: number; timesLogged: number; symptoms: string[] }
+interface BeneficialFood { food: string; avgScoreAfter: number; timesLogged: number; benefits: string[] }
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -29,6 +31,10 @@ export default function DashboardPage() {
   const [hasLoggedToday, setHasLoggedToday] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [patternSheetOpen, setPatternSheetOpen] = useState(false)
+  const [triggerFoods, setTriggerFoods] = useState<TriggerFood[]>([])
+  const [beneficialFoods, setBeneficialFoods] = useState<BeneficialFood[]>([])
+  const [profileCompleteness, setProfileCompleteness] = useState(0)
+  const [completenessItems, setCompletenessItems] = useState<{ label: string; done: boolean; href: string }[]>([])
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -64,6 +70,21 @@ export default function DashboardPage() {
     }
     setStreak(streakCount)
 
+    // Calculate profile completeness
+    const gutProfile = p?.gut_profile || {} as Record<string, unknown>
+    const { count: docCount } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    const items = [
+      { label: 'Complete onboarding', done: !!p?.onboarding_complete, href: '/onboarding' },
+      { label: 'Log at least 5 entries', done: allLogs.length >= 5, href: '/dashboard/log' },
+      { label: 'Upload a gut test', done: (docCount || 0) > 0, href: '/dashboard/upload' },
+      { label: 'Generate a meal plan', done: false, href: '/dashboard/meal-plan' },
+      { label: 'Set dietary restrictions', done: !!(gutProfile as Record<string, unknown>).restrictions, href: '/onboarding' },
+    ]
+    const { count: mealCount } = await supabase.from('meal_plans').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    items[3].done = (mealCount || 0) > 0
+    setCompletenessItems(items)
+    setProfileCompleteness(Math.round((items.filter(i => i.done).length / items.length) * 100))
+
     setLoading(false)
 
     if (allLogs.length >= 2) {
@@ -75,7 +96,11 @@ export default function DashboardPage() {
     if (allLogs.length >= 5) {
       fetch('/api/patterns', { method: 'POST' })
         .then(r => r.json())
-        .then(data => { if (data.patterns?.length) setPatterns(data.patterns) })
+        .then(data => {
+          if (data.patterns?.length) setPatterns(data.patterns)
+          if (data.triggerFoods?.length) setTriggerFoods(data.triggerFoods)
+          if (data.beneficialFoods?.length) setBeneficialFoods(data.beneficialFoods)
+        })
         .catch(() => {})
     }
   }, [])
@@ -170,11 +195,12 @@ export default function DashboardPage() {
         <div className="flex-1 flex flex-col px-6 pb-20 min-h-0">
           {/* Quick actions */}
           <div className="flex-none mb-3 animate-fade-up stagger-2">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {[
                 { href: '/dashboard/log', emoji: '🎤', label: 'Log now' },
                 { href: '/dashboard/upload', emoji: '📄', label: 'Upload' },
                 { href: '/dashboard/meal-plan', emoji: '🍽️', label: 'Meals' },
+                { href: '/dashboard/food-checker', emoji: '🔍', label: 'Food check' },
               ].map(({ href, emoji, label }) => (
                 <Link key={href} href={href} onClick={() => haptic.light()}>
                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center hover:border-[#00B4B4]/30 transition-colors active:scale-[0.97]">
@@ -282,7 +308,7 @@ export default function DashboardPage() {
                         if (url) window.location.href = url
                       }}
                       className="text-[#4ADE80] text-xs font-medium hover:underline"
-                    >Upgrade to Core — $9/mo →</button>
+                    >Upgrade to Core — $14/mo →</button>
                   </Card>
                 )}
                 <button
@@ -371,9 +397,64 @@ export default function DashboardPage() {
                         <p className="text-sm text-white/70">{p.detail}</p>
                         <div className="flex gap-2 mt-1">
                           <Badge variant={p.confidence === 'high' ? 'green' : 'amber'}>{p.confidence}</Badge>
+                          {p.occurrences && <span className="text-white/30 text-xs">{p.occurrences}x observed</span>}
                         </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {triggerFoods.length > 0 && (
+              <Card className="border-red-500/20 bg-red-500/5">
+                <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Trigger foods</p>
+                <div className="space-y-2">
+                  {triggerFoods.map((f, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-400 text-sm">⚠️</span>
+                        <span className="text-sm text-white/70">{f.food}</span>
+                      </div>
+                      <Badge variant="red">{f.avgScoreAfter}/10</Badge>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {beneficialFoods.length > 0 && (
+              <Card className="border-[#4ADE80]/20 bg-[#4ADE80]/5">
+                <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Gut-friendly foods</p>
+                <div className="space-y-2">
+                  {beneficialFoods.map((f, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#4ADE80] text-sm">✓</span>
+                        <span className="text-sm text-white/70">{f.food}</span>
+                      </div>
+                      <Badge variant="green">{f.avgScoreAfter}/10</Badge>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {profileCompleteness < 100 && (
+              <Card>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-white/40 text-xs uppercase tracking-wide">Gut profile</p>
+                  <span className="text-[#4ADE80] text-xs font-medium">{profileCompleteness}%</span>
+                </div>
+                <div className="w-full bg-white/5 rounded-full h-2 mb-3">
+                  <div className="h-full rounded-full bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] transition-all" style={{ width: `${profileCompleteness}%` }} />
+                </div>
+                <div className="space-y-1.5">
+                  {completenessItems.filter(i => !i.done).slice(0, 2).map((item) => (
+                    <Link key={item.label} href={item.href} className="flex items-center gap-2 text-sm text-white/50 hover:text-white/70 transition-colors">
+                      <span className="w-4 h-4 rounded border border-white/20 shrink-0" />
+                      {item.label}
+                    </Link>
                   ))}
                 </div>
               </Card>
@@ -383,7 +464,7 @@ export default function DashboardPage() {
           <div className="space-y-4 mb-6 md:mb-0">
             <div className="animate-fade-up stagger-1">
               <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Quick actions</p>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 {[
                   { href: '/dashboard/log', emoji: '🎤', label: 'Log now' },
                   { href: '/dashboard/upload', emoji: '📄', label: 'Upload test' },
@@ -438,11 +519,23 @@ export default function DashboardPage() {
           <div className="space-y-4 hidden lg:block">
             {streak > 0 && (
               <Card className="text-center py-6 animate-fade-up">
-                <div className="text-4xl mb-2">{streak >= 7 ? '🔥' : streak >= 3 ? '✨' : '📝'}</div>
+                <div className="text-4xl mb-2">{streak >= 90 ? '🏆' : streak >= 30 ? '💎' : streak >= 7 ? '🔥' : streak >= 3 ? '✨' : '📝'}</div>
                 <p className="text-3xl font-bold gradient-text mb-1">{streak}</p>
                 <p className="text-white/40 text-sm">day{streak !== 1 ? 's' : ''} logging streak</p>
-                {streak >= 7 && <p className="text-[#4ADE80] text-xs mt-2">Amazing consistency!</p>}
+                {streak >= 90 && <p className="text-[#4ADE80] text-xs mt-2">Gut health master! 90+ days</p>}
+                {streak >= 30 && streak < 90 && <p className="text-[#4ADE80] text-xs mt-2">Incredible! 30+ day streak</p>}
+                {streak >= 7 && streak < 30 && <p className="text-[#4ADE80] text-xs mt-2">Amazing consistency!</p>}
                 {streak >= 3 && streak < 7 && <p className="text-[#4ADE80] text-xs mt-2">Keep it going!</p>}
+                <div className="mt-4 px-4">
+                  <div className="flex justify-between text-xs text-white/30 mb-1">
+                    {[7, 30, 90].map(m => (
+                      <span key={m} className={streak >= m ? 'text-[#4ADE80]' : ''}>{m}d{streak >= m ? ' ✓' : ''}</span>
+                    ))}
+                  </div>
+                  <div className="w-full bg-white/5 rounded-full h-1.5">
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] transition-all" style={{ width: `${Math.min((streak / 90) * 100, 100)}%` }} />
+                  </div>
+                </div>
               </Card>
             )}
             {profile?.plan === 'free' && (
@@ -460,7 +553,7 @@ export default function DashboardPage() {
                     if (url) window.location.href = url
                   }}
                   className="text-[#4ADE80] text-sm font-medium hover:underline"
-                >Upgrade to Core — $9/mo →</button>
+                >Upgrade to Core — $14/mo →</button>
               </div>
             )}
             <button

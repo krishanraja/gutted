@@ -11,10 +11,12 @@ import { haptic } from '@/lib/haptics'
 import { MealPlanSkeleton } from '@/components/ui/Skeleton'
 import { CardCarousel } from '@/components/CardCarousel'
 import { BottomSheet } from '@/components/BottomSheet'
+import { useToast } from '@/components/ToastProvider'
 
 interface Meal { name: string; description: string; gutBenefits: string; prepTime: string }
 interface Day { day: string; breakfast: Meal; lunch: Meal; dinner: Meal; snacks: string[] }
-interface Plan { weekSummary: string; days: Day[]; gutTips: string[] }
+interface GroceryCategory { category: string; items: string[] }
+interface Plan { weekSummary: string; days: Day[]; gutTips: string[]; groceryList?: GroceryCategory[] }
 
 export default function MealPlanPage() {
   const router = useRouter()
@@ -27,6 +29,9 @@ export default function MealPlanPage() {
 
   const [userPlan, setUserPlan] = useState('free')
   const [planAge, setPlanAge] = useState(0)
+  const [emailing, setEmailing] = useState(false)
+  const [showGroceryList, setShowGroceryList] = useState(false)
+  const { toast } = useToast()
   const limits = getPlanLimits(userPlan)
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -87,6 +92,31 @@ export default function MealPlanPage() {
       setError((e as Error).message || 'Could not generate meal plan')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const emailPlan = async () => {
+    setEmailing(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: profile } = await supabase.from('profiles').select('name, email').eq('id', user.id).single()
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'weekly-meal-plan',
+          to: profile?.email || user.email,
+          data: { name: profile?.name || 'there', mealPlanUrl: `${window.location.origin}/dashboard/meal-plan` },
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to send')
+      toast('Meal plan sent to your email', 'success')
+    } catch {
+      toast('Could not send email', 'error')
+    } finally {
+      setEmailing(false)
     }
   }
 
@@ -168,29 +198,51 @@ export default function MealPlanPage() {
               </div>
             )}
 
-            {/* Day tabs */}
-            <div className="flex-none px-6 mb-3">
-              <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
-                {days.map((d, i) => (
+            {/* View toggle: Meals / Grocery List */}
+            {plan.groceryList && plan.groceryList.length > 0 && (
+              <div className="flex-none px-6 mb-3">
+                <div className="flex bg-white/5 rounded-xl p-1 max-w-xs">
                   <button
-                    key={d}
-                    onClick={() => { setActiveDay(i); haptic.tap() }}
-                    className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                      activeDay === i
-                        ? 'bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] text-black'
-                        : i === todayIndex
-                        ? 'border border-[#00B4B4]/50 text-[#4ADE80]'
-                        : 'bg-white/5 text-white/40'
-                    }`}
+                    onClick={() => setShowGroceryList(false)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${!showGroceryList ? 'bg-white/10 text-white' : 'text-white/40'}`}
                   >
-                    {d}
+                    Meals
                   </button>
-                ))}
+                  <button
+                    onClick={() => setShowGroceryList(true)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${showGroceryList ? 'bg-white/10 text-white' : 'text-white/40'}`}
+                  >
+                    Grocery List
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Day tabs */}
+            {!showGroceryList && (
+              <div className="flex-none px-6 mb-3">
+                <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
+                  {days.map((d, i) => (
+                    <button
+                      key={d}
+                      onClick={() => { setActiveDay(i); haptic.tap() }}
+                      className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        activeDay === i
+                          ? 'bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] text-black'
+                          : i === todayIndex
+                          ? 'border border-[#00B4B4]/50 text-[#4ADE80]'
+                          : 'bg-white/5 text-white/40'
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Meal carousel — one meal at a time */}
-            {currentDay && (
+            {!showGroceryList && currentDay && (
               <div className="flex-1 px-6 pb-20 min-h-0 animate-fade-up">
                 <CardCarousel>
                   {renderMealCard(currentDay.breakfast, 'Breakfast')}
@@ -215,9 +267,49 @@ export default function MealPlanPage() {
               </div>
             )}
 
-            {/* Regenerate button */}
-            <div className="flex-none px-6 pb-20">
-              <Button onClick={generate} loading={generating} variant="outline" className="w-full">Regenerate</Button>
+            {/* Grocery list (mobile) */}
+            {showGroceryList && plan.groceryList && (
+              <div className="flex-1 px-6 pb-20 min-h-0 space-y-3 overflow-y-auto">
+                {plan.groceryList.map((cat) => (
+                  <Card key={cat.category}>
+                    <p className="text-white/40 text-xs uppercase tracking-wide mb-2">{cat.category}</p>
+                    <ul className="space-y-1.5">
+                      {cat.items.map((item, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-white/70">
+                          <span className="w-4 h-4 rounded border border-white/20 shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                ))}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const text = plan.groceryList!.map(c => `${c.category}:\n${c.items.map(i => `  - ${i}`).join('\n')}`).join('\n\n')
+                    navigator.clipboard.writeText(text)
+                    toast('Grocery list copied to clipboard', 'success')
+                  }}
+                >
+                  Copy list to clipboard
+                </Button>
+              </div>
+            )}
+
+            {/* Regenerate & email buttons */}
+            <div className="flex-none px-6 pb-20 flex gap-3">
+              <Button onClick={generate} loading={generating} variant="outline" className="flex-1">Regenerate</Button>
+              {limits.emailMealPlans && (
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  loading={emailing}
+                  onClick={emailPlan}
+                >
+                  Email me this plan
+                </Button>
+              )}
             </div>
           </>
         )}
@@ -274,74 +366,138 @@ export default function MealPlanPage() {
               </Card>
             </div>
 
-            <div className="px-6 mb-4">
-              <div className="flex gap-1.5 overflow-x-auto pb-1 hide-scrollbar">
-                {days.map((d, i) => (
-                  <button
-                    key={d}
-                    onClick={() => { setActiveDay(i); haptic.tap() }}
-                    className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                      activeDay === i
-                        ? 'bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] text-black'
-                        : i === todayIndex
-                        ? 'border border-[#00B4B4]/50 text-[#4ADE80]'
-                        : 'bg-white/5 text-white/40'
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {currentDay && (
-              <div className="px-6 space-y-3 mb-4">
-                {(['breakfast', 'lunch', 'dinner'] as const).map(meal => {
-                  const m = currentDay[meal]
-                  return (
-                    <Card key={meal} entrance="fade-up">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="text-white/30 text-xs uppercase tracking-wide mb-0.5 capitalize">{meal}</p>
-                          <p className="font-semibold">{m.name}</p>
-                        </div>
-                        <span className="text-white/30 text-xs shrink-0 ml-2">⏱ {m.prepTime}</span>
-                      </div>
-                      <p className="text-white/50 text-sm mb-2">{m.description}</p>
-                      <p className="text-[#4ADE80] text-xs">✓ {m.gutBenefits}</p>
-                    </Card>
-                  )
-                })}
-
-                {currentDay.snacks?.length > 0 && (
-                  <Card>
-                    <p className="text-white/30 text-xs uppercase tracking-wide mb-2">Snacks</p>
-                    <div className="flex flex-wrap gap-2">
-                      {currentDay.snacks.map((s, i) => (
-                        <span key={i} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm text-white/60">{s}</span>
-                      ))}
-                    </div>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            {plan.gutTips?.length > 0 && (
+            {/* View toggle: Meals / Grocery List (desktop) */}
+            {plan.groceryList && plan.groceryList.length > 0 && (
               <div className="px-6 mb-4">
-                <p className="text-white/40 text-xs uppercase tracking-wide mb-3">This week&apos;s gut tips</p>
-                <div className="space-y-2">
-                  {plan.gutTips.map((tip, i) => (
-                    <div key={i} className="flex gap-2 text-sm text-white/60">
-                      <span className="text-[#00B4B4] shrink-0">💡</span>{tip}
-                    </div>
-                  ))}
+                <div className="flex bg-white/5 rounded-xl p-1 max-w-xs">
+                  <button
+                    onClick={() => setShowGroceryList(false)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${!showGroceryList ? 'bg-white/10 text-white' : 'text-white/40'}`}
+                  >
+                    Meals
+                  </button>
+                  <button
+                    onClick={() => setShowGroceryList(true)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${showGroceryList ? 'bg-white/10 text-white' : 'text-white/40'}`}
+                  >
+                    Grocery List
+                  </button>
                 </div>
               </div>
             )}
 
-            <div className="px-6 flex gap-3">
+            {!showGroceryList && (
+              <>
+                <div className="px-6 mb-4">
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 hide-scrollbar">
+                    {days.map((d, i) => (
+                      <button
+                        key={d}
+                        onClick={() => { setActiveDay(i); haptic.tap() }}
+                        className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                          activeDay === i
+                            ? 'bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] text-black'
+                            : i === todayIndex
+                            ? 'border border-[#00B4B4]/50 text-[#4ADE80]'
+                            : 'bg-white/5 text-white/40'
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {currentDay && (
+                  <div className="px-6 space-y-3 mb-4">
+                    {(['breakfast', 'lunch', 'dinner'] as const).map(meal => {
+                      const m = currentDay[meal]
+                      return (
+                        <Card key={meal} entrance="fade-up">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="text-white/30 text-xs uppercase tracking-wide mb-0.5 capitalize">{meal}</p>
+                              <p className="font-semibold">{m.name}</p>
+                            </div>
+                            <span className="text-white/30 text-xs shrink-0 ml-2">⏱ {m.prepTime}</span>
+                          </div>
+                          <p className="text-white/50 text-sm mb-2">{m.description}</p>
+                          <p className="text-[#4ADE80] text-xs">✓ {m.gutBenefits}</p>
+                        </Card>
+                      )
+                    })}
+
+                    {currentDay.snacks?.length > 0 && (
+                      <Card>
+                        <p className="text-white/30 text-xs uppercase tracking-wide mb-2">Snacks</p>
+                        <div className="flex flex-wrap gap-2">
+                          {currentDay.snacks.map((s, i) => (
+                            <span key={i} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm text-white/60">{s}</span>
+                          ))}
+                        </div>
+                      </Card>
+                    )}
+                  </div>
+                )}
+
+                {plan.gutTips?.length > 0 && (
+                  <div className="px-6 mb-4">
+                    <p className="text-white/40 text-xs uppercase tracking-wide mb-3">This week&apos;s gut tips</p>
+                    <div className="space-y-2">
+                      {plan.gutTips.map((tip, i) => (
+                        <div key={i} className="flex gap-2 text-sm text-white/60">
+                          <span className="text-[#00B4B4] shrink-0">💡</span>{tip}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Grocery list (desktop) */}
+            {showGroceryList && plan.groceryList && (
+              <div className="px-6 space-y-3 mb-4">
+                {plan.groceryList.map((cat) => (
+                  <Card key={cat.category}>
+                    <p className="text-white/40 text-xs uppercase tracking-wide mb-2">{cat.category}</p>
+                    <ul className="space-y-1.5">
+                      {cat.items.map((item, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-white/70">
+                          <span className="w-4 h-4 rounded border border-white/20 shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                ))}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const text = plan.groceryList!.map(c => `${c.category}:\n${c.items.map(i => `  - ${i}`).join('\n')}`).join('\n\n')
+                    navigator.clipboard.writeText(text)
+                    toast('Grocery list copied to clipboard', 'success')
+                  }}
+                >
+                  Copy list to clipboard
+                </Button>
+              </div>
+            )}
+
+            <div className="px-6 flex gap-3 flex-wrap">
               <Button onClick={generate} loading={generating} variant="outline" className="flex-1">Regenerate</Button>
               <Button variant="outline" className="flex-1" onClick={() => window.print()}>Print plan</Button>
+              {limits.emailMealPlans && (
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  loading={emailing}
+                  onClick={emailPlan}
+                >
+                  Email me this plan
+                </Button>
+              )}
             </div>
           </>
         )}

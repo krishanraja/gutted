@@ -16,7 +16,7 @@ User profile: ${JSON.stringify(userProfile || {})}
 Recent gut health test findings: ${JSON.stringify(documents?.slice(0, 3) || [])}
 Recent symptom logs: ${JSON.stringify(recentLogs?.slice(0, 5) || [])}
 
-Create a practical, gut-friendly 7-day meal plan. Be specific with meal names and include gut health benefits for each meal.
+Create a practical, gut-friendly 7-day meal plan. Be specific with meal names and include gut health benefits for each meal. Also generate a consolidated grocery/shopping list for the entire week, grouped by category.
 
 Return exactly this JSON structure:
 {
@@ -30,7 +30,10 @@ Return exactly this JSON structure:
       "snacks": ["<snack 1>", "<snack 2>"]
     }
   ],
-  "gutTips": ["<daily gut health tip 1>", "<tip 2>", "<tip 3>"]
+  "gutTips": ["<daily gut health tip 1>", "<tip 2>", "<tip 3>"],
+  "groceryList": [
+    { "category": "<Produce/Protein/Dairy/Grains/Pantry/Other>", "items": ["<item 1 with quantity>", "<item 2 with quantity>"] }
+  ]
 }`
 
     const msg = await anthropic.messages.create({

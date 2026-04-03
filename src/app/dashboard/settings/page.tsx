@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 
-interface Profile { name: string; email: string; plan: string }
+interface Profile { name: string; email: string; plan: string; gut_profile?: Record<string, unknown> }
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -21,7 +21,7 @@ export default function SettingsPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
-      const { data } = await supabase.from('profiles').select('name, email, plan').eq('id', user.id).single()
+      const { data } = await supabase.from('profiles').select('name, email, plan, gut_profile').eq('id', user.id).single()
       setProfile(data)
       setLoading(false)
     }
@@ -88,7 +88,79 @@ export default function SettingsPage() {
               </button>
             )}
           </div>
+          {profile?.plan !== 'free' && (
+            <button
+              onClick={async () => {
+                const res = await fetch('/api/stripe/portal', { method: 'POST' })
+                const { url } = await res.json()
+                if (url) window.location.href = url
+              }}
+              className="text-white/40 text-sm hover:text-white/60 mt-3 transition-colors"
+            >
+              Manage subscription →
+            </button>
+          )}
         </Card>
+
+        {/* Gut Score Goal */}
+        <Card>
+          <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Gut score goal</p>
+          <p className="text-white/50 text-xs mb-3">Set a target 7-day average gut score to work toward.</p>
+          <div className="flex items-center gap-4">
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={(profile?.gut_profile?.scoreGoal as number) || 7}
+              onChange={async (e) => {
+                const goal = parseInt(e.target.value)
+                const supabase = createClient()
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) return
+                await supabase.from('profiles').update({
+                  gut_profile: { ...profile?.gut_profile, scoreGoal: goal }
+                }).eq('id', user.id)
+                setProfile(prev => prev ? { ...prev, gut_profile: { ...prev.gut_profile, scoreGoal: goal } } : prev)
+              }}
+              className="flex-1 accent-[#4ADE80]"
+            />
+            <span className="text-2xl font-bold gradient-text w-12 text-center">
+              {(profile?.gut_profile?.scoreGoal as number) || 7}
+            </span>
+          </div>
+        </Card>
+
+        {/* Daily Reminders */}
+        {profile?.plan !== 'free' && (
+          <Card>
+            <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Daily reminders</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-white/70">Get a daily check-in email</p>
+                <p className="text-white/30 text-xs mt-0.5">We'll remind you to log if you haven't today</p>
+              </div>
+              <button
+                onClick={async () => {
+                  const supabase = createClient()
+                  const { data: { user } } = await supabase.auth.getUser()
+                  if (!user) return
+                  const newValue = !profile?.gut_profile?.remindersEnabled
+                  await supabase.from('profiles').update({
+                    gut_profile: { ...profile?.gut_profile, remindersEnabled: newValue }
+                  }).eq('id', user.id)
+                  setProfile(prev => prev ? { ...prev, gut_profile: { ...prev.gut_profile, remindersEnabled: newValue } } : prev)
+                }}
+                className={`w-12 h-6 rounded-full transition-colors relative ${
+                  profile?.gut_profile?.remindersEnabled ? 'bg-[#4ADE80]' : 'bg-white/20'
+                }`}
+              >
+                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+                  profile?.gut_profile?.remindersEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                }`} />
+              </button>
+            </div>
+          </Card>
+        )}
 
         {/* Export data (desktop) */}
         <Card className="hidden md:block">
