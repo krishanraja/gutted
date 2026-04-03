@@ -136,6 +136,66 @@ export const emailTemplates = {
 </html>`
   }),
 
+  monthlyReport: (name: string, currentAvg: number, prevAvg: number, logCount: number, highlights: string) => ({
+    subject: `Your monthly gut health report: ${currentAvg}/10 ${currentAvg > prevAvg ? '📈' : currentAvg < prevAvg ? '📉' : '📊'}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Monthly Gut Health Report</title>
+</head>
+<body style="margin:0;padding:0;background-color:#000000;font-family:Inter,system-ui,sans-serif;color:#ffffff;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <img src="https://gutted.app/icon.png" alt="gutted." style="height:40px;">
+    </div>
+
+    <div style="text-align:center;margin-bottom:32px;">
+      <h1 style="color:#ffffff;font-size:28px;font-weight:bold;margin:0 0 8px 0;">
+        Monthly Report, ${name}
+      </h1>
+      <p style="color:#a3a3a3;font-size:14px;">Here's how your gut health shaped up this month.</p>
+    </div>
+
+    <div style="background:linear-gradient(135deg, rgba(0,180,180,0.1) 0%, rgba(74,222,128,0.1) 100%);border:1px solid rgba(0,180,180,0.2);border-radius:16px;padding:32px;margin-bottom:24px;">
+      <div style="display:flex;justify-content:center;gap:40px;text-align:center;margin-bottom:20px;">
+        <div>
+          <p style="color:#a3a3a3;font-size:12px;margin:0 0 4px 0;">This Month</p>
+          <p style="background:linear-gradient(to right, #00B4B4, #4ADE80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:36px;font-weight:bold;margin:0;">${currentAvg}</p>
+        </div>
+        <div>
+          <p style="color:#a3a3a3;font-size:12px;margin:0 0 4px 0;">Last Month</p>
+          <p style="color:#ffffff;font-size:36px;font-weight:bold;margin:0;opacity:0.4;">${prevAvg || '—'}</p>
+        </div>
+      </div>
+      ${prevAvg > 0 ? `<p style="text-align:center;color:${currentAvg >= prevAvg ? '#4ADE80' : '#EF4444'};font-size:14px;margin:0;">
+        ${currentAvg > prevAvg ? `↑ Up ${Math.round((currentAvg - prevAvg) * 10) / 10} points — nice improvement!` : currentAvg < prevAvg ? `↓ Down ${Math.round((prevAvg - currentAvg) * 10) / 10} points — let's work on this` : 'Holding steady'}
+      </p>` : ''}
+      <p style="text-align:center;color:#a3a3a3;font-size:14px;margin:12px 0 0 0;">${logCount} logs recorded this month</p>
+    </div>
+
+    ${highlights ? `
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;margin-bottom:24px;">
+      <h2 style="color:#ffffff;font-size:16px;margin:0 0 16px 0;">Highlights</h2>
+      <p style="color:#a3a3a3;font-size:14px;line-height:1.8;margin:0;white-space:pre-line;">${highlights}</p>
+    </div>
+    ` : ''}
+
+    <div style="text-align:center;margin-bottom:32px;">
+      <a href="https://gutted.app/dashboard/report" style="background:linear-gradient(to right, #00B4B4, #4ADE80);color:#000000;text-decoration:none;padding:12px 32px;border-radius:12px;font-weight:600;display:inline-block;">
+        View Full Report →
+      </a>
+    </div>
+
+    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:24px;text-align:center;">
+      <p style="color:#525252;font-size:12px;margin:0;">Sent monthly to Pro members. <a href="https://gutted.app/dashboard/settings" style="color:#525252;text-decoration:underline;">Manage preferences</a></p>
+    </div>
+  </div>
+</body>
+</html>`
+  }),
+
   weeklyDigest: (name: string, avgScore: number, logCount: number, trend: string, change: number) => ({
     subject: `Your weekly gut score: ${avgScore}/10 ${trend === 'up' ? '📈' : trend === 'down' ? '📉' : '📊'}`,
     html: `
