@@ -102,6 +102,34 @@ export default function SettingsPage() {
           )}
         </Card>
 
+        {/* Gut Score Goal */}
+        <Card>
+          <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Gut score goal</p>
+          <p className="text-white/50 text-xs mb-3">Set a target 7-day average gut score to work toward.</p>
+          <div className="flex items-center gap-4">
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={(profile?.gut_profile?.scoreGoal as number) || 7}
+              onChange={async (e) => {
+                const goal = parseInt(e.target.value)
+                const supabase = createClient()
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) return
+                await supabase.from('profiles').update({
+                  gut_profile: { ...profile?.gut_profile, scoreGoal: goal }
+                }).eq('id', user.id)
+                setProfile(prev => prev ? { ...prev, gut_profile: { ...prev.gut_profile, scoreGoal: goal } } : prev)
+              }}
+              className="flex-1 accent-[#4ADE80]"
+            />
+            <span className="text-2xl font-bold gradient-text w-12 text-center">
+              {(profile?.gut_profile?.scoreGoal as number) || 7}
+            </span>
+          </div>
+        </Card>
+
         {/* Daily Reminders */}
         {profile?.plan !== 'free' && (
           <Card>

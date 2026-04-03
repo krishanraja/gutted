@@ -161,15 +161,34 @@ export default function DashboardPage() {
         {/* Column 1: Score + AI Insights */}
         <div className="space-y-4 mb-6 md:mb-0">
           {/* Gut score card */}
-          <Card glow className="flex items-center gap-6 py-6">
-            <GutScore score={todayScore} size="lg" />
-            <div>
-              <p className="text-white/40 text-sm mb-1">Today&apos;s gut score</p>
-              <p className="text-lg font-semibold">
-                {todayScore === 0 ? 'Log your first entry' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day - take it easy'}
-              </p>
-              {todayScore === 0 && <p className="text-white/30 text-xs mt-1">Tap &ldquo;Log now&rdquo; to get your score</p>}
+          <Card glow className="py-6">
+            <div className="flex items-center gap-6">
+              <GutScore score={todayScore} size="lg" />
+              <div>
+                <p className="text-white/40 text-sm mb-1">Today&apos;s gut score</p>
+                <p className="text-lg font-semibold">
+                  {todayScore === 0 ? 'Log your first entry' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day - take it easy'}
+                </p>
+                {todayScore === 0 && <p className="text-white/30 text-xs mt-1">Tap &ldquo;Log now&rdquo; to get your score</p>}
+              </div>
             </div>
+            {/* Goal progress */}
+            {todayScore > 0 && (profile?.gut_profile as Record<string, unknown>)?.scoreGoal && (
+              <div className="mt-4 pt-3 border-t border-white/5">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-white/40">Goal: {(profile?.gut_profile as Record<string, unknown>).scoreGoal as number}/10</span>
+                  <span className={todayScore >= ((profile?.gut_profile as Record<string, unknown>).scoreGoal as number) ? 'text-[#4ADE80]' : 'text-white/40'}>
+                    {todayScore >= ((profile?.gut_profile as Record<string, unknown>).scoreGoal as number) ? 'On target!' : `${((profile?.gut_profile as Record<string, unknown>).scoreGoal as number) - todayScore} to go`}
+                  </span>
+                </div>
+                <div className="w-full bg-white/5 rounded-full h-1.5">
+                  <div
+                    className={`h-full rounded-full transition-all ${todayScore >= ((profile?.gut_profile as Record<string, unknown>).scoreGoal as number) ? 'bg-[#4ADE80]' : 'bg-gradient-to-r from-[#00B4B4] to-[#4ADE80]'}`}
+                    style={{ width: `${Math.min((todayScore / ((profile?.gut_profile as Record<string, unknown>).scoreGoal as number)) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* Profile completeness */}
