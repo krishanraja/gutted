@@ -136,6 +136,56 @@ export const emailTemplates = {
 </html>`
   }),
 
+  weeklyDigest: (name: string, avgScore: number, logCount: number, trend: string, change: number) => ({
+    subject: `Your weekly gut score: ${avgScore}/10 ${trend === 'up' ? '📈' : trend === 'down' ? '📉' : '📊'}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Weekly Gut Health Digest</title>
+</head>
+<body style="margin:0;padding:0;background-color:#000000;font-family:Inter,system-ui,sans-serif;color:#ffffff;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <img src="https://gutted.app/icon.png" alt="gutted." style="height:40px;">
+    </div>
+
+    <div style="text-align:center;margin-bottom:32px;">
+      <h1 style="color:#ffffff;font-size:28px;font-weight:bold;margin:0 0 8px 0;">
+        Your Week in Review, ${name}
+      </h1>
+    </div>
+
+    <div style="background:linear-gradient(135deg, rgba(0,180,180,0.1) 0%, rgba(74,222,128,0.1) 100%);border:1px solid rgba(0,180,180,0.2);border-radius:16px;padding:32px;margin-bottom:24px;text-align:center;">
+      <p style="color:#a3a3a3;font-size:14px;margin:0 0 8px 0;">Average gut score</p>
+      <p style="background:linear-gradient(to right, #00B4B4, #4ADE80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:48px;font-weight:bold;margin:0;">
+        ${avgScore}/10
+      </p>
+      ${trend !== 'new' && change > 0 ? `
+      <p style="color:${trend === 'up' ? '#4ADE80' : '#EF4444'};font-size:14px;margin:8px 0 0 0;">
+        ${trend === 'up' ? '↑' : '↓'} ${change} from last week
+      </p>` : ''}
+      <p style="color:#a3a3a3;font-size:14px;margin:12px 0 0 0;">${logCount} log${logCount !== 1 ? 's' : ''} this week</p>
+    </div>
+
+    <div style="text-align:center;margin-bottom:32px;">
+      <p style="color:#a3a3a3;font-size:16px;margin:0 0 20px 0;">
+        ${avgScore >= 7 ? 'Great week! Your gut health is looking strong.' : avgScore >= 4 ? 'Room for improvement. Check your patterns for insights.' : 'Tough week. Review your trigger foods and meal plan.'}
+      </p>
+      <a href="https://gutted.app/dashboard" style="background:linear-gradient(to right, #00B4B4, #4ADE80);color:#000000;text-decoration:none;padding:12px 32px;border-radius:12px;font-weight:600;display:inline-block;">
+        View Full Dashboard →
+      </a>
+    </div>
+
+    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:24px;text-align:center;">
+      <p style="color:#525252;font-size:12px;margin:0;">Sent weekly to all paid gutted. members. <a href="https://gutted.app/dashboard/settings" style="color:#525252;text-decoration:underline;">Manage preferences</a></p>
+    </div>
+  </div>
+</body>
+</html>`
+  }),
+
   dailyReminder: (name: string) => ({
     subject: "How's your gut today? Time for a quick log",
     html: `
