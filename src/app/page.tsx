@@ -53,35 +53,53 @@ const plans = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-6 py-4 max-w-4xl mx-auto">
-        <Image src="/icon.png" alt="gutted." width={32} height={32} className="h-8 w-8" />
-        <div className="flex gap-3">
-          <Link href="/auth/login">
-            <Button variant="ghost" size="sm">Sign in</Button>
-          </Link>
-          <Link href="/auth/signup">
-            <Button size="sm">Start free</Button>
-          </Link>
-        </div>
-      </nav>
+      {/* Hero with video background */}
+      <section className="relative overflow-hidden">
+        {/* Video background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/Gutted background.mp4" type="video/mp4" />
+        </video>
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-black/60" />
 
-      {/* Hero */}
-      <section className="px-6 py-16 sm:py-20 text-center max-w-2xl mx-auto">
-        <div className="mb-6">
-          <Image src="/logo.png" alt="gutted." width={240} height={80} className="h-auto w-60 sm:w-72 mx-auto" priority />
-        </div>
-        <p className="text-xl text-white/60 font-medium tracking-wide uppercase mb-10">Know Your Gut</p>
-        <p className="text-lg text-white/60 mb-10 leading-relaxed">
-          Voice-log your symptoms. Upload your tests. Get a meal plan that actually fits your gut - not a generic one-size-fits-all template.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/auth/signup">
-            <Button size="lg">Start free - no card needed</Button>
-          </Link>
-          <Link href="#how-it-works">
-            <Button variant="outline" size="lg">See how it works</Button>
-          </Link>
+        {/* Nav overlaying video */}
+        <nav className="relative z-20 flex items-center justify-between px-6 py-4 max-w-4xl mx-auto">
+          <Image src="/icon.png" alt="gutted." width={32} height={32} className="h-8 w-8 drop-shadow-lg" />
+          <div className="flex gap-3">
+            <Link href="/auth/login">
+              <Button variant="ghost" size="sm">Sign in</Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button size="sm">Start free</Button>
+            </Link>
+          </div>
+        </nav>
+
+        {/* Hero content */}
+        <div className="relative z-10 px-6 py-16 sm:py-24 text-center max-w-2xl mx-auto">
+          <div className="mb-3">
+            <Image src="/logo.png" alt="gutted." width={240} height={80} className="h-auto w-60 sm:w-72 mx-auto drop-shadow-2xl" priority />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-10">
+            <span className="gradient-text">Know Your Gut</span>
+          </h2>
+          <p className="text-lg text-white/80 mb-10 leading-relaxed drop-shadow-lg">
+            Voice-log your symptoms. Upload your tests. Get a meal plan that actually fits your gut - not a generic one-size-fits-all template.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/auth/signup">
+              <Button size="lg">Start free - no card needed</Button>
+            </Link>
+            <Link href="#how-it-works">
+              <Button variant="outline" size="lg">See how it works</Button>
+            </Link>
+          </div>
         </div>
       </section>
 
