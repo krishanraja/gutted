@@ -198,11 +198,12 @@ export default function DashboardPage() {
           {/* Quick actions */}
           <div>
             <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Quick actions</p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               {[
                 { href: '/dashboard/log', emoji: '🎤', label: 'Log now' },
                 { href: '/dashboard/upload', emoji: '📄', label: 'Upload test' },
                 { href: '/dashboard/meal-plan', emoji: '🍽️', label: 'Meal plan' },
+                { href: '/dashboard/report', emoji: '📊', label: 'Report' },
               ].map(({ href, emoji, label }) => (
                 <Link key={href} href={href}>
                   <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center hover:border-[#00B4B4]/30 transition-colors active:scale-95">
