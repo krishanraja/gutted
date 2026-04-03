@@ -22,23 +22,33 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } })
     if (error) { setError(error.message); setLoading(false); return }
     if (data.user) {
-      await supabase.from('profiles').upsert({ id: data.user.id, email, name })
-      
-      // Send welcome email
-      try {
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'welcome',
-            to: email,
-            data: { name }
+      // Auto-confirm email so user goes straight into the app
+      if (!data.session) {
+        try {
+          await fetch('/api/auth/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: data.user.id })
           })
-        })
-      } catch (e) {
-        console.log('Welcome email failed:', e)
+          // Sign in now that email is confirmed
+          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+          if (signInError) { setError(signInError.message); setLoading(false); return }
+        } catch {
+          setError('Account created but sign-in failed. Please try logging in.')
+          setLoading(false)
+          return
+        }
       }
-      
+
+      await supabase.from('profiles').upsert({ id: data.user.id, email, name })
+
+      // Send welcome email (non-blocking)
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'welcome', to: email, data: { name } })
+      }).catch(() => {})
+
       router.push('/onboarding')
     }
   }
@@ -47,7 +57,7 @@ export default function SignupPage() {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
-          <Image src="/logo.png" alt="gutted." width={120} height={40} className="h-10 w-auto" />
+          <Image src="/icon.png" alt="gutted." width={40} height={40} className="h-10 w-10" />
         </div>
         <h1 className="text-2xl font-bold text-center mb-2">Know your gut.</h1>
         <p className="text-white/40 text-center mb-8 text-sm">Free to start - no card needed</p>

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: 'Voice-log your symptoms. Upload your tests. Get a meal plan that actually fits your gut.',
   manifest: '/manifest.json',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/icon.png',
     apple: '/icon.png',
   },
   openGraph: {

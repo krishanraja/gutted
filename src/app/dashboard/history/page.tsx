@@ -23,8 +23,10 @@ export default function HistoryPage() {
       const { data } = await supabase.from('logs').select('*').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(50)
       const l = data || []
       setLogs(l)
-      const scores = l.filter(x => x.gut_score > 0).map(x => x.gut_score)
-      setAvgScore(scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0)
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      const recentScores = l.filter(x => x.gut_score > 0 && new Date(x.logged_at) >= sevenDaysAgo).map(x => x.gut_score)
+      setAvgScore(recentScores.length ? Math.round(recentScores.reduce((a, b) => a + b, 0) / recentScores.length) : 0)
       setLoading(false)
     }
     load()

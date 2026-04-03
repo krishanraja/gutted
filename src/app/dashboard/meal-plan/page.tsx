@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Navigation } from '@/components/Navigation'
 import { Card } from '@/components/ui/Card'
@@ -10,6 +11,7 @@ interface Day { day: string; breakfast: Meal; lunch: Meal; dinner: Meal; snacks:
 interface Plan { weekSummary: string; days: Day[]; gutTips: string[] }
 
 export default function MealPlanPage() {
+  const router = useRouter()
   const [plan, setPlan] = useState<Plan | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
@@ -80,6 +82,10 @@ export default function MealPlanPage() {
   return (
     <div className="min-h-screen bg-black pb-24">
       <div className="px-6 pt-12 pb-4">
+        <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+          Back
+        </button>
         <h1 className="text-2xl font-bold">Your meal plan</h1>
         <p className="text-white/40 text-sm mt-1">Personalised for your gut profile</p>
       </div>

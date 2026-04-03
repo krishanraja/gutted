@@ -27,7 +27,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
-          <Image src="/logo.png" alt="gutted." width={120} height={40} className="h-10 w-auto" />
+          <Image src="/icon.png" alt="gutted." width={40} height={40} className="h-10 w-10" />
         </div>
         <h1 className="text-2xl font-bold text-center mb-2">Welcome back</h1>
         <p className="text-white/40 text-center mb-8 text-sm">Sign in to your gut health dashboard</p>
@@ -48,6 +48,9 @@ export default function LoginPage() {
               placeholder="••••••••"
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 transition-colors"
             />
+          </div>
+          <div className="flex justify-end">
+            <Link href="/auth/forgot-password" className="text-[#4ADE80] text-sm hover:underline">Forgot password?</Link>
           </div>
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <Button type="submit" loading={loading} className="w-full">Sign in</Button>

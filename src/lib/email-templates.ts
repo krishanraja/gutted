@@ -12,7 +12,7 @@ export const emailTemplates = {
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
     <!-- Logo -->
     <div style="text-align:center;margin-bottom:32px;">
-      <img src="https://gutted.app/logo.png" alt="gutted." style="height:40px;">
+      <img src="https://gutted.app/icon.png" alt="gutted." style="height:40px;">
     </div>
     
     <!-- Header -->
@@ -71,7 +71,7 @@ export const emailTemplates = {
 <body style="margin:0;padding:0;background-color:#000000;font-family:Inter,system-ui,sans-serif;color:#ffffff;">
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
     <div style="text-align:center;margin-bottom:32px;">
-      <img src="https://gutted.app/logo.png" alt="gutted." style="height:40px;">
+      <img src="https://gutted.app/icon.png" alt="gutted." style="height:40px;">
     </div>
     
     <div style="text-align:center;margin-bottom:40px;">
@@ -110,7 +110,7 @@ export const emailTemplates = {
 <body style="margin:0;padding:0;background-color:#000000;font-family:Inter,system-ui,sans-serif;color:#ffffff;">
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
     <div style="text-align:center;margin-bottom:32px;">
-      <img src="https://gutted.app/logo.png" alt="gutted." style="height:40px;">
+      <img src="https://gutted.app/icon.png" alt="gutted." style="height:40px;">
     </div>
     
     <div style="text-align:center;margin-bottom:40px;">
@@ -148,7 +148,7 @@ export const emailTemplates = {
 <body style="margin:0;padding:0;background-color:#000000;font-family:Inter,system-ui,sans-serif;color:#ffffff;">
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
     <div style="text-align:center;margin-bottom:32px;">
-      <img src="https://gutted.app/logo.png" alt="gutted." style="height:40px;">
+      <img src="https://gutted.app/icon.png" alt="gutted." style="height:40px;">
     </div>
     
     <div style="text-align:center;margin-bottom:40px;">
