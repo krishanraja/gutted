@@ -31,7 +31,9 @@ export default function LogPage() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [mode, setMode] = useState<'voice' | 'text'>('voice')
+  const [mode, setMode] = useState<'voice' | 'text' | 'photo'>('voice')
+  const [photoAnalysing, setPhotoAnalysing] = useState(false)
+  const [photoResult, setPhotoResult] = useState<{ mealName: string; foods: { name: string; portion: string; gutImpact: string; note: string }[]; overallGutRating: number; logEntry: string; tips: string[]; photoUrl: string } | null>(null)
   const [tagsChanged, setTagsChanged] = useState(false)
   const [userProfile, setUserProfile] = useState<Record<string, unknown> | null>(null)
   const [recentLogs, setRecentLogs] = useState<{ content: string; gut_score: number }[]>([])
@@ -130,14 +132,14 @@ export default function LogPage() {
 
       {/* Mode toggle */}
       <div className="px-6 mb-6">
-        <div className="flex bg-white/5 rounded-xl p-1 max-w-xs">
-          {(['voice', 'text'] as const).map(m => (
+        <div className="flex bg-white/5 rounded-xl p-1 max-w-sm">
+          {([['voice', '🎤 Voice'], ['text', '✏️ Text'], ['photo', '📸 Photo']] as const).map(([m, label]) => (
             <button
               key={m}
-              onClick={() => setMode(m)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${mode === m ? 'bg-white/10 text-white' : 'text-white/40'}`}
+              onClick={() => { setMode(m as 'voice' | 'text' | 'photo'); setPhotoResult(null) }}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === m ? 'bg-white/10 text-white' : 'text-white/40'}`}
             >
-              {m === 'voice' ? '🎤 Voice' : '✏️ Text'}
+              {label}
             </button>
           ))}
         </div>
@@ -145,7 +147,94 @@ export default function LogPage() {
 
       {/* Input */}
       <div className="px-6 mb-6">
-        {mode === 'voice' ? (
+        {mode === 'photo' ? (
+          plan === 'free' ? (
+            <div className="text-center py-8 bg-white/5 border border-white/10 rounded-2xl">
+              <p className="text-2xl mb-2">📸</p>
+              <p className="font-semibold mb-1">Photo logging is a Pro feature</p>
+              <p className="text-white/40 text-sm mb-3">Snap a photo of your meal and we'll identify the foods and log them automatically.</p>
+              <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade to Pro →</Link>
+            </div>
+          ) : (
+            <div>
+              <label className="block w-full cursor-pointer">
+                <div className="border-2 border-dashed border-white/20 rounded-2xl p-8 text-center hover:border-[#00B4B4]/40 transition-colors">
+                  {photoAnalysing ? (
+                    <>
+                      <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin mx-auto mb-3" />
+                      <p className="text-white/50 text-sm">Analysing your meal...</p>
+                    </>
+                  ) : photoResult ? (
+                    <>
+                      <p className="text-2xl mb-2">✅</p>
+                      <p className="text-white/70 text-sm">{photoResult.mealName}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-3xl mb-2">📸</p>
+                      <p className="text-white/50 text-sm">Tap to take a photo or select from gallery</p>
+                    </>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    setPhotoAnalysing(true)
+                    setError('')
+                    try {
+                      const fd = new FormData()
+                      fd.append('file', file)
+                      const res = await fetch('/api/analyse-photo', { method: 'POST', body: fd })
+                      const data = await res.json()
+                      if (data.error) throw new Error(data.error)
+                      setPhotoResult(data)
+                      setTranscript(data.logEntry)
+                      // Auto-analyse the log entry
+                      analyseText(data.logEntry)
+                    } catch (err: unknown) {
+                      setError((err as Error).message || 'Photo analysis failed')
+                    } finally {
+                      setPhotoAnalysing(false)
+                    }
+                  }}
+                />
+              </label>
+              {photoResult && (
+                <div className="mt-4 space-y-3">
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Foods identified</p>
+                    <div className="space-y-2">
+                      {photoResult.foods.map((f, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className={f.gutImpact === 'positive' ? 'text-[#4ADE80]' : f.gutImpact === 'negative' ? 'text-red-400' : 'text-white/40'}>
+                              {f.gutImpact === 'positive' ? '✓' : f.gutImpact === 'negative' ? '⚠' : '•'}
+                            </span>
+                            <span className="text-white/70">{f.name}</span>
+                            <span className="text-white/30 text-xs">{f.portion}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {photoResult.tips.length > 0 && (
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                      <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Tips</p>
+                      {photoResult.tips.map((t, i) => (
+                        <p key={i} className="text-sm text-white/60 flex gap-2"><span className="text-[#4ADE80]">💡</span>{t}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        ) : mode === 'voice' ? (
           <VoiceRecorder onTranscription={handleTranscription} onError={setError} />
         ) : (
           <div className="space-y-3">
