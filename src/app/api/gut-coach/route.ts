@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
     const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
     const limits = getPlanLimits(profile?.plan || 'free')
-    if (!limits.mealPlan) {
+    if (!limits.gutCoach) {
       return NextResponse.json({ error: 'Upgrade to Core or Pro to use the Gut Coach' }, { status: 403 })
     }
 

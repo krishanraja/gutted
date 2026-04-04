@@ -15,6 +15,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [signingOut, setSigningOut] = useState(false)
+  const [upgrading, setUpgrading] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -36,13 +37,19 @@ export default function SettingsPage() {
   }
 
   const upgrade = async (plan: string) => {
-    const res = await fetch('/api/stripe/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan }),
-    })
-    const { url } = await res.json()
-    if (url) window.location.href = url
+    setUpgrading(true)
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      })
+      const { url } = await res.json()
+      if (url) window.location.href = url
+      else setUpgrading(false)
+    } catch {
+      setUpgrading(false)
+    }
   }
 
   if (loading) return (
@@ -83,8 +90,13 @@ export default function SettingsPage() {
               </Badge>
             </div>
             {profile?.plan === 'free' && (
-              <button onClick={() => upgrade('core')} className="text-[#4ADE80] text-sm font-medium hover:underline">
-                Upgrade →
+              <button onClick={() => upgrade('core')} disabled={upgrading} className="text-[#4ADE80] text-sm font-medium hover:underline disabled:opacity-50">
+                {upgrading ? 'Redirecting...' : 'Upgrade to Core →'}
+              </button>
+            )}
+            {profile?.plan === 'core' && (
+              <button onClick={() => upgrade('pro')} disabled={upgrading} className="text-[#4ADE80] text-sm font-medium hover:underline disabled:opacity-50">
+                {upgrading ? 'Redirecting...' : 'Upgrade to Pro →'}
               </button>
             )}
           </div>

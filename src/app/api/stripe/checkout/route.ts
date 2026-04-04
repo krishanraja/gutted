@@ -12,11 +12,21 @@ export async function POST(req: NextRequest) {
     const planConfig = PLANS[plan as keyof typeof PLANS]
     if (!planConfig) return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
 
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('stripe_customer_id')
+      .eq('id', user.id)
+      .single()
+
+    const customerParams: Record<string, unknown> = profile?.stripe_customer_id
+      ? { customer: profile.stripe_customer_id }
+      : { customer_email: user.email }
+
     const origin = req.headers.get('origin') || 'https://gutted.app'
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      customer_email: user.email,
+      ...customerParams,
       line_items: [{
         price_data: {
           currency: 'usd',

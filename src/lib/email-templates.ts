@@ -282,6 +282,46 @@ export const emailTemplates = {
 </html>`
   }),
 
+  'payment-failed': (name: string) => ({
+    subject: "Action needed: your gutted. payment failed",
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Payment Failed</title>
+</head>
+<body style="margin:0;padding:0;background-color:#000000;font-family:Inter,system-ui,sans-serif;color:#ffffff;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <img src="https://gutted.app/icon.png" alt="gutted." style="height:40px;">
+    </div>
+    
+    <div style="text-align:center;margin-bottom:40px;">
+      <h1 style="color:#ffffff;font-size:28px;font-weight:bold;margin:0 0 16px 0;">
+        Payment failed, ${name}
+      </h1>
+      <p style="color:#a3a3a3;margin:0;font-size:16px;">We couldn't process your latest subscription payment. Please update your payment method to keep your premium features active.</p>
+    </div>
+
+    <div style="text-align:center;margin-bottom:32px;">
+      <a href="https://gutted.app/dashboard/settings" style="background:linear-gradient(to right, #00B4B4, #4ADE80);color:#000000;text-decoration:none;padding:12px 32px;border-radius:12px;font-weight:600;display:inline-block;">
+        Update Payment Method →
+      </a>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:20px;margin-bottom:32px;">
+      <p style="color:#a3a3a3;font-size:14px;margin:0;">If your payment isn't updated, your account will be downgraded to the free plan when your subscription lapses. Your data won't be deleted.</p>
+    </div>
+
+    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:24px;text-align:center;">
+      <p style="color:#525252;font-size:12px;margin:0;">© 2026 gutted. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`
+  }),
+
   upgrade: (name: string, plan: string) => ({
     subject: `🎉 Welcome to gutted. ${plan}!`,
     html: `

@@ -56,6 +56,23 @@ export default function OnboardingPage() {
       gut_profile: { ...answers, currentGutScore: gutScore },
       onboarding_complete: true,
     }).eq('id', user.id)
+
+    const selectedPlan = sessionStorage.getItem('gutted-selected-plan')
+    if (selectedPlan === 'core' || selectedPlan === 'pro') {
+      sessionStorage.removeItem('gutted-selected-plan')
+      try {
+        const res = await fetch('/api/stripe/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan: selectedPlan }),
+        })
+        const { url } = await res.json()
+        if (url) { window.location.href = url; return }
+      } catch {
+        // Checkout failed -- fall through to dashboard
+      }
+    }
+
     router.push('/dashboard')
   }
 

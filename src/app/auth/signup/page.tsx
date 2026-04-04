@@ -1,6 +1,6 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
@@ -8,12 +8,20 @@ import { Button } from '@/components/ui/Button'
 
 export default function SignupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const selectedPlan = searchParams.get('plan')
+    if (selectedPlan === 'core' || selectedPlan === 'pro') {
+      sessionStorage.setItem('gutted-selected-plan', selectedPlan)
+    }
+  }, [searchParams])
 
   const signupWithGoogle = async () => {
     setGoogleLoading(true)

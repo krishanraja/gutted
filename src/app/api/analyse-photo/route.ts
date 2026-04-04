@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@/lib/openai'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { getPlanLimits } from '@/lib/plan-limits'
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,7 +10,8 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
     const { data: profile } = await supabase.from('profiles').select('plan, gut_profile').eq('id', user.id).single()
-    if (profile?.plan === 'free') {
+    const limits = getPlanLimits(profile?.plan || 'free')
+    if (!limits.photoLogging) {
       return NextResponse.json({ error: 'Upgrade to Pro for photo food logging' }, { status: 403 })
     }
 

@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
@@ -12,6 +12,7 @@ import { DashboardSkeleton } from '@/components/ui/Skeleton'
 import { CardCarousel } from '@/components/CardCarousel'
 import { BottomSheet } from '@/components/BottomSheet'
 import { haptic } from '@/lib/haptics'
+import { useToast } from '@/components/ToastProvider'
 
 interface Profile { name: string; plan: string; gut_profile: Record<string, unknown> }
 interface Log { id: string; type: string; content: string; gut_score: number; logged_at: string }
@@ -21,6 +22,8 @@ interface BeneficialFood { food: string; avgScoreAfter: number; timesLogged: num
 
 export default function DashboardPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { toast } = useToast()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [logs, setLogs] = useState<Log[]>([])
   const [todayScore, setTodayScore] = useState(0)
@@ -31,10 +34,18 @@ export default function DashboardPage() {
   const [hasLoggedToday, setHasLoggedToday] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [patternSheetOpen, setPatternSheetOpen] = useState(false)
+  const [upgrading, setUpgrading] = useState(false)
   const [triggerFoods, setTriggerFoods] = useState<TriggerFood[]>([])
   const [beneficialFoods, setBeneficialFoods] = useState<BeneficialFood[]>([])
   const [profileCompleteness, setProfileCompleteness] = useState(0)
   const [completenessItems, setCompletenessItems] = useState<{ label: string; done: boolean; href: string }[]>([])
+
+  useEffect(() => {
+    if (searchParams.get('upgraded') === '1') {
+      toast('Welcome to your new plan! Your premium features are now active.', 'success')
+      window.history.replaceState({}, '', '/dashboard')
+    }
+  }, [searchParams, toast])
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -298,17 +309,22 @@ export default function DashboardPage() {
                     <p className="font-semibold text-sm mb-1">Unlock your full gut profile</p>
                     <p className="text-white/50 text-xs mb-2">Upload a gut test and get a personalised weekly meal plan.</p>
                     <button
+                      disabled={upgrading}
                       onClick={async () => {
-                        const res = await fetch('/api/stripe/checkout', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ plan: 'core' }),
-                        })
-                        const { url } = await res.json()
-                        if (url) window.location.href = url
+                        setUpgrading(true)
+                        try {
+                          const res = await fetch('/api/stripe/checkout', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ plan: 'core' }),
+                          })
+                          const { url } = await res.json()
+                          if (url) window.location.href = url
+                          else setUpgrading(false)
+                        } catch { setUpgrading(false) }
                       }}
-                      className="text-[#4ADE80] text-xs font-medium hover:underline"
-                    >Upgrade to Core — $14/mo →</button>
+                      className="text-[#4ADE80] text-xs font-medium hover:underline disabled:opacity-50"
+                    >{upgrading ? 'Redirecting...' : 'Upgrade to Core — $14/mo →'}</button>
                   </Card>
                 )}
                 <button
@@ -543,17 +559,22 @@ export default function DashboardPage() {
                 <p className="font-semibold mb-1">Unlock your full gut profile</p>
                 <p className="text-white/50 text-sm mb-3">Upload a gut test and get a personalised weekly meal plan.</p>
                 <button
+                  disabled={upgrading}
                   onClick={async () => {
-                    const res = await fetch('/api/stripe/checkout', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ plan: 'core' }),
-                    })
-                    const { url } = await res.json()
-                    if (url) window.location.href = url
+                    setUpgrading(true)
+                    try {
+                      const res = await fetch('/api/stripe/checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ plan: 'core' }),
+                      })
+                      const { url } = await res.json()
+                      if (url) window.location.href = url
+                      else setUpgrading(false)
+                    } catch { setUpgrading(false) }
                   }}
-                  className="text-[#4ADE80] text-sm font-medium hover:underline"
-                >Upgrade to Core — $14/mo →</button>
+                  className="text-[#4ADE80] text-sm font-medium hover:underline disabled:opacity-50"
+                >{upgrading ? 'Redirecting...' : 'Upgrade to Core — $14/mo →'}</button>
               </div>
             )}
             <button

@@ -83,7 +83,7 @@ export default function CoachPage() {
     }
   }
 
-  if (!limits.mealPlan) {
+  if (!limits.gutCoach) {
     return (
       <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
         <div className="px-6 pt-12 pb-6">

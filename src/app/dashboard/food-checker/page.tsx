@@ -94,6 +94,29 @@ export default function FoodCheckerPage() {
 
   const popularSearches = ['Yogurt', 'Kimchi', 'Banana', 'Oats', 'Salmon', 'Broccoli', 'Almonds', 'Ginger']
 
+  if (!limits.foodChecker) {
+    return (
+      <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
+        <div className="px-6 pt-12 pb-6">
+          <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            Back
+          </button>
+          <h1 className="text-2xl font-bold">Food Checker</h1>
+        </div>
+        <div className="px-6">
+          <Card className="text-center py-10">
+            <div className="text-4xl mb-4">🔍</div>
+            <p className="font-semibold mb-2">Unlock Food Checker</p>
+            <p className="text-white/40 text-sm mb-6">Check if foods are gut-friendly for your specific profile before you eat them.</p>
+            <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade to Core →</Link>
+          </Card>
+        </div>
+        <Navigation />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
       <div className="px-6 pt-12 pb-6">

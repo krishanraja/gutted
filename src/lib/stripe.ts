@@ -8,7 +8,6 @@ export const PLANS = {
   core: {
     name: 'Core',
     price: 14,
-    priceId: 'price_core_monthly', // update after creating in Stripe dashboard
     features: [
       'Unlimited voice logging',
       '5 document uploads/mo',
@@ -22,7 +21,6 @@ export const PLANS = {
   pro: {
     name: 'Pro',
     price: 29,
-    priceId: 'price_pro_monthly', // update after creating in Stripe dashboard
     features: [
       'Everything in Core',
       'Unlimited document uploads',

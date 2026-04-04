@@ -31,6 +31,9 @@ export async function POST(req: NextRequest) {
       case 'upgrade':
         emailData = emailTemplates.upgrade(data.name, data.plan)
         break
+      case 'payment-failed':
+        emailData = emailTemplates['payment-failed'](data.name)
+        break
       default:
         return NextResponse.json({ error: 'Invalid email type' }, { status: 400 })
     }
