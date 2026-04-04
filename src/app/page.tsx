@@ -98,7 +98,7 @@ export default function LandingPage() {
         </div>
 
         {/* Feature hints */}
-        <div className="flex-none relative z-10 flex items-center justify-center gap-3 px-6 py-4 pb-safe text-[11px] text-white/30">
+        <div className="flex-none relative z-10 flex items-center justify-center gap-3 px-6 py-4 mb-6 pb-safe text-[11px] text-white/30">
           <span>🎤 Voice logging</span>
           <span className="text-white/15">·</span>
           <span>🧬 Doc intelligence</span>
