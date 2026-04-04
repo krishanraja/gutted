@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -21,6 +21,14 @@ interface TriggerFood { food: string; avgScoreAfter: number; timesLogged: number
 interface BeneficialFood { food: string; avgScoreAfter: number; timesLogged: number; benefits: string[] }
 
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent />
+    </Suspense>
+  )
+}
+
+function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
