@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { anthropic } from '@/lib/anthropic'
+import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     if (!food) return NextResponse.json({ error: 'No food data' }, { status: 400 })
 
     const msg = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: CLAUDE_MODEL,
       max_tokens: 512,
       system: 'You are a gut health nutrition analyst. Rate foods for gut friendliness based on the user\'s specific gut profile and conditions. Be evidence-based and practical. Never diagnose.',
       messages: [{

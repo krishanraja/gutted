@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { emailTemplates } from '@/lib/email-templates'
-import { anthropic } from '@/lib/anthropic'
+import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       let highlights = ''
       if (current.length >= 3) {
         const msg = await anthropic.messages.create({
-          model: 'claude-3-5-sonnet-20241022',
+          model: CLAUDE_MODEL,
           max_tokens: 512,
           messages: [{
             role: 'user',

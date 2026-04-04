@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { anthropic } from '@/lib/anthropic'
+import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
 
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 - If they mention concerning symptoms (blood in stool, severe pain, unexplained weight loss), flag it and recommend seeing a doctor`
 
     const msg = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: CLAUDE_MODEL,
       max_tokens: 1024,
       system: systemPrompt,
       messages: userMessages.slice(-10), // Keep last 10 messages for context

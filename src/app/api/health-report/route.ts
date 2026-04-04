@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { anthropic } from '@/lib/anthropic'
+import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
 
@@ -45,7 +45,7 @@ export async function POST() {
     let aiSummary = ''
     if (allLogs.length >= 3) {
       const msg = await anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+        model: CLAUDE_MODEL,
         max_tokens: 1024,
         system: 'You are a gut health report writer. Write a professional, encouraging health summary suitable for a monthly report. Be specific about trends and patterns. Never diagnose. Always recommend consulting a healthcare professional for medical concerns.',
         messages: [{

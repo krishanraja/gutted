@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { anthropic } from '@/lib/anthropic'
+import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST() {
@@ -22,7 +22,7 @@ export async function POST() {
     const { data: profile } = await supabase.from('profiles').select('gut_profile').eq('id', user.id).single()
 
     const msg = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: CLAUDE_MODEL,
       max_tokens: 1024,
       system: `You are a gut health pattern analyst. Identify correlations between foods, behaviours, timing, and gut health scores from the user's logs. Be specific and data-driven. Only report patterns you have reasonable confidence in. Also identify specific trigger foods that consistently correlate with low scores, and beneficial foods that correlate with high scores.`,
       messages: [{

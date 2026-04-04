@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { anthropic } from '@/lib/anthropic'
+import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST() {
@@ -18,7 +18,7 @@ export async function POST() {
     }
 
     const msg = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: CLAUDE_MODEL,
       max_tokens: 256,
       system: `You are a warm, encouraging gut health AI assistant. Generate a brief, personalised daily insight based on the user's recent gut health logs. Be specific, actionable, and reference actual patterns you see. Keep it to 1-2 sentences. Never diagnose. Use the user's name if available.`,
       messages: [{

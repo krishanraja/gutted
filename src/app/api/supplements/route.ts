@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { anthropic } from '@/lib/anthropic'
+import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
 
@@ -19,7 +19,7 @@ export async function POST() {
     ])
 
     const msg = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: CLAUDE_MODEL,
       max_tokens: 1024,
       system: 'You are a gut health supplement advisor. Recommend evidence-based supplements and probiotics based on the user\'s specific health data. Always cite general scientific evidence. Never make medical claims. Always recommend consulting a healthcare professional before starting any supplement regimen.',
       messages: [{
