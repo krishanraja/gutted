@@ -51,10 +51,12 @@ html { overscroll-behavior-y: none; }
 
 /* === VIEWPORT LOCK (mobile no-scroll) === */
 .mobile-viewport {
-  height: 100dvh;
+  position: fixed;
+  inset: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  touch-action: manipulation;
 }
 @media (min-width: 768px) {
   .mobile-viewport { height: auto; min-height: 100vh; overflow: auto; display: block; }
