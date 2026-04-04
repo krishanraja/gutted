@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /onboarding/
+Disallow: /api/
+Disallow: /auth/
+
+Sitemap: https://www.gutted.app/sitemap.xml
