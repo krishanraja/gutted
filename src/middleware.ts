@@ -22,6 +22,20 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
+  // Redirect legacy routes to new tab structure
+  const legacyRedirects: Record<string, string> = {
+    '/dashboard/log': '/dashboard?tab=log',
+    '/dashboard/history': '/dashboard?tab=history',
+    '/dashboard/coach': '/dashboard?tab=coach',
+    '/dashboard/meal-plan': '/dashboard/food',
+    '/dashboard/upload': '/dashboard/food?tab=upload',
+    '/dashboard/food-checker': '/dashboard/food?tab=check',
+    '/dashboard/supplements': '/dashboard/food?tab=supplements',
+  }
+  if (legacyRedirects[pathname]) {
+    return NextResponse.redirect(new URL(legacyRedirects[pathname], request.url))
+  }
+
   // Protect dashboard routes
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding')) {
     if (!user) return NextResponse.redirect(new URL('/auth/login', request.url))

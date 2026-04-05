@@ -4,15 +4,19 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { Navigation } from '@/components/Navigation'
 import { GutScore } from '@/components/GutScore'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { DashboardSkeleton } from '@/components/ui/Skeleton'
 import { CardCarousel } from '@/components/CardCarousel'
 import { BottomSheet } from '@/components/BottomSheet'
+import { SectionNav } from '@/components/SectionNav'
+import { LogContent } from '@/components/content/LogContent'
+import { HistoryContent } from '@/components/content/HistoryContent'
+import { CoachContent } from '@/components/content/CoachContent'
 import { haptic } from '@/lib/haptics'
 import { useToast } from '@/components/ToastProvider'
+import { getUnlockStatus } from '@/lib/unlock-status'
 
 interface Profile { name: string; plan: string; gut_profile: Record<string, unknown> }
 interface Log { id: string; type: string; content: string; gut_score: number; logged_at: string }
@@ -32,6 +36,8 @@ function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
+  const initialTab = searchParams.get('tab') || 'overview'
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [logs, setLogs] = useState<Log[]>([])
   const [todayScore, setTodayScore] = useState(0)
@@ -47,6 +53,9 @@ function DashboardContent() {
   const [beneficialFoods, setBeneficialFoods] = useState<BeneficialFood[]>([])
   const [profileCompleteness, setProfileCompleteness] = useState(0)
   const [completenessItems, setCompletenessItems] = useState<{ label: string; done: boolean; href: string }[]>([])
+  const [logCount, setLogCount] = useState(0)
+  const [docCount, setDocCount] = useState(0)
+  const [hasRestrictions, setHasRestrictions] = useState(false)
 
   useEffect(() => {
     if (searchParams.get('upgraded') === '1') {
@@ -68,6 +77,8 @@ function DashboardContent() {
     setProfile(p)
     const allLogs = l || []
     setLogs(allLogs)
+    setLogCount(allLogs.length)
+    setHasRestrictions(!!(p?.gut_profile as Record<string, unknown>)?.restrictions)
 
     const scores = allLogs.filter(log => log.gut_score).map(log => log.gut_score)
     setTodayScore(scores.length ? Math.round(scores.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(scores.length, 3)) : 0)
@@ -91,11 +102,12 @@ function DashboardContent() {
 
     // Calculate profile completeness
     const gutProfile = p?.gut_profile || {} as Record<string, unknown>
-    const { count: docCount } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    const { count: dc } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    setDocCount(dc || 0)
     const items = [
       { label: 'Complete onboarding', done: !!p?.onboarding_complete, href: '/onboarding' },
       { label: 'Log at least 5 entries', done: allLogs.length >= 5, href: '/dashboard/log' },
-      { label: 'Upload a gut test', done: (docCount || 0) > 0, href: '/dashboard/upload' },
+      { label: 'Upload a gut test', done: (dc || 0) > 0, href: '/dashboard/upload' },
       { label: 'Generate a meal plan', done: false, href: '/dashboard/meal-plan' },
       { label: 'Set dietary restrictions', done: !!(gutProfile as Record<string, unknown>).restrictions, href: '/onboarding' },
     ]
@@ -151,6 +163,22 @@ function DashboardContent() {
     || (dailyInsight ? `${insightIcons[dailyInsight.type] || '💡'} ${dailyInsight.insight}` : null)
     || (todayScore === 0 ? 'Log your first entry to get your score' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day — take it easy')
 
+  const unlock = getUnlockStatus(logCount, docCount, hasRestrictions)
+  const gutTabs = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'log', label: 'Log' },
+    { key: 'history', label: 'History', locked: !unlock.history.unlocked, lockMessage: unlock.history.requirement },
+    { key: 'coach', label: 'Coach', locked: !unlock.coach.unlocked, lockMessage: unlock.coach.requirement },
+  ]
+
+  // If user selects a locked tab, show the lock message instead
+  const activeTabLocked = gutTabs.find(t => t.key === activeTab)?.locked
+  const handleTabChange = (key: string) => {
+    const tab = gutTabs.find(t => t.key === key)
+    if (tab?.locked) return
+    setActiveTab(key)
+  }
+
   if (loading) return <DashboardSkeleton />
 
   return (
@@ -182,32 +210,75 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* Zone 2: Hero Score */}
+        {/* Section Nav */}
+        <div className="px-6 pb-2">
+          <SectionNav tabs={gutTabs} activeTab={activeTab} onTabChange={handleTabChange} />
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'log' && <div className="flex-1 overflow-y-auto pb-20"><LogContent /></div>}
+        {activeTab === 'history' && <div className="flex-1 overflow-y-auto pb-20"><HistoryContent /></div>}
+        {activeTab === 'coach' && <div className="flex-1 overflow-y-auto pb-20"><CoachContent /></div>}
+
+        {activeTab === 'overview' && <>
+        {/* Zone 2: Hero Score or Welcome */}
         <div className="flex-none px-6 py-4">
-          <Card glow className="flex flex-col items-center py-6 animate-fade-up">
-            <GutScore score={todayScore} size="lg" />
-            <p className="text-white/50 text-sm mt-3 text-center line-clamp-2 px-4 animate-fade-up stagger-1">
-              {contextLine}
-            </p>
-            {nudge && (
-              <Link href={nudge.action} className="text-[#4ADE80] text-xs mt-2 hover:underline animate-fade-up stagger-2">
-                {nudge.cta} →
-              </Link>
-            )}
-            {patterns.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3 justify-center animate-fade-up stagger-3">
-                {patterns.slice(0, 3).map((p, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { haptic.tap(); setPatternSheetOpen(true) }}
-                    className="bg-white/5 border border-white/10 rounded-full px-2.5 py-0.5 text-[10px] text-white/50 active:scale-[0.97]"
-                  >
-                    🔍 {p.trigger}
-                  </button>
+          {logCount === 0 ? (
+            <Card glow className="flex flex-col items-center py-8 animate-fade-up">
+              <div className="text-4xl mb-3">👋</div>
+              <h2 className="text-xl font-bold mb-2">Let's get to know your gut</h2>
+              <p className="text-white/50 text-sm text-center mb-4 px-4">
+                Start by logging how you feel. The more you log, the smarter your insights become.
+              </p>
+              <button
+                onClick={() => { haptic.tap(); setActiveTab('log') }}
+                className="text-[#4ADE80] text-sm font-medium hover:underline"
+              >
+                Log your first entry →
+              </button>
+              <div className="mt-6 w-full space-y-2 px-4">
+                <p className="text-white/30 text-[10px] uppercase tracking-wide text-center mb-2">What unlocks as you log</p>
+                {[
+                  { count: '1 log', feature: 'Gut Score & Overview' },
+                  { count: '3 logs', feature: 'History & Trends' },
+                  { count: '5 logs', feature: 'AI Coach & Patterns' },
+                ].map(item => (
+                  <div key={item.feature} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5">
+                    <svg className="w-3.5 h-3.5 text-white/20 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                    <span className="text-xs text-white/40">{item.count}</span>
+                    <span className="text-xs text-white/60">{item.feature}</span>
+                  </div>
                 ))}
               </div>
-            )}
-          </Card>
+            </Card>
+          ) : (
+            <Card glow className="flex flex-col items-center py-6 animate-fade-up">
+              <GutScore score={todayScore} size="lg" />
+              <p className="text-white/50 text-sm mt-3 text-center line-clamp-2 px-4 animate-fade-up stagger-1">
+                {contextLine}
+              </p>
+              {nudge && (
+                <button onClick={() => { haptic.tap(); setActiveTab('log') }} className="text-[#4ADE80] text-xs mt-2 hover:underline animate-fade-up stagger-2">
+                  {nudge.cta} →
+                </button>
+              )}
+              {patterns.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3 justify-center animate-fade-up stagger-3">
+                  {patterns.slice(0, 3).map((p, i) => (
+                    <button
+                      key={i}
+                      onClick={() => { haptic.tap(); setPatternSheetOpen(true) }}
+                      className="bg-white/5 border border-white/10 rounded-full px-2.5 py-0.5 text-[10px] text-white/50 active:scale-[0.97]"
+                    >
+                      🔍 {p.trigger}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Card>
+          )}
         </div>
 
         {/* Zone 3: Quick Actions + Carousel */}
@@ -346,8 +417,7 @@ function DashboardContent() {
             </CardCarousel>
           </div>
         </div>
-
-        <Navigation />
+        </>}
       </div>
 
       {/* Desktop: original layout preserved */}
@@ -373,7 +443,17 @@ function DashboardContent() {
           <h1 className="text-2xl font-bold mt-0.5">{profile?.name || 'friend'}</h1>
         </div>
 
-        <div className="px-6 md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+        {/* Section Nav - Desktop */}
+        <div className="px-6 pb-4">
+          <SectionNav tabs={gutTabs} activeTab={activeTab} onTabChange={handleTabChange} />
+        </div>
+
+        {/* Tab Content - Desktop */}
+        {activeTab === 'log' && <div className="px-6"><LogContent /></div>}
+        {activeTab === 'history' && <div className="px-6"><HistoryContent /></div>}
+        {activeTab === 'coach' && <div className="px-6"><CoachContent /></div>}
+
+        {activeTab === 'overview' && <div className="px-6 md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           <div className="space-y-4 mb-6 md:mb-0">
             <Card glow className="flex items-center gap-6 py-6 animate-fade-up">
               <GutScore score={todayScore} size="lg" />
@@ -593,9 +673,7 @@ function DashboardContent() {
               {refreshing ? 'Refreshing...' : 'Refresh dashboard'}
             </button>
           </div>
-        </div>
-
-        <Navigation />
+        </div>}
       </div>
 
       {/* Pattern detail bottom sheet */}
