@@ -3,11 +3,8 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 const shortcuts: Record<string, string> = {
-  d: '/dashboard',
-  n: '/dashboard/log',
-  u: '/dashboard/upload',
-  m: '/dashboard/meal-plan',
-  h: '/dashboard/history',
+  g: '/dashboard',
+  f: '/dashboard/food',
   s: '/dashboard/settings',
 }
 

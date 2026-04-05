@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Navigation } from '@/components/Navigation'
 import { GutScore } from '@/components/GutScore'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -130,8 +129,6 @@ export default function LogDetailPage() {
           </Card>
         )}
       </div>
-
-      <Navigation />
     </div>
   )
 }
