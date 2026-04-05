@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
+import { HeroVideo } from '@/components/HeroVideo'
 
 const features = [
   {
@@ -56,16 +57,7 @@ export default function LandingPage() {
       {/* ===== MOBILE: viewport-locked, no scroll ===== */}
       <div className="mobile-viewport md:hidden bg-black text-white">
         {/* Video background */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0"
-        >
-          <source src="/Gutted background.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-black/60 z-0" />
+        <HeroVideo />
 
         {/* Nav */}
         <nav className="flex-none relative z-20 flex items-center justify-between px-6 py-4">
@@ -111,16 +103,7 @@ export default function LandingPage() {
       <div className="hidden md:block min-h-screen bg-black text-white">
         {/* Hero with video background */}
         <section className="relative overflow-hidden">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover"
-          >
-            <source src="/Gutted background.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-black/60" />
+          <HeroVideo />
 
           <nav className="relative z-20 flex items-center justify-between px-6 py-4 max-w-4xl mx-auto">
             <Image src="/icon.png" alt="gutted." width={32} height={32} className="h-8 w-8 drop-shadow-lg" />
