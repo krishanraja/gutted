@@ -21,6 +21,9 @@ body {
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 16px);
 }
+.pb-nav {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 16px));
+}
 
 /* Gradient text utility */
 .gradient-text {
