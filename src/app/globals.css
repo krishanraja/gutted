@@ -59,7 +59,7 @@ html { overscroll-behavior-y: none; }
   touch-action: manipulation;
 }
 @media (min-width: 768px) {
-  .mobile-viewport { height: auto; min-height: 100vh; overflow: auto; display: block; }
+  .mobile-viewport { position: static; height: auto; min-height: 100vh; overflow: auto; }
 }
 
 /* === ENTRANCE ANIMATIONS === */
