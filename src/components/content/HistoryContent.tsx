@@ -14,7 +14,7 @@ import { staggerDelay } from '@/lib/animations'
 
 interface Log { id: string; type: string; content: string; gut_score: number; logged_at: string; ai_analysis: { summary?: string; insights?: string[]; recommendations?: string[] } | null }
 
-export function HistoryContent() {
+export function HistoryContent({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter()
   const [logs, setLogs] = useState<Log[]>([])
   const [loading, setLoading] = useState(true)
@@ -77,13 +77,15 @@ export function HistoryContent() {
   return (
     <>
       {/* Mobile: viewport-locked with scroll zone */}
-      <div className="mobile-viewport md:hidden">
+      <div className={embedded ? "flex flex-col h-full md:hidden" : "mobile-viewport md:hidden"}>
         {/* Fixed top: header + score + sparkline */}
         <div className="flex-none">
-          <div className="px-6 pt-10 pb-3 animate-fade-in">
-            <h1 className="text-xl font-bold">History</h1>
-            <p className="text-white/40 text-xs mt-0.5">Your gut health over time</p>
-          </div>
+          {!embedded && (
+            <div className="px-6 pt-10 pb-3 animate-fade-in">
+              <h1 className="text-xl font-bold">History</h1>
+              <p className="text-white/40 text-xs mt-0.5">Your gut health over time</p>
+            </div>
+          )}
 
           {/* Compact avg score + sparkline */}
           {(avgScore > 0 || hasSparkline) && (

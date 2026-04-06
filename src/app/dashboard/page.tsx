@@ -216,13 +216,13 @@ function DashboardContent() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'log' && <div className="flex-1 overflow-y-auto pb-20"><LogContent /></div>}
-        {activeTab === 'history' && <div className="flex-1 overflow-y-auto pb-20"><HistoryContent /></div>}
+        {activeTab === 'log' && <div className="flex-1 overflow-y-auto pb-20"><LogContent embedded /></div>}
+        {activeTab === 'history' && <div className="flex-1 overflow-y-auto pb-20"><HistoryContent embedded /></div>}
         {activeTab === 'coach' && <div className="flex-1 overflow-y-auto pb-20"><CoachContent /></div>}
 
-        {activeTab === 'overview' && <>
+        {activeTab === 'overview' && <div className="flex-1 overflow-y-auto pb-20">
         {/* Zone 2: Hero Score or Welcome */}
-        <div className="flex-none px-6 py-4">
+        <div className="px-6 py-4">
           {logCount === 0 ? (
             <Card glow className="flex flex-col items-center py-8 animate-fade-up">
               <div className="text-4xl mb-3">👋</div>
@@ -282,7 +282,7 @@ function DashboardContent() {
         </div>
 
         {/* Zone 3: Quick Actions + Carousel */}
-        <div className="flex-1 flex flex-col px-6 pb-20 min-h-0">
+        <div className="flex flex-col px-6 min-h-0">
           {/* Quick actions */}
           <div className="flex-none mb-3 animate-fade-up stagger-2">
             <div className="grid grid-cols-4 gap-2">
@@ -417,7 +417,7 @@ function DashboardContent() {
             </CardCarousel>
           </div>
         </div>
-        </>}
+        </div>}
       </div>
 
       {/* Desktop: original layout preserved */}
