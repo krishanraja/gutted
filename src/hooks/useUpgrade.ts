@@ -1,8 +1,10 @@
 'use client'
 import { useState } from 'react'
+import { useToast } from '@/components/ToastProvider'
 
 export function useUpgrade() {
   const [upgrading, setUpgrading] = useState(false)
+  const { toast } = useToast()
 
   const upgrade = async (plan: string) => {
     setUpgrading(true)
@@ -12,10 +14,15 @@ export function useUpgrade() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan }),
       })
-      const { url } = await res.json()
-      if (url) window.location.href = url
-      else setUpgrading(false)
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        toast('Unable to start checkout. Please try again.', 'error')
+        setUpgrading(false)
+      }
     } catch {
+      toast('Unable to start checkout. Please try again.', 'error')
       setUpgrading(false)
     }
   }

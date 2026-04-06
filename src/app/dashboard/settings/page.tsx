@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { useUpgrade } from '@/hooks/useUpgrade'
+import { useToast } from '@/components/ToastProvider'
 
 interface Profile { name: string; email: string; plan: string; gut_profile?: Record<string, unknown> }
 
@@ -16,6 +17,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [signingOut, setSigningOut] = useState(false)
   const { upgrade, upgrading } = useUpgrade()
+  const { toast } = useToast()
 
   useEffect(() => {
     const load = async () => {
@@ -106,11 +108,11 @@ export default function SettingsPage() {
               onClick={async () => {
                 try {
                   const res = await fetch('/api/stripe/portal', { method: 'POST' })
-                  const { url } = await res.json()
-                  if (url) window.location.href = url
-                  else alert('Unable to open subscription management. Please contact support.')
+                  const data = await res.json()
+                  if (data.url) window.location.href = data.url
+                  else toast('Unable to open subscription management. Please contact support.', 'error')
                 } catch {
-                  alert('Unable to open subscription management. Please contact support.')
+                  toast('Unable to open subscription management. Please contact support.', 'error')
                 }
               }}
               className="text-white/40 text-sm hover:text-white/60 mt-3 transition-colors"
