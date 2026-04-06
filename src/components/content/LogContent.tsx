@@ -23,7 +23,7 @@ interface Analysis {
 
 type Phase = 'input' | 'processing' | 'results'
 
-export function LogContent() {
+export function LogContent({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter()
   const { toast } = useToast()
   const [transcript, setTranscript] = useState('')
@@ -139,7 +139,14 @@ export function LogContent() {
     })
     haptic.success()
     toast('Log saved successfully', 'success')
-    router.push('/dashboard')
+    if (embedded) {
+      setPhase('input')
+      setTranscript('')
+      setTags([])
+      setAnalysis(null)
+    } else {
+      router.push('/dashboard')
+    }
   }
 
   const toggleSection = (section: string) => {
@@ -239,17 +246,19 @@ export function LogContent() {
   return (
     <>
       {/* Mobile: viewport-locked phase-based flow */}
-      <div className="mobile-viewport md:hidden">
-        {/* Header */}
-        <div className="flex-none px-6 pt-10 pb-3 animate-fade-in">
-          <button onClick={() => phase === 'results' ? setPhase('input') : router.back()} className="text-white/40 text-sm mb-2 flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
-            {phase === 'results' ? 'Edit' : 'Back'}
-          </button>
-          <h1 className="text-xl font-bold">
-            {phase === 'results' ? 'Your gut analysis' : "How's your gut today?"}
-          </h1>
-        </div>
+      <div className={embedded ? "flex flex-col h-full md:hidden" : "mobile-viewport md:hidden"}>
+        {/* Header — only shown in standalone mode */}
+        {!embedded && (
+          <div className="flex-none px-6 pt-10 pb-3 animate-fade-in">
+            <button onClick={() => phase === 'results' ? setPhase('input') : router.back()} className="text-white/40 text-sm mb-2 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+              {phase === 'results' ? 'Edit' : 'Back'}
+            </button>
+            <h1 className="text-xl font-bold">
+              {phase === 'results' ? 'Your gut analysis' : "How's your gut today?"}
+            </h1>
+          </div>
+        )}
 
         {/* Phase: Input */}
         {phase === 'input' && (
