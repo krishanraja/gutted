@@ -126,7 +126,7 @@ export function HistoryContent({ embedded = false }: { embedded?: boolean }) {
         </div>
 
         {/* Scrollable log list */}
-        <div className="flex-1 overflow-y-auto px-6 pb-20 min-h-0">
+        <div className="flex-1 overflow-y-auto px-6 pb-28 min-h-0">
           {Object.keys(grouped).length === 0 ? (
             <Card className="text-center py-8 animate-fade-up">
               <p className="text-2xl mb-2">📝</p>

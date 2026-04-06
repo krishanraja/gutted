@@ -1,5 +1,6 @@
 'use client'
 import { haptic } from '@/lib/haptics'
+import { useToast } from '@/components/ToastProvider'
 
 interface Tab {
   key: string
@@ -15,6 +16,8 @@ interface SectionNavProps {
 }
 
 export function SectionNav({ tabs, activeTab, onTabChange }: SectionNavProps) {
+  const { toast } = useToast()
+
   return (
     <div className="flex gap-1 overflow-x-auto scrollbar-hide px-1 py-1 bg-white/5 rounded-xl">
       {tabs.map(tab => {
@@ -23,7 +26,11 @@ export function SectionNav({ tabs, activeTab, onTabChange }: SectionNavProps) {
           <button
             key={tab.key}
             onClick={() => {
-              if (tab.locked) return
+              if (tab.locked) {
+                haptic.tap()
+                toast(tab.lockMessage || `${tab.label} is locked`, 'info')
+                return
+              }
               haptic.tap()
               onTabChange(tab.key)
             }}

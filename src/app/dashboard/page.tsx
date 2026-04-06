@@ -216,11 +216,11 @@ function DashboardContent() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'log' && <div className="flex-1 overflow-y-auto pb-20"><LogContent embedded /></div>}
-        {activeTab === 'history' && <div className="flex-1 overflow-y-auto pb-20"><HistoryContent embedded /></div>}
-        {activeTab === 'coach' && <div className="flex-1 overflow-y-auto pb-20"><CoachContent /></div>}
+        {activeTab === 'log' && <div className="flex-1 overflow-y-auto pb-28"><LogContent embedded /></div>}
+        {activeTab === 'history' && <div className="flex-1 overflow-y-auto pb-28"><HistoryContent embedded /></div>}
+        {activeTab === 'coach' && <div className="flex-1 overflow-y-auto pb-28"><CoachContent /></div>}
 
-        {activeTab === 'overview' && <div className="flex-1 overflow-y-auto pb-20">
+        {activeTab === 'overview' && <div className="flex-1 overflow-y-auto pb-28">
         {/* Zone 2: Hero Score or Welcome */}
         <div className="px-6 py-4">
           {logCount === 0 ? (

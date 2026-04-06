@@ -262,7 +262,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
         {/* Phase: Input */}
         {phase === 'input' && (
-          <div className="flex-1 flex flex-col px-6 pb-20 min-h-0 animate-fade-in">
+          <div className="flex-1 flex flex-col px-6 pb-28 min-h-0 animate-fade-in">
             {/* Mode toggle */}
             <div className="flex-none mb-4">
               {modeToggle('max-w-sm')}
@@ -350,7 +350,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
         {/* Phase: Results */}
         {phase === 'results' && analysis && (
-          <div className="flex-1 flex flex-col px-6 pb-20 min-h-0 overflow-y-auto animate-scale-in">
+          <div className="flex-1 flex flex-col px-6 pb-28 min-h-0 overflow-y-auto animate-scale-in">
             {/* Score card */}
             <Card glow className="flex-none flex items-center gap-4 mb-4">
               <GutScore score={analysis.gutScore} size="lg" />
@@ -410,7 +410,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
         {/* Save button — anchored at bottom for results phase */}
         {phase === 'results' && transcript && (
-          <div className="flex-none px-6 pb-20">
+          <div className="flex-none px-6 pb-28">
             {atLimit ? (
               <div className="bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border border-[#00B4B4]/20 rounded-2xl p-3 text-center">
                 <p className="font-semibold text-sm mb-1">Daily log limit reached</p>
