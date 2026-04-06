@@ -242,7 +242,7 @@ export function MealPlanContent() {
 
             {/* Meal carousel — one meal at a time */}
             {!showGroceryList && currentDay && (
-              <div className="flex-1 px-6 pb-28 min-h-0 animate-fade-up">
+              <div className="flex-1 px-6 pb-nav min-h-0 animate-fade-up">
                 <CardCarousel>
                   {renderMealCard(currentDay.breakfast, 'Breakfast')}
                   {renderMealCard(currentDay.lunch, 'Lunch')}
@@ -268,7 +268,7 @@ export function MealPlanContent() {
 
             {/* Grocery list (mobile) */}
             {showGroceryList && plan.groceryList && (
-              <div className="flex-1 px-6 pb-28 min-h-0 space-y-3 overflow-y-auto">
+              <div className="flex-1 px-6 pb-nav min-h-0 space-y-3 overflow-y-auto">
                 {plan.groceryList.map((cat) => (
                   <Card key={cat.category}>
                     <p className="text-white/40 text-xs uppercase tracking-wide mb-2">{cat.category}</p>
@@ -297,7 +297,7 @@ export function MealPlanContent() {
             )}
 
             {/* Regenerate & email buttons */}
-            <div className="flex-none px-6 pb-28 flex gap-3">
+            <div className="flex-none px-6 pb-nav flex gap-3">
               <Button onClick={generate} loading={generating} variant="outline" className="flex-1">Regenerate</Button>
               {limits.emailMealPlans && (
                 <Button
