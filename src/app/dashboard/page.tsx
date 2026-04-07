@@ -17,6 +17,7 @@ import { CoachContent } from '@/components/content/CoachContent'
 import { haptic } from '@/lib/haptics'
 import { useToast } from '@/components/ToastProvider'
 import { getUnlockStatus } from '@/lib/unlock-status'
+import { GuidedLogWizard } from '@/components/GuidedLogWizard'
 
 interface Profile { name: string; plan: string; gut_profile: Record<string, unknown> }
 interface Log { id: string; type: string; content: string; gut_score: number; logged_at: string }
@@ -56,6 +57,7 @@ function DashboardContent() {
   const [logCount, setLogCount] = useState(0)
   const [docCount, setDocCount] = useState(0)
   const [hasRestrictions, setHasRestrictions] = useState(false)
+  const [userId, setUserId] = useState('')
 
   useEffect(() => {
     if (searchParams.get('upgraded') === '1') {
@@ -68,6 +70,7 @@ function DashboardContent() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { window.location.href = '/auth/login'; return }
+    setUserId(user.id)
 
     const [{ data: p }, { data: l }] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
@@ -227,36 +230,13 @@ function DashboardContent() {
         {activeTab === 'overview' && <div className="flex-1 overflow-y-auto pb-nav">
         {/* Zone 2: Hero Score or Welcome */}
         <div className="px-6 py-4">
-          {logCount === 0 ? (
-            <Card glow className="flex flex-col items-center py-8 animate-fade-up">
-              <div className="text-4xl mb-3">👋</div>
-              <h2 className="text-xl font-bold mb-2">Let's get to know your gut</h2>
-              <p className="text-white/50 text-sm text-center mb-4 px-4">
-                Start by logging how you feel. The more you log, the smarter your insights become.
-              </p>
-              <button
-                onClick={() => { haptic.tap(); setActiveTab('log') }}
-                className="text-[#4ADE80] text-sm font-medium hover:underline"
-              >
-                Log your first entry →
-              </button>
-              <div className="mt-6 w-full space-y-2 px-4">
-                <p className="text-white/30 text-[10px] uppercase tracking-wide text-center mb-2">What unlocks as you log</p>
-                {[
-                  { count: '1 log', feature: 'Gut Score & Overview' },
-                  { count: '3 logs', feature: 'History & Trends' },
-                  { count: '5 logs', feature: 'AI Coach & Patterns' },
-                ].map(item => (
-                  <div key={item.feature} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5">
-                    <svg className="w-3.5 h-3.5 text-white/20 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                    </svg>
-                    <span className="text-xs text-white/40">{item.count}</span>
-                    <span className="text-xs text-white/60">{item.feature}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
+          {logCount < 3 ? (
+            <GuidedLogWizard
+              logCount={logCount}
+              userProfile={profile?.gut_profile || null}
+              userId={userId}
+              onComplete={() => load()}
+            />
           ) : (
             <Card glow className="flex flex-col items-center py-6 animate-fade-up">
               <GutScore score={todayScore} size="lg" />
@@ -463,6 +443,14 @@ function DashboardContent() {
 
         {activeTab === 'overview' && <div className="px-6 md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           <div className="space-y-4 mb-6 md:mb-0">
+            {logCount < 3 ? (
+              <GuidedLogWizard
+                logCount={logCount}
+                userProfile={profile?.gut_profile || null}
+                userId={userId}
+                onComplete={() => load()}
+              />
+            ) : (
             <Card glow className="flex items-center gap-6 py-6 animate-fade-up">
               <GutScore score={todayScore} size="lg" />
               <div>
@@ -473,6 +461,7 @@ function DashboardContent() {
                 {todayScore === 0 && <p className="text-white/30 text-xs mt-1">Tap &ldquo;Log now&rdquo; to get your score</p>}
               </div>
             </Card>
+            )}
 
             {nudge && (
               <Card className="border-[#00B4B4]/20 bg-[#00B4B4]/5 animate-fade-up stagger-1">
