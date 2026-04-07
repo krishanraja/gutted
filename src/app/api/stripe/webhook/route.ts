@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe, PLANS } from '@/lib/stripe'
+import { stripe, resolvePlanFromPriceId, resolvePlanFromAmount } from '@/lib/stripe'
 import { createServiceClient } from '@/lib/supabase/server'
-
-function resolvePlanFromAmount(amountInCents: number): string | null {
-  for (const [key, config] of Object.entries(PLANS)) {
-    if (config.price * 100 === amountInCents) return key
-  }
-  return null
-}
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -39,7 +32,23 @@ export async function POST(req: NextRequest) {
         plan,
         stripe_customer_id: session.customer,
         stripe_subscription_id: session.subscription,
+        subscription_status: 'active',
       }).eq('id', userId)
+
+      // Fetch subscription to store period end
+      if (session.subscription) {
+        try {
+          const sub = await stripe.subscriptions.retrieve(session.subscription as string)
+          const periodEnd = sub.items.data[0]?.current_period_end
+          if (periodEnd) {
+            await supabase.from('profiles').update({
+              current_period_end: new Date(periodEnd * 1000).toISOString(),
+            }).eq('id', userId)
+          }
+        } catch (e) {
+          console.log('Failed to fetch subscription for period end:', e)
+        }
+      }
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -67,26 +76,51 @@ export async function POST(req: NextRequest) {
 
   if (event.type === 'customer.subscription.updated') {
     const sub = event.data.object
+    const priceId = sub.items?.data?.[0]?.price?.id
     const amountInCents = sub.items?.data?.[0]?.price?.unit_amount
-    const newPlan = resolvePlanFromAmount(amountInCents)
+
+    // Resolve plan: prefer price ID, fall back to amount matching for legacy subscriptions
+    const newPlan = (priceId ? resolvePlanFromPriceId(priceId) : null)
+      || (amountInCents ? resolvePlanFromAmount(amountInCents) : null)
+
+    const subscriptionStatus = sub.cancel_at_period_end ? 'canceling' : sub.status
+    const periodEnd = sub.items?.data?.[0]?.current_period_end
+
+    const updateData: Record<string, unknown> = {
+      subscription_status: subscriptionStatus,
+      stripe_subscription_id: sub.id,
+      current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+    }
 
     if (newPlan) {
-      await supabase.from('profiles')
-        .update({ plan: newPlan, stripe_subscription_id: sub.id })
-        .eq('stripe_customer_id', sub.customer)
+      updateData.plan = newPlan
     }
+
+    await supabase.from('profiles')
+      .update(updateData)
+      .eq('stripe_customer_id', sub.customer)
   }
 
   if (event.type === 'customer.subscription.deleted') {
     const sub = event.data.object
     await supabase.from('profiles')
-      .update({ plan: 'free', stripe_subscription_id: null })
+      .update({
+        plan: 'free',
+        stripe_subscription_id: null,
+        subscription_status: 'canceled',
+        current_period_end: null,
+      })
       .eq('stripe_subscription_id', sub.id)
   }
 
   if (event.type === 'invoice.payment_failed') {
     const invoice = event.data.object
     const customerId = invoice.customer
+
+    // Update subscription status to past_due
+    await supabase.from('profiles')
+      .update({ subscription_status: 'past_due' })
+      .eq('stripe_customer_id', customerId)
 
     const { data: profile } = await supabase
       .from('profiles')

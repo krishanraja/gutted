@@ -27,15 +27,7 @@ export async function POST(req: NextRequest) {
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       ...customerParams,
-      line_items: [{
-        price_data: {
-          currency: 'usd',
-          product_data: { name: `gutted. ${planConfig.name}` },
-          unit_amount: planConfig.price * 100,
-          recurring: { interval: 'month' },
-        },
-        quantity: 1,
-      }],
+      line_items: [{ price: planConfig.priceId, quantity: 1 }],
       metadata: { userId: user.id, plan },
       success_url: `${origin}/dashboard?upgraded=1`,
       cancel_url: `${origin}/dashboard`,
