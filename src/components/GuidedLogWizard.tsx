@@ -259,7 +259,7 @@ export function GuidedLogWizard({ logCount, userProfile, userId, onComplete }: G
     return (
       <div className="animate-fade-in">
         {/* Progress bar */}
-        <div className="mb-4">
+        <div className="mb-2">
           <div className="flex items-center justify-between mb-1.5">
             <p className="text-white/30 text-[10px] uppercase tracking-wide">
               Step {wizardStep + 1} of {totalSteps}
@@ -276,7 +276,7 @@ export function GuidedLogWizard({ logCount, userProfile, userId, onComplete }: G
 
         {/* Intro — only on step 0 */}
         {wizardStep === 0 && (
-          <div className="text-center mb-5 animate-fade-up">
+          <div className="text-center mb-3 animate-fade-up">
             <h2 className="text-lg font-bold mb-1">{intro.heading}</h2>
             <p className="text-white/40 text-sm">{intro.sub}</p>
           </div>
@@ -341,7 +341,7 @@ export function GuidedLogWizard({ logCount, userProfile, userId, onComplete }: G
         {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
 
         {/* Actions */}
-        <div className="mt-5 space-y-2">
+        <div className="mt-3 space-y-2">
           <Button onClick={goNext} className="w-full" disabled={!canContinue}>
             {wizardStep === totalSteps - 1 ? 'Analyse my gut' : 'Continue'}
           </Button>

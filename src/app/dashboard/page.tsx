@@ -227,9 +227,9 @@ function DashboardContent() {
         {activeTab === 'history' && <div className="flex-1 overflow-y-auto pb-nav"><HistoryContent embedded /></div>}
         {activeTab === 'coach' && <div className="flex-1 overflow-y-auto pb-nav"><CoachContent /></div>}
 
-        {activeTab === 'overview' && <div className="flex-1 overflow-hidden pb-nav">
+        {activeTab === 'overview' && <div className="flex-1 flex flex-col min-h-0 overflow-hidden pb-nav">
         {/* Zone 2: Hero Score or Welcome */}
-        <div className="px-6 py-4">
+        <div className={`px-6 py-2 ${logCount < 3 ? 'flex-1 min-h-0' : 'flex-none'}`}>
           {logCount < 3 ? (
             <GuidedLogWizard
               logCount={logCount}
@@ -265,8 +265,8 @@ function DashboardContent() {
           )}
         </div>
 
-        {/* Zone 3: Quick Actions + Carousel */}
-        <div className="flex flex-col px-6 min-h-0">
+        {/* Zone 3: Quick Actions + Carousel (hidden during onboarding wizard) */}
+        {logCount >= 3 && <div className="flex-1 min-h-0 flex flex-col px-6">
           {/* Quick actions */}
           <div className="flex-none mb-3 animate-fade-up stagger-2">
             <div className="grid grid-cols-4 gap-2">
@@ -400,7 +400,7 @@ function DashboardContent() {
               </div>
             </CardCarousel>
           </div>
-        </div>
+        </div>}
         </div>}
       </div>
 
