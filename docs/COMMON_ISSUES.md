@@ -54,8 +54,8 @@ npm run dev
 - Check that Google Cloud Console has the correct authorized origins
 
 **"Invalid login credentials" error**
-- User may not exist — check Supabase Auth dashboard
-- Password may be wrong — use forgot password flow
+- User may not exist -- check Supabase Auth dashboard
+- Password may be wrong -- use forgot password flow
 - Account may have been created with OAuth (no password set)
 
 ---
@@ -77,7 +77,7 @@ npm run dev
 **Meal plan generation failing**
 - Check `ANTHROPIC_API_KEY` is valid
 - Ensure user has completed onboarding (gut_profile must exist)
-- API may timeout on cold starts — retry after a moment
+- API may timeout on cold starts -- retry after a moment
 - Check for rate limiting on Anthropic API
 
 **"429 Too Many Requests" from AI APIs**
@@ -104,8 +104,8 @@ npm run dev
 - Check microphone permissions in iOS Settings
 
 **Animations janky on low-end devices**
-- GutScore animation uses `requestAnimationFrame` — should be smooth
-- Frequency bars use CSS transitions — reduce count if needed
+- GutScore animation uses `requestAnimationFrame` -- should be smooth
+- Frequency bars use CSS transitions -- reduce count if needed
 - Consider `will-change: transform` for animated elements
 
 ---
@@ -143,7 +143,7 @@ npm run dev
 - Ensure `metadata.userId` is being passed in checkout session
 
 **User shows wrong plan after upgrade**
-- Webhook may be delayed — check Stripe webhook delivery logs
+- Webhook may be delayed -- check Stripe webhook delivery logs
 - Verify the webhook handler updates the correct user profile
 - Clear any client-side caching and refresh
 
@@ -153,16 +153,16 @@ npm run dev
 
 ### Performance
 - **Cold starts:** Serverless functions may take 1-3s on first request after inactivity
-- **AI latency:** Claude analysis takes 3-8s, GPT-4o vision takes 5-15s — show loading states
+- **AI latency:** Claude analysis takes 3-8s, GPT-4o vision takes 5-15s -- show loading states
 - **Audio upload:** Large recordings need the 10MB server action limit
 
 ### Security
 - Never expose `SUPABASE_SERVICE_ROLE_KEY` to the client
 - Always verify Stripe webhook signatures
 - File uploads should validate type and size server-side
-- RLS must be enabled on all tables — never bypass it
+- RLS must be enabled on all tables -- never bypass it
 
 ### Costs
-- Monitor AI API usage — each log analysis and meal plan generation costs tokens
+- Monitor AI API usage -- each log analysis and meal plan generation costs tokens
 - Supabase free tier has limits (500MB DB, 1GB storage, 50K auth users)
 - Stripe takes 2.9% + 30c per transaction

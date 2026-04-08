@@ -247,7 +247,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
     <>
       {/* Mobile: viewport-locked phase-based flow */}
       <div className={embedded ? "flex flex-col h-full md:hidden" : "mobile-viewport md:hidden"}>
-        {/* Header — only shown in standalone mode */}
+        {/* Header -- only shown in standalone mode */}
         {!embedded && (
           <div className="flex-none px-6 pt-10 pb-3 animate-fade-in">
             <button onClick={() => phase === 'results' ? setPhase('input') : router.back()} className="text-white/40 text-sm mb-2 flex items-center gap-1">
@@ -302,7 +302,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
               )}
             </div>
 
-            {/* Quick tags — horizontal scroll strip */}
+            {/* Quick tags -- horizontal scroll strip */}
             <div className="flex-none mt-4">
               <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Quick tags</p>
               <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
@@ -408,7 +408,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
           </div>
         )}
 
-        {/* Save button — anchored at bottom for results phase */}
+        {/* Save button -- anchored at bottom for results phase */}
         {phase === 'results' && transcript && (
           <div className="flex-none px-6 pb-nav">
             {atLimit ? (

@@ -17,11 +17,11 @@ Over 70 million Americans suffer from digestive issues, yet most rely on generic
 
 ## The Solution
 
-gutted. is the first app to close the loop between **symptom tracking**, **medical data**, and **personalized nutrition** — all powered by AI.
+gutted. is the first app to close the loop between **symptom tracking**, **medical data**, and **personalized nutrition** -- all powered by AI.
 
-1. **Voice-log symptoms in seconds** — speak naturally, and AI transcribes + analyzes
-2. **Upload any gut test or food label** — AI extracts biomarkers and explains results in plain English
-3. **Receive a weekly meal plan tailored to your gut** — built from your unique profile, symptoms, and test data
+1. **Voice-log symptoms in seconds** -- speak naturally, and AI transcribes + analyzes
+2. **Upload any gut test or food label** -- AI extracts biomarkers and explains results in plain English
+3. **Receive a weekly meal plan tailored to your gut** -- built from your unique profile, symptoms, and test data
 
 ## Key Differentiators
 
@@ -36,9 +36,9 @@ gutted. is the first app to close the loop between **symptom tracking**, **medic
 ## Business Model
 
 Three-tier subscription:
-- **Free** — 3 voice logs, 1 upload, basic scoring
-- **Core ($9/mo)** — Unlimited logging, weekly meal plans, trends
-- **Pro ($19/mo)** — Unlimited everything, PDF reports, priority AI, email meal plans
+- **Free** -- 3 voice logs, 1 upload, basic scoring
+- **Core ($9/mo)** -- Unlimited logging, weekly meal plans, trends
+- **Pro ($19/mo)** -- Unlimited everything, PDF reports, priority AI, email meal plans
 
 ## Technology
 
@@ -53,4 +53,4 @@ Built on a modern, scalable stack: Next.js 16, React 19, Supabase (PostgreSQL + 
 
 ## Vision
 
-gutted. aims to become the **default gut health platform** — the place where anyone with digestive issues goes first, before (and between) doctor visits. By building the richest individual gut health dataset per user, we create compounding value that deepens engagement and reduces churn over time.
+gutted. aims to become the **default gut health platform** -- the place where anyone with digestive issues goes first, before (and between) doctor visits. By building the richest individual gut health dataset per user, we create compounding value that deepens engagement and reduces churn over time.

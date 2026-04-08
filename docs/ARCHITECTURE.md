@@ -117,10 +117,10 @@ User requests plan → Fetch profile + logs + documents from DB
 
 Four core tables, all with row-level security:
 
-- **profiles** — User identity, subscription plan, gut profile (JSONB)
-- **logs** — Voice/text entries with AI analysis and gut scores
-- **documents** — Uploaded files with AI interpretations and biomarkers
-- **meal_plans** — Weekly generated plans stored as JSONB
+- **profiles** -- User identity, subscription plan, gut profile (JSONB)
+- **logs** -- Voice/text entries with AI analysis and gut scores
+- **documents** -- Uploaded files with AI interpretations and biomarkers
+- **meal_plans** -- Weekly generated plans stored as JSONB
 
 All tables cascade-delete from `profiles` for clean account removal.
 
@@ -144,14 +144,14 @@ Multi-model approach optimized for each task:
 | Meal plan generation | Claude 3.5 Sonnet | Structured output + dietary reasoning |
 | Food nutrition lookup | Edamam API | Verified nutrition database |
 
-All AI calls are server-side only — API keys never reach the client.
+All AI calls are server-side only -- API keys never reach the client.
 
 ## Security Model
 
 - **Row-Level Security (RLS)** on all database tables
-- **Server-side API keys** — no secrets in client bundles
+- **Server-side API keys** -- no secrets in client bundles
 - **Supabase Auth** with JWT verification
 - **Stripe webhook signature verification**
 - **10MB body size limit** on server actions
 - **File type validation** on uploads (images + PDF only)
-- **Non-medical disclaimers** — AI always recommends professional consultation
+- **Non-medical disclaimers** -- AI always recommends professional consultation

@@ -8,17 +8,17 @@ gutted. relies on AI (Claude and GPT-4o) for health-related analysis. This docum
 
 ## Core Principles for AI Health Analysis
 
-### 1. Never Diagnose — Always Inform
+### 1. Never Diagnose -- Always Inform
 The AI must never state or imply a medical diagnosis. All outputs should:
 - Describe observations, not conclusions
 - Use language like "this may suggest" rather than "you have"
 - Always include a recommendation to consult a healthcare professional
 - Frame insights as patterns worth discussing with a doctor
 
-**Example — Good:**
-> "Your recent logs show a pattern of bloating after meals containing dairy. This may suggest lactose sensitivity — worth discussing with your healthcare provider."
+**Example -- Good:**
+> "Your recent logs show a pattern of bloating after meals containing dairy. This may suggest lactose sensitivity -- worth discussing with your healthcare provider."
 
-**Example — Bad:**
+**Example -- Bad:**
 > "You have lactose intolerance. Stop eating dairy immediately."
 
 ### 2. Distinguish Correlation from Causation
@@ -61,20 +61,20 @@ AI should NOT:
 ### Medical Test Interpretation
 When analyzing uploaded gut tests (Viome, GI-MAP, Thryve, SIBO):
 
-1. **Extract key biomarkers** — Identify the most important findings
-2. **Explain in plain English** — No jargon without explanation
-3. **Contextualize** — "This level is [above/below/within] typical range"
-4. **Prioritize** — Lead with the most actionable findings
-5. **Flag concerns** — Clearly mark results that warrant medical follow-up
-6. **Connect to diet** — Relate findings to practical food choices where appropriate
+1. **Extract key biomarkers** -- Identify the most important findings
+2. **Explain in plain English** -- No jargon without explanation
+3. **Contextualize** -- "This level is [above/below/within] typical range"
+4. **Prioritize** -- Lead with the most actionable findings
+5. **Flag concerns** -- Clearly mark results that warrant medical follow-up
+6. **Connect to diet** -- Relate findings to practical food choices where appropriate
 
 ### Food Label Analysis
 When analyzing food labels:
 
-1. **Gut-friendliness rating** — Score 1-10 based on ingredients
-2. **Flag problematic ingredients** — Artificial sweeteners, high FODMAPs, known irritants
-3. **Note positives** — Fiber content, probiotics, anti-inflammatory ingredients
-4. **Consider the user's profile** — An ingredient that's fine for most may be problematic for someone with celiac
+1. **Gut-friendliness rating** -- Score 1-10 based on ingredients
+2. **Flag problematic ingredients** -- Artificial sweeteners, high FODMAPs, known irritants
+3. **Note positives** -- Fiber content, probiotics, anti-inflammatory ingredients
+4. **Consider the user's profile** -- An ingredient that's fine for most may be problematic for someone with celiac
 
 ---
 
@@ -124,7 +124,7 @@ When analyzing food labels:
 When the AI lacks sufficient data:
 - Say so explicitly: "With only 2 logs, it's too early to identify patterns"
 - Encourage more data collection: "Log consistently for 7 days for more accurate insights"
-- Avoid filling gaps with generic advice — silence is better than noise
+- Avoid filling gaps with generic advice -- silence is better than noise
 
 ---
 

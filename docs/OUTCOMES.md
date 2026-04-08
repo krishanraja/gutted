@@ -21,7 +21,7 @@
 #### Long-Term Outcomes (Ongoing Use)
 | Action | Outcome |
 |--------|---------|
-| Consistent tracking | Identify triggers — foods, stress, timing patterns |
+| Consistent tracking | Identify triggers -- foods, stress, timing patterns |
 | Regular meal plans | Diet aligned with individual gut needs, not generic advice |
 | Document history | Complete medical data archive with AI interpretations |
 | Score trends | Measurable gut health improvement over weeks and months |
@@ -92,8 +92,8 @@
 
 ## Impact Vision
 
-**Individual level:** Every gutted. user gains measurable clarity about their gut health — they know their triggers, they understand their tests, and they eat food that works for their body.
+**Individual level:** Every gutted. user gains measurable clarity about their gut health -- they know their triggers, they understand their tests, and they eat food that works for their body.
 
 **Market level:** gutted. proves that AI can make personalized health management accessible to everyone, not just those who can afford specialists and nutritionists.
 
-**Health system level:** Better-informed patients have more productive doctor visits, catch issues earlier, and manage chronic conditions more effectively — reducing long-term healthcare burden.
+**Health system level:** Better-informed patients have more productive doctor visits, catch issues earlier, and manage chronic conditions more effectively -- reducing long-term healthcare burden.

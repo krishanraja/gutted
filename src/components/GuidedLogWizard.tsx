@@ -113,7 +113,7 @@ export function GuidedLogWizard({ logCount, userProfile, userId, onComplete }: G
   const persist = useCallback((step: number, ans: Answers) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ step, answers: ans, logCount }))
-    } catch { /* quota exceeded — non-critical */ }
+    } catch { /* quota exceeded -- non-critical */ }
   }, [logCount])
 
   const toggleSymptom = (val: string) => {
@@ -201,7 +201,7 @@ export function GuidedLogWizard({ logCount, userProfile, userId, onComplete }: G
       setWizardStep(next)
       persist(next, answers)
     } else {
-      // Last step — go straight to analysis
+      // Last step -- go straight to analysis
       analyseAndSave()
     }
   }
@@ -274,7 +274,7 @@ export function GuidedLogWizard({ logCount, userProfile, userId, onComplete }: G
           </div>
         </div>
 
-        {/* Intro — only on step 0 */}
+        {/* Intro -- only on step 0 */}
         {wizardStep === 0 && (
           <div className="text-center mb-3 animate-fade-up">
             <h2 className="text-lg font-bold mb-1">{intro.heading}</h2>

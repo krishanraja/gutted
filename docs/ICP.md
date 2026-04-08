@@ -2,7 +2,7 @@
 
 ## Primary Personas
 
-### 1. The Frustrated Tracker — "Sarah"
+### 1. The Frustrated Tracker -- "Sarah"
 **Demographics:** 25-40, female, urban/suburban, health-conscious
 **Income:** $50K-$100K
 **Tech comfort:** High (daily smartphone user, uses 3+ health apps)
@@ -24,11 +24,11 @@
 - AI analysis gives her instant, personalized insights after each entry
 - Meal plans are built from her actual symptom data, not generic templates
 
-**Willingness to pay:** Core plan ($9/mo) — she values convenience and personalization
+**Willingness to pay:** Core plan ($9/mo) -- she values convenience and personalization
 
 ---
 
-### 2. The Test-Result Googler — "Mike"
+### 2. The Test-Result Googler -- "Mike"
 **Demographics:** 30-50, any gender, has seen a GI specialist or done at-home gut tests
 **Income:** $60K-$120K
 **Tech comfort:** Moderate to high
@@ -42,7 +42,7 @@
 **Pain Points:**
 - Medical reports use terminology he doesn't fully understand
 - His doctor gave him 15 minutes and a generic pamphlet
-- He wants actionable, ongoing guidance — not a one-time interpretation
+- He wants actionable, ongoing guidance -- not a one-time interpretation
 - No existing tool connects his test data to daily nutrition
 
 **Why gutted.:**
@@ -51,11 +51,11 @@
 - Meal plans incorporate his test results alongside daily symptoms
 - Ongoing tracking shows whether dietary changes are improving his scores
 
-**Willingness to pay:** Pro plan ($19/mo) — he's already invested in testing and wants maximum value
+**Willingness to pay:** Pro plan ($19/mo) -- he's already invested in testing and wants maximum value
 
 ---
 
-### 3. The Gut-Curious Optimizer — "Alex"
+### 3. The Gut-Curious Optimizer -- "Alex"
 **Demographics:** 22-35, any gender, fitness/wellness-oriented
 **Income:** $40K-$80K
 **Tech comfort:** Very high (early adopter, uses productivity tools)
@@ -94,7 +94,7 @@
 ### 5. The Postpartum Recoverer
 - Experiencing gut changes after pregnancy
 - New to digestive health tracking
-- Limited time (new parent) — voice logging is essential
+- Limited time (new parent) -- voice logging is essential
 - Values convenience above all
 - Core plan
 
@@ -117,12 +117,12 @@
 
 ## Acquisition Channels (Prioritized)
 
-1. **Content marketing** — SEO for "how to read Viome results," "gut health meal plan," "IBS symptom tracker"
-2. **Social media** — TikTok/Instagram gut health community (large, engaged audience)
-3. **App store optimization** — "gut health," "IBS tracker," "meal plan" keywords
-4. **Referral** — Users share meal plans and gut scores with friends/partners
-5. **Practitioner partnerships** — Nutritionists recommend to clients
-6. **Influencer collaborations** — Gut health podcasters and creators
+1. **Content marketing** -- SEO for "how to read Viome results," "gut health meal plan," "IBS symptom tracker"
+2. **Social media** -- TikTok/Instagram gut health community (large, engaged audience)
+3. **App store optimization** -- "gut health," "IBS tracker," "meal plan" keywords
+4. **Referral** -- Users share meal plans and gut scores with friends/partners
+5. **Practitioner partnerships** -- Nutritionists recommend to clients
+6. **Influencer collaborations** -- Gut health podcasters and creators
 
 ## Retention Drivers
 
@@ -130,4 +130,4 @@
 - **Compounding data:** More logs = better insights = harder to leave
 - **Weekly meal plans:** Recurring value delivery every week
 - **Score gamification:** Users want to improve their gut score
-- **Document uploads:** Test history is stored and analyzed — switching means losing context
+- **Document uploads:** Test history is stored and analyzed -- switching means losing context

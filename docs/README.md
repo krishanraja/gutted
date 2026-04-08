@@ -1,6 +1,6 @@
 # gutted. Documentation
 
-> **Know your gut.** — AI-powered gut health companion
+> **Know your gut.** -- AI-powered gut health companion
 
 ---
 
@@ -27,7 +27,7 @@ gutted. is a full-stack AI health application that helps users track gut symptom
 | Document | Description |
 |----------|-------------|
 | [FEATURES](./FEATURES.md) | Complete feature inventory with details |
-| [DESIGN_SYSTEM](./DESIGN_SYSTEM.md) | Colors, typography, spacing, components — the full design spec |
+| [DESIGN_SYSTEM](./DESIGN_SYSTEM.md) | Colors, typography, spacing, components -- the full design spec |
 | [VISUAL_GUIDELINES](./VISUAL_GUIDELINES.md) | How to apply the design system correctly |
 | [BRANDING](./BRANDING.md) | Brand identity, voice, colors, and logo usage |
 
