@@ -166,11 +166,11 @@ export const emailTemplates = {
         </div>
         <div>
           <p style="color:#a3a3a3;font-size:12px;margin:0 0 4px 0;">Last Month</p>
-          <p style="color:#ffffff;font-size:36px;font-weight:bold;margin:0;opacity:0.4;">${prevAvg || '--'}</p>
+          <p style="color:#ffffff;font-size:36px;font-weight:bold;margin:0;opacity:0.4;">${prevAvg || '-'}</p>
         </div>
       </div>
       ${prevAvg > 0 ? `<p style="text-align:center;color:${currentAvg >= prevAvg ? '#4ADE80' : '#EF4444'};font-size:14px;margin:0;">
-        ${currentAvg > prevAvg ? `↑ Up ${Math.round((currentAvg - prevAvg) * 10) / 10} points -- nice improvement!` : currentAvg < prevAvg ? `↓ Down ${Math.round((prevAvg - currentAvg) * 10) / 10} points -- let's work on this` : 'Holding steady'}
+        ${currentAvg > prevAvg ? `↑ Up ${Math.round((currentAvg - prevAvg) * 10) / 10} points - nice improvement!` : currentAvg < prevAvg ? `↓ Down ${Math.round((prevAvg - currentAvg) * 10) / 10} points - let's work on this` : 'Holding steady'}
       </p>` : ''}
       <p style="text-align:center;color:#a3a3a3;font-size:14px;margin:12px 0 0 0;">${logCount} logs recorded this month</p>
     </div>

@@ -152,7 +152,7 @@ function DashboardContent() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   const getNudge = () => {
-    if (!hasLoggedToday) return { text: "You haven't logged today -- how's your gut feeling?", action: '/dashboard/log', cta: 'Log now' }
+    if (!hasLoggedToday) return { text: "You haven't logged today - how's your gut feeling?", action: '/dashboard/log', cta: 'Log now' }
     const recentScores = logs.slice(0, 5).filter(l => l.gut_score).map(l => l.gut_score)
     const avgRecent = recentScores.length ? recentScores.reduce((a, b) => a + b, 0) / recentScores.length : 0
     if (avgRecent > 0 && avgRecent < 4) return { text: "Your scores have been low. Let's look at what might be causing it.", action: '/dashboard/history', cta: 'View history' }
@@ -164,7 +164,7 @@ function DashboardContent() {
   // Contextual line below score -- show the most important one
   const contextLine = nudge?.text
     || (dailyInsight ? `${insightIcons[dailyInsight.type] || '💡'} ${dailyInsight.insight}` : null)
-    || (todayScore === 0 ? 'Log your first entry to get your score' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day -- take it easy')
+    || (todayScore === 0 ? 'Log your first entry to get your score' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day - take it easy')
 
   const unlock = getUnlockStatus(logCount, docCount, hasRestrictions)
   const gutTabs = [
@@ -387,7 +387,7 @@ function DashboardContent() {
                         } catch { setUpgrading(false) }
                       }}
                       className="text-[#4ADE80] text-xs font-medium hover:underline disabled:opacity-50"
-                    >{upgrading ? 'Redirecting...' : 'Upgrade to Core -- $14/mo →'}</button>
+                    >{upgrading ? 'Redirecting...' : 'Upgrade to Core - $14/mo →'}</button>
                   </Card>
                 )}
                 <button
@@ -659,7 +659,7 @@ function DashboardContent() {
                     } catch { setUpgrading(false) }
                   }}
                   className="text-[#4ADE80] text-sm font-medium hover:underline disabled:opacity-50"
-                >{upgrading ? 'Redirecting...' : 'Upgrade to Core -- $14/mo →'}</button>
+                >{upgrading ? 'Redirecting...' : 'Upgrade to Core - $14/mo →'}</button>
               </div>
             )}
             <button

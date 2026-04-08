@@ -10,7 +10,7 @@ import { useAuth } from '@/components/AuthProvider'
 const steps = [
   {
     q: "What are your gut health goals?",
-    subtitle: "Select all that apply -- we'll personalise your experience.",
+    subtitle: "Select all that apply - we'll personalise your experience.",
     key: 'goals',
     multi: true,
     options: [
@@ -200,7 +200,7 @@ export default function OnboardingPage() {
         {phase === 'gut-score' && (
           <div className="animate-fade-in">
             <h2 className="text-2xl font-bold mb-2">How is your gut right now?</h2>
-            <p className="text-white/40 text-sm mb-10">Be honest -- this is your starting point, not your goal.</p>
+            <p className="text-white/40 text-sm mb-10">Be honest - this is your starting point, not your goal.</p>
             <div className="flex flex-col items-center gap-8">
               <div className="relative">
                 <div className="text-7xl font-bold gradient-text">{gutScore}</div>
