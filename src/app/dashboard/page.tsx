@@ -227,7 +227,7 @@ function DashboardContent() {
         {activeTab === 'history' && <div className="flex-1 overflow-y-auto pb-nav"><HistoryContent embedded /></div>}
         {activeTab === 'coach' && <div className="flex-1 overflow-y-auto pb-nav"><CoachContent /></div>}
 
-        {activeTab === 'overview' && <div className="flex-1 overflow-y-auto pb-nav">
+        {activeTab === 'overview' && <div className="flex-1 overflow-hidden pb-nav">
         {/* Zone 2: Hero Score or Welcome */}
         <div className="px-6 py-4">
           {logCount < 3 ? (
