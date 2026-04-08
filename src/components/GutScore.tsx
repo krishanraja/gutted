@@ -22,7 +22,7 @@ export function GutScore({ score, size = 'lg', animate = true }: GutScoreProps) 
     const tick = (now: number) => {
       const elapsed = now - startTime
       const t = Math.min(elapsed / duration, 1)
-      // Elastic overshoot easing — goes to 1.03 then settles to 1
+      // Elastic overshoot easing -- goes to 1.03 then settles to 1
       const eased = t < 1
         ? 1 - Math.pow(1 - t, 3) + Math.sin(t * Math.PI) * 0.03
         : 1
@@ -32,7 +32,7 @@ export function GutScore({ score, size = 'lg', animate = true }: GutScoreProps) 
       if (t < 1) {
         requestAnimationFrame(tick)
       } else {
-        // Animation complete — fire haptic and mark revealed
+        // Animation complete -- fire haptic and mark revealed
         if (!hapticFired.current && score > 0) {
           hapticFired.current = true
           haptic.scoreReveal()

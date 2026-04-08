@@ -2,17 +2,17 @@
 
 ## Overview
 
-gutted. follows a dark, minimal, premium visual language. Every screen should feel clean, focused, and modern — like a high-end health device interface.
+gutted. follows a dark, minimal, premium visual language. Every screen should feel clean, focused, and modern -- like a high-end health device interface.
 
 ---
 
 ## Core Principles
 
-1. **Dark canvas, bright data** — Black backgrounds make health data and scores pop
-2. **Less is more** — Remove every element that doesn't serve the user's immediate goal
-3. **Motion with purpose** — Animations communicate state changes, never decorative
-4. **Mobile-native feel** — Every interaction should feel like a native app, not a website
-5. **Accessible hierarchy** — Information importance is clear at a glance through size, weight, and opacity
+1. **Dark canvas, bright data** -- Black backgrounds make health data and scores pop
+2. **Less is more** -- Remove every element that doesn't serve the user's immediate goal
+3. **Motion with purpose** -- Animations communicate state changes, never decorative
+4. **Mobile-native feel** -- Every interaction should feel like a native app, not a website
+5. **Accessible hierarchy** -- Information importance is clear at a glance through size, weight, and opacity
 
 ---
 
@@ -66,7 +66,7 @@ Caption:        text-xs text-white/30                  (12px, regular)
 
 ### Rules
 - Never use more than 3 levels of text hierarchy on a single screen
-- Headings are always `text-white` — never muted
+- Headings are always `text-white` -- never muted
 - Body text can be `white` or `white/70` depending on density
 - Numbers and scores should be `font-bold` to stand out
 - The gradient text effect is reserved for brand elements and landing page headings only
@@ -80,7 +80,7 @@ Caption:        text-xs text-white/30                  (12px, regular)
 - Default size: 24x24 (`w-6 h-6`)
 - Small icons: 20x20 (`w-5 h-5`)
 - Stroke width: 1.5px
-- Style: Outline (not filled) — consistent with Heroicons
+- Style: Outline (not filled) -- consistent with Heroicons
 
 ### Color
 | State | Color |
@@ -201,7 +201,7 @@ Label to input:      mb-1 (4px)
 - No slide-in animations for page content
 - Loading states use a simple spinner, never skeleton screens
 - Gut score is the only element with a "dramatic" animation
-- Transitions default to 200ms — never slower than 300ms for UI elements
+- Transitions default to 200ms -- never slower than 300ms for UI elements
 
 ---
 
@@ -219,7 +219,7 @@ Label to input:      mb-1 (4px)
 
 ### Empty States
 - Use text-based empty states with a relevant emoji or icon
-- Never show a blank page — always guide the user to their next action
+- Never show a blank page -- always guide the user to their next action
 - Example: "No logs yet. Tap the mic to record your first entry."
 
 ---
@@ -227,11 +227,11 @@ Label to input:      mb-1 (4px)
 ## Do's and Don'ts
 
 ### Do
-- Use the gradient sparingly — it's a highlight, not a base
+- Use the gradient sparingly -- it's a highlight, not a base
 - Maintain consistent spacing with Tailwind's scale
 - Show loading states for all async operations
 - Use color to communicate status (green/amber/red)
-- Keep text concise — mobile screens have limited space
+- Keep text concise -- mobile screens have limited space
 
 ### Don't
 - Don't use colored backgrounds on cards (only `white/5`)

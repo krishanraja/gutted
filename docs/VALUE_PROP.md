@@ -2,7 +2,7 @@
 
 ## Core Value Proposition
 
-**gutted. is the only app that connects your gut symptoms, medical test results, and meal planning into one AI-powered system — so you finally understand your gut and know exactly what to eat.**
+**gutted. is the only app that connects your gut symptoms, medical test results, and meal planning into one AI-powered system -- so you finally understand your gut and know exactly what to eat.**
 
 ---
 
@@ -44,7 +44,7 @@
 
 ### vs. Seeing a Specialist
 - **Specialist provides:** Expert diagnosis and treatment plans
-- **gutted. provides:** Day-to-day tracking, pattern recognition, and dietary guidance between visits — making specialist appointments more productive
+- **gutted. provides:** Day-to-day tracking, pattern recognition, and dietary guidance between visits -- making specialist appointments more productive
 
 ---
 
@@ -65,19 +65,19 @@ The more you use gutted., the more it knows about your gut, and the more persona
 
 ## Value by Plan
 
-### Free — Experience the Intelligence
+### Free -- Experience the Intelligence
 - See how voice logging removes friction
 - Get your first AI gut score and analysis
 - Understand the quality of AI insights before committing
 
-### Core ($9/mo) — Daily Gut Management
+### Core ($9/mo) -- Daily Gut Management
 - Unlimited logging for consistent tracking
 - Weekly meal plans that adapt to your patterns
 - Document uploads to incorporate real medical data
 - Full history with trend visibility
 
-### Pro ($19/mo) — Complete Gut Optimization
-- Everything unlimited — no constraints
+### Pro ($19/mo) -- Complete Gut Optimization
+- Everything unlimited -- no constraints
 - PDF health reports to share with your doctor
 - Priority AI processing for faster results
 - Weekly emailed meal plans for convenience
@@ -91,4 +91,4 @@ The more you use gutted., the more it knows about your gut, and the more persona
 
 ## Elevator Pitch (30 seconds)
 
-> Over 70 million Americans deal with gut issues, but the tools available are fragmented — you track symptoms in one app, get test results you can't interpret, and follow generic diets that don't account for your body. gutted. is the first app that connects all three. You voice-log symptoms in seconds, upload any gut test for instant AI analysis, and get a weekly meal plan built specifically for your gut. It's like having a gut health specialist in your pocket.
+> Over 70 million Americans deal with gut issues, but the tools available are fragmented -- you track symptoms in one app, get test results you can't interpret, and follow generic diets that don't account for your body. gutted. is the first app that connects all three. You voice-log symptoms in seconds, upload any gut test for instant AI analysis, and get a weekly meal plan built specifically for your gut. It's like having a gut health specialist in your pocket.

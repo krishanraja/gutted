@@ -10,7 +10,7 @@ gutted. uses a dark-first, mobile-first design system built on Tailwind CSS 4 wi
 
 ### Core Palette
 ```
-Background:     #000000        (pure black — OLED optimized)
+Background:     #000000        (pure black -- OLED optimized)
 Surface:        white/5        (rgba(255,255,255,0.05))
 Surface Hover:  white/10       (rgba(255,255,255,0.10))
 Border:         white/10       (rgba(255,255,255,0.10))
@@ -19,7 +19,7 @@ Border Focus:   #00B4B4/50     (teal at 50% opacity)
 
 ### Text Hierarchy
 ```
-Primary:        #FFFFFF        (white — headings, body)
+Primary:        #FFFFFF        (white -- headings, body)
 Secondary:      white/50       (labels, descriptions)
 Tertiary:       white/30       (placeholders, hints)
 ```
@@ -33,9 +33,9 @@ Gradient:       #00B4B4 → #4ADE80  (brand signature)
 
 ### Status Colors
 ```
-Success/Good:   #4ADE80        (green — gut score >= 7)
-Warning/Mid:    #FBBF24        (amber — gut score 4-6)
-Error/Poor:     #F87171        (red — gut score < 4)
+Success/Good:   #4ADE80        (green -- gut score >= 7)
+Warning/Mid:    #FBBF24        (amber -- gut score 4-6)
+Error/Poor:     #F87171        (red -- gut score < 4)
 ```
 
 ---
@@ -93,15 +93,15 @@ Based on Tailwind's 4px grid:
 Four variants, three sizes:
 
 **Variants:**
-- `gradient` — Teal-to-green gradient background (primary CTA)
-- `outline` — Transparent with white/20 border
-- `ghost` — Transparent, no border
-- `danger` — Red background for destructive actions
+- `gradient` -- Teal-to-green gradient background (primary CTA)
+- `outline` -- Transparent with white/20 border
+- `ghost` -- Transparent, no border
+- `danger` -- Red background for destructive actions
 
 **Sizes:**
-- `sm` — `px-3 py-1.5 text-sm`
-- `md` — `px-4 py-2.5 text-sm` (default)
-- `lg` — `px-6 py-3 text-base`
+- `sm` -- `px-3 py-1.5 text-sm`
+- `md` -- `px-4 py-2.5 text-sm` (default)
+- `lg` -- `px-6 py-3 text-base`
 
 **States:**
 - Hover: `opacity-90`
@@ -126,11 +126,11 @@ Glow:           shadow-lg shadow-cyan-500/10 (optional)
 Inline status indicator.
 
 **Variants:**
-- `green` — `bg-green-500/20 text-green-400`
-- `amber` — `bg-amber-500/20 text-amber-400`
-- `red` — `bg-red-500/20 text-red-400`
-- `teal` — `bg-teal-500/20 text-teal-400`
-- `neutral` — `bg-white/10 text-white/70`
+- `green` -- `bg-green-500/20 text-green-400`
+- `amber` -- `bg-amber-500/20 text-amber-400`
+- `red` -- `bg-red-500/20 text-red-400`
+- `teal` -- `bg-teal-500/20 text-teal-400`
+- `neutral` -- `bg-white/10 text-white/70`
 
 ### Input Fields
 ```
@@ -238,4 +238,4 @@ Mobile-first with minimal breakpoints:
 | `md:` | 768px+ | Landing page grid changes |
 | `lg:` | 1024px+ | Landing page max-width |
 
-The dashboard is designed for `max-w-sm` (384px) — fully mobile-optimized.
+The dashboard is designed for `max-w-sm` (384px) -- fully mobile-optimized.

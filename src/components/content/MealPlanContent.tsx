@@ -240,7 +240,7 @@ export function MealPlanContent() {
               </div>
             )}
 
-            {/* Meal carousel — one meal at a time */}
+            {/* Meal carousel -- one meal at a time */}
             {!showGroceryList && currentDay && (
               <div className="flex-1 px-6 pb-nav min-h-0 animate-fade-up">
                 <CardCarousel>

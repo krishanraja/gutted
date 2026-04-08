@@ -55,8 +55,8 @@ NEXT_PUBLIC_SITE_URL=https://gutted.app
 ```
 
 ### Notes
-- `NEXT_PUBLIC_` prefixed variables are exposed to the browser — only use for non-sensitive values
-- `SUPABASE_SERVICE_ROLE_KEY` has full database access — server-side only
+- `NEXT_PUBLIC_` prefixed variables are exposed to the browser -- only use for non-sensitive values
+- `SUPABASE_SERVICE_ROLE_KEY` has full database access -- server-side only
 - Stripe keys: use `sk_test_` for staging, `sk_live_` for production
 
 ---

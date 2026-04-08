@@ -1,4 +1,4 @@
-# UX Test Report — gutted.
+# UX Test Report -- gutted.
 
 **Date:** 2026-04-04 UTC  
 **URL Tested:** https://www.gutted.app  
@@ -15,7 +15,7 @@ gutted. has a **polished UI/UX** with excellent mobile-first design, smooth onbo
 1. ~~Claude AI analysis returns 500 error~~ ✅ FIXED (model updated to claude-sonnet-4)
 2. ~~Edamam food lookup fails~~ ✅ FIXED (credentials updated)
 3. ~~Pricing mismatch~~ ✅ FIXED (landing page updated to $14/$29)
-4. Stripe shows "WellWell" instead of "gutted." — **Pending manual update**
+4. Stripe shows "WellWell" instead of "gutted." -- **Pending manual update**
 
 **Key Wins:**
 - Beautiful, intuitive mobile-first PWA design

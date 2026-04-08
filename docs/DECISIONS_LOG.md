@@ -12,7 +12,7 @@ A record of key architectural, design, and product decisions made during the dev
 **Context:** Needed a full-stack React framework with serverless API routes, SSR, and modern React features
 **Rationale:**
 - App Router provides server components, layouts, and loading states out of the box
-- API routes run as serverless functions — no separate backend needed
+- API routes run as serverless functions -- no separate backend needed
 - React 19 compatibility with server actions
 - Strong Vercel deployment ecosystem
 **Trade-offs:** Next.js 16 has breaking changes vs. earlier versions; must reference docs carefully
@@ -25,7 +25,7 @@ A record of key architectural, design, and product decisions made during the dev
 - **Whisper** is best-in-class for speech-to-text accuracy
 - **GPT-4o** leads in document/image understanding (medical test interpretation)
 - **Claude 3.5 Sonnet** excels at structured reasoning (symptom analysis, meal planning)
-- Each model is used where it performs best — no compromises
+- Each model is used where it performs best -- no compromises
 **Trade-offs:** Multiple API keys to manage, higher integration complexity, multiple vendor dependencies
 
 ### ADR-003: Supabase for Backend
@@ -57,18 +57,18 @@ A record of key architectural, design, and product decisions made during the dev
 
 ### DDR-001: Dark-Only Theme
 **Date:** Project inception
-**Decision:** Ship with dark theme only — no light mode
+**Decision:** Ship with dark theme only -- no light mode
 **Context:** Many health apps use light themes; we wanted differentiation
 **Rationale:**
 - Pure black (#000000) background saves battery on OLED screens
 - Creates a premium, modern aesthetic that stands out
-- Reduces visual clutter — content and data are the focus
+- Reduces visual clutter -- content and data are the focus
 - Simpler to maintain one theme well than two themes adequately
 **Trade-offs:** Some users prefer light mode; outdoor readability is slightly reduced
 
 ### DDR-002: Mobile-First, Max-Width Constraint
 **Date:** Project inception
-**Decision:** Dashboard uses `max-w-sm` (384px) — designed for phones first
+**Decision:** Dashboard uses `max-w-sm` (384px) -- designed for phones first
 **Context:** Gut health tracking is a personal, on-the-go activity
 **Rationale:**
 - Primary use case is logging symptoms immediately when they occur
@@ -105,12 +105,12 @@ A record of key architectural, design, and product decisions made during the dev
 
 ### PDR-001: Auto-Confirm Email Signup
 **Date:** Project inception
-**Decision:** Skip email verification — auto-confirm users on signup
+**Decision:** Skip email verification -- auto-confirm users on signup
 **Context:** Standard email verification adds friction to onboarding
 **Rationale:**
 - Reducing signup-to-first-log time is critical for activation
 - Email verification causes 20-40% drop-off in typical apps
-- Security risk is low — users can only access their own data
+- Security risk is low -- users can only access their own data
 - Can add verification later if abuse becomes an issue
 **Trade-offs:** Fake email addresses possible; mitigated by RLS (no impact on other users)
 
@@ -119,8 +119,8 @@ A record of key architectural, design, and product decisions made during the dev
 **Decision:** Free, Core ($9/mo), Pro ($19/mo)
 **Context:** Need to balance accessibility with revenue
 **Rationale:**
-- **Free** tier provides genuine value — enough to hook users and demonstrate AI quality
-- **Core** removes limits for daily users — the "default" plan
+- **Free** tier provides genuine value -- enough to hook users and demonstrate AI quality
+- **Core** removes limits for daily users -- the "default" plan
 - **Pro** adds premium features (PDF reports, unlimited uploads, email plans)
 - Price points align with health app market ($5-20/mo range)
 **Trade-offs:** Free tier costs money (AI API calls); limited to 3 logs + 1 upload to control costs
@@ -132,7 +132,7 @@ A record of key architectural, design, and product decisions made during the dev
 **Rationale:**
 - Single number is easy to track and compare over time
 - Color-coding (green/amber/red) provides instant understanding
-- Gamification effect — users want to improve their score
+- Gamification effect -- users want to improve their score
 - 7-day rolling average smooths daily variation
 **Trade-offs:** Oversimplification of complex health data; mitigated by detailed insights alongside the score
 

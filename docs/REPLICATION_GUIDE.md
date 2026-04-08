@@ -14,9 +14,9 @@ This guide walks through setting up a complete local development environment and
 - **Accounts needed:**
   - [Supabase](https://supabase.com) (free tier)
   - [Stripe](https://stripe.com) (free test mode)
-  - [OpenAI](https://platform.openai.com) (paid — needs GPT-4o and Whisper access)
-  - [Anthropic](https://console.anthropic.com) (paid — needs Claude API access)
-  - [Resend](https://resend.com) (free tier — 3,000 emails/mo)
+  - [OpenAI](https://platform.openai.com) (paid -- needs GPT-4o and Whisper access)
+  - [Anthropic](https://console.anthropic.com) (paid -- needs Claude API access)
+  - [Resend](https://resend.com) (free tier -- 3,000 emails/mo)
   - [Edamam](https://developer.edamam.com) (free developer tier)
   - [Vercel](https://vercel.com) (free hobby tier for deployment)
 
@@ -43,7 +43,7 @@ npm install
 ### Run Database Migration
 1. Go to Supabase Dashboard → SQL Editor
 2. Paste the contents of `supabase/migrations/001_initial.sql`
-3. Run the query — this creates all tables and RLS policies
+3. Run the query -- this creates all tables and RLS policies
 
 ### Configure Authentication
 1. Go to Authentication → Providers
@@ -168,7 +168,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you should see the landing page.
+Open [http://localhost:3000](http://localhost:3000) -- you should see the landing page.
 
 ### Verify the Setup
 1. **Sign up** with email/password → Should redirect to onboarding

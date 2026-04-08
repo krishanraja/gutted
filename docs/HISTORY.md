@@ -6,7 +6,7 @@
 **Period:** Project inception
 
 **Motivation:**
-The idea for gutted. emerged from a common frustration: people with gut issues have no single tool that connects their symptoms, medical test results, and diet. Existing apps handle one piece — tracking OR nutrition OR test interpretation — but never all three together.
+The idea for gutted. emerged from a common frustration: people with gut issues have no single tool that connects their symptoms, medical test results, and diet. Existing apps handle one piece -- tracking OR nutrition OR test interpretation -- but never all three together.
 
 **Key decisions made:**
 - Target the gut health vertical specifically (not general health)
@@ -21,16 +21,16 @@ The idea for gutted. emerged from a common frustration: people with gut issues h
 **Period:** Initial build
 
 **What was built:**
-1. **Authentication system** — Email/password, Google OAuth, magic links with auto-confirm
-2. **Onboarding flow** — 4-step personalization (goals, restrictions, conditions, score)
-3. **Voice logging** — MediaRecorder + Whisper transcription + Claude analysis
-4. **Document upload** — Drag-drop + camera capture + GPT-4o vision analysis
-5. **Meal plan generation** — Claude-powered 7-day personalized plans
-6. **History & analytics** — Timeline view with 7-day rolling averages
-7. **Dashboard** — Personalized home screen with gut score and quick actions
-8. **Subscription billing** — Stripe Checkout with three-tier pricing
-9. **Transactional email** — Welcome, upgrade, meal plan delivery via Resend
-10. **Landing page** — Hero video, feature showcase, pricing table, CTAs
+1. **Authentication system** -- Email/password, Google OAuth, magic links with auto-confirm
+2. **Onboarding flow** -- 4-step personalization (goals, restrictions, conditions, score)
+3. **Voice logging** -- MediaRecorder + Whisper transcription + Claude analysis
+4. **Document upload** -- Drag-drop + camera capture + GPT-4o vision analysis
+5. **Meal plan generation** -- Claude-powered 7-day personalized plans
+6. **History & analytics** -- Timeline view with 7-day rolling averages
+7. **Dashboard** -- Personalized home screen with gut score and quick actions
+8. **Subscription billing** -- Stripe Checkout with three-tier pricing
+9. **Transactional email** -- Welcome, upgrade, meal plan delivery via Resend
+10. **Landing page** -- Hero video, feature showcase, pricing table, CTAs
 
 **Technical milestones:**
 - Next.js 16 App Router architecture established
@@ -84,9 +84,9 @@ The idea for gutted. emerged from a common frustration: people with gut issues h
 
 ## Lessons Learned
 
-1. **Voice-first was the right call** — Typing symptoms on a phone is tedious; voice removes the biggest friction point in health tracking
-2. **Multi-model AI pays off** — Using the best model for each task produces noticeably better results than compromising on a single model
-3. **Auto-confirm reduces drop-off** — Skipping email verification significantly improved signup completion rates
-4. **Dark theme resonates** — Users respond positively to the premium feel; it also differentiates from clinical health apps
-5. **10MB server action limit matters** — Audio recordings can be large; this config change was essential
-6. **RLS is worth the upfront effort** — Row-level security eliminates an entire class of data access bugs
+1. **Voice-first was the right call** -- Typing symptoms on a phone is tedious; voice removes the biggest friction point in health tracking
+2. **Multi-model AI pays off** -- Using the best model for each task produces noticeably better results than compromising on a single model
+3. **Auto-confirm reduces drop-off** -- Skipping email verification significantly improved signup completion rates
+4. **Dark theme resonates** -- Users respond positively to the premium feel; it also differentiates from clinical health apps
+5. **10MB server action limit matters** -- Audio recordings can be large; this config change was essential
+6. **RLS is worth the upfront effort** -- Row-level security eliminates an entire class of data access bugs

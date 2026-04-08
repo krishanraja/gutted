@@ -142,7 +142,7 @@ export function SupplementsContent() {
                     <span className="text-[#4ADE80] shrink-0">🥬</span>
                     <div>
                       <span className="text-white/80 font-medium">{f.food}</span>
-                      <span className="text-white/50"> — {f.benefit}</span>
+                      <span className="text-white/50"> - {f.benefit}</span>
                     </div>
                   </div>
                 ))}

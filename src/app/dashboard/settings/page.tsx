@@ -69,7 +69,7 @@ export default function SettingsPage() {
         setSubInfo(data)
       }
     } catch {
-      // Silent fail — profile data is the fallback
+      // Silent fail -- profile data is the fallback
     } finally {
       setSubLoading(false)
     }
@@ -301,7 +301,7 @@ export default function SettingsPage() {
               {(['core', 'pro'] as const).map(plan => (
                 <div key={plan} className="p-3 rounded-xl bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border border-[#00B4B4]/20">
                   <p className="font-semibold text-sm mb-2">
-                    {plan === 'core' ? 'Core' : 'Pro'} — ${plan === 'core' ? '14' : '29'}/mo
+                    {plan === 'core' ? 'Core' : 'Pro'} - ${plan === 'core' ? '14' : '29'}/mo
                   </p>
                   <ul className="space-y-1.5 mb-3">
                     {PLAN_FEATURES[plan].map(feature => (
@@ -328,7 +328,7 @@ export default function SettingsPage() {
           {currentPlan === 'core' && !isCanceling && (
             <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border border-[#00B4B4]/20">
               <p className="font-semibold text-sm mb-2">
-                Upgrade to Pro — $29/mo
+                Upgrade to Pro - $29/mo
               </p>
               <ul className="space-y-1.5 mb-3">
                 {PLAN_FEATURES.pro.map(feature => (

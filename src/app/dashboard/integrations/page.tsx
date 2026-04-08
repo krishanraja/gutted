@@ -101,7 +101,7 @@ export default function IntegrationsPage() {
           <Card className="text-center py-10">
             <div className="text-4xl mb-4">🔗</div>
             <p className="font-semibold mb-2">Unlock health integrations</p>
-            <p className="text-white/40 text-sm mb-6">Upgrade to Pro to track sleep, exercise, stress, and more — and see how they affect your gut health.</p>
+            <p className="text-white/40 text-sm mb-6">Upgrade to Pro to track sleep, exercise, stress, and more - and see how they affect your gut health.</p>
             <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade to Pro →</Link>
           </Card>
         </div>

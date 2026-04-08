@@ -10,26 +10,26 @@
 Ship a fully functional MVP with core AI features, authentication, billing, and mobile-optimized UI.
 
 ### Delivered
-- [x] **Landing page** — Hero video, feature showcase, pricing, CTAs
-- [x] **Authentication** — Email/password, Google OAuth, magic links, auto-confirm
-- [x] **Onboarding** — 4-step flow (goals, restrictions, conditions, gut score)
-- [x] **Dashboard** — Personalized home with gut score, quick actions, recent logs
-- [x] **Voice logging** — MediaRecorder + Whisper transcription + Claude analysis
-- [x] **Text logging** — Fallback input with quick symptom tags
-- [x] **Document upload** — Drag-drop + camera capture
-- [x] **Document analysis** — GPT-4o vision for test results, reports, food labels
-- [x] **Meal plan generation** — Claude-powered 7-day personalized plans
-- [x] **History** — Timeline view with 7-day rolling average
-- [x] **Settings** — Profile, plan display, sign out
-- [x] **Stripe billing** — Three-tier subscriptions with webhook handling
-- [x] **Email** — Welcome, upgrade, meal plan delivery via Resend
-- [x] **Database** — PostgreSQL schema with RLS on all tables
-- [x] **PWA** — Manifest, mobile-optimized, standalone display
-- [x] **Design system** — Dark theme, teal-green gradient, component library
+- [x] **Landing page** -- Hero video, feature showcase, pricing, CTAs
+- [x] **Authentication** -- Email/password, Google OAuth, magic links, auto-confirm
+- [x] **Onboarding** -- 4-step flow (goals, restrictions, conditions, gut score)
+- [x] **Dashboard** -- Personalized home with gut score, quick actions, recent logs
+- [x] **Voice logging** -- MediaRecorder + Whisper transcription + Claude analysis
+- [x] **Text logging** -- Fallback input with quick symptom tags
+- [x] **Document upload** -- Drag-drop + camera capture
+- [x] **Document analysis** -- GPT-4o vision for test results, reports, food labels
+- [x] **Meal plan generation** -- Claude-powered 7-day personalized plans
+- [x] **History** -- Timeline view with 7-day rolling average
+- [x] **Settings** -- Profile, plan display, sign out
+- [x] **Stripe billing** -- Three-tier subscriptions with webhook handling
+- [x] **Email** -- Welcome, upgrade, meal plan delivery via Resend
+- [x] **Database** -- PostgreSQL schema with RLS on all tables
+- [x] **PWA** -- Manifest, mobile-optimized, standalone display
+- [x] **Design system** -- Dark theme, teal-green gradient, component library
 
 ---
 
-## Upcoming: Sprint 2 — Polish & Feedback
+## Upcoming: Sprint 2 -- Polish & Feedback
 
 ### Goals
 Refine the MVP based on initial user feedback. Focus on reliability, performance, and usability gaps.
@@ -64,7 +64,7 @@ Refine the MVP based on initial user feedback. Focus on reliability, performance
 
 ---
 
-## Upcoming: Sprint 3 — Growth Features
+## Upcoming: Sprint 3 -- Growth Features
 
 ### Goals
 Add features that drive retention, enable sharing, and unlock Pro plan value.
@@ -96,7 +96,7 @@ Add features that drive retention, enable sharing, and unlock Pro plan value.
 
 ---
 
-## Upcoming: Sprint 4 — Scale & Expand
+## Upcoming: Sprint 4 -- Scale & Expand
 
 ### Goals
 Prepare for growth, add B2B capabilities, and explore new markets.
@@ -135,7 +135,7 @@ Prepare for growth, add B2B capabilities, and explore new markets.
 | Aspect | Approach |
 |--------|----------|
 | Sprint length | 2 weeks |
-| Planning | Start of sprint — prioritize by impact and effort |
-| Review | End of sprint — demo, measure, adjust |
-| Retrospective | After each sprint — what worked, what didn't |
+| Planning | Start of sprint -- prioritize by impact and effort |
+| Review | End of sprint -- demo, measure, adjust |
+| Retrospective | After each sprint -- what worked, what didn't |
 | Releases | Continuous deployment via Vercel |

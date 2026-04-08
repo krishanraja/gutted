@@ -11,7 +11,7 @@
 /.next/
 /out/
 
-# env — NEVER commit
+# env -- NEVER commit
 .env
 .env.local
 .env.*.local

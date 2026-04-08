@@ -3,12 +3,12 @@
 ## Core Features
 
 ### 1. Voice-First Symptom Logging
-Log gut symptoms by speaking naturally — no typing required.
+Log gut symptoms by speaking naturally -- no typing required.
 
 - **One-tap recording** with animated frequency visualization (20-bar display)
 - **OpenAI Whisper** transcription for accurate speech-to-text
 - **Quick symptom tags** for common issues (bloating, cramps, nausea, heartburn, etc.)
-- **Text fallback** — type entries when voice isn't convenient
+- **Text fallback** -- type entries when voice isn't convenient
 - **Instant AI analysis** after each log with gut score, insights, and recommendations
 
 ### 2. AI-Powered Gut Health Scoring
@@ -61,10 +61,10 @@ Complete timeline of your gut health journey.
 ### 6. Guided Onboarding
 Four-step personalization flow for new users:
 
-1. **Health goals** — What do you want to improve?
-2. **Dietary restrictions** — Allergies, intolerances, preferences
-3. **Existing conditions** — IBS, GERD, Crohn's, celiac, etc.
-4. **Initial gut score** — Baseline self-assessment
+1. **Health goals** -- What do you want to improve?
+2. **Dietary restrictions** -- Allergies, intolerances, preferences
+3. **Existing conditions** -- IBS, GERD, Crohn's, celiac, etc.
+4. **Initial gut score** -- Baseline self-assessment
 
 ### 7. Mobile-First PWA
 Designed as a Progressive Web App for native-like mobile experience:
@@ -80,7 +80,7 @@ Central hub with personalized greeting and quick actions:
 
 - **Time-based greeting** (Good morning/afternoon/evening)
 - **Current gut score** card with animated indicator
-- **Quick action buttons** — Log, Upload, View Meals
+- **Quick action buttons** -- Log, Upload, View Meals
 - **Recent logs** feed with scores and timestamps
 - **Onboarding prompt** for users who haven't completed setup
 
@@ -91,18 +91,18 @@ Central hub with personalized greeting and quick actions:
 ### 9. Flexible Authentication
 Multiple sign-in methods for user convenience:
 
-- **Email/password** — Traditional registration
-- **Google OAuth** — One-tap social login
-- **Magic links** — Password-less email login
-- **Auto-confirm** — No email verification friction
-- **Password reset** — Self-service recovery flow
+- **Email/password** -- Traditional registration
+- **Google OAuth** -- One-tap social login
+- **Magic links** -- Password-less email login
+- **Auto-confirm** -- No email verification friction
+- **Password reset** -- Self-service recovery flow
 
 ### 10. User Settings
 Account management and subscription control:
 
-- **Profile display** — Name, email, current plan
-- **Plan management** — View tier, upgrade options
-- **Sign out** — Secure session termination
+- **Profile display** -- Name, email, current plan
+- **Plan management** -- View tier, upgrade options
+- **Sign out** -- Secure session termination
 
 ---
 
@@ -126,10 +126,10 @@ Three plans with progressive value:
 ### 12. Transactional Email
 Automated email touchpoints via Resend:
 
-- **Welcome email** — Sent on signup with getting-started guidance
-- **Upgrade confirmation** — Plan upgrade acknowledgment
-- **Weekly meal plans** — Emailed plans for Pro subscribers
-- **Password reset** — Self-service account recovery
+- **Welcome email** -- Sent on signup with getting-started guidance
+- **Upgrade confirmation** -- Plan upgrade acknowledgment
+- **Weekly meal plans** -- Emailed plans for Pro subscribers
+- **Password reset** -- Self-service account recovery
 
 ---
 
@@ -138,16 +138,16 @@ Automated email touchpoints via Resend:
 ### 13. Multi-Model AI Pipeline
 Purpose-optimized AI for each task:
 
-- **Whisper** — Audio transcription
-- **Claude 3.5 Sonnet** — Symptom analysis + meal planning
-- **GPT-4o** — Medical document vision analysis
-- **Edamam** — Verified nutrition data
+- **Whisper** -- Audio transcription
+- **Claude 3.5 Sonnet** -- Symptom analysis + meal planning
+- **GPT-4o** -- Medical document vision analysis
+- **Edamam** -- Verified nutrition data
 
 ### 14. Data Security
 Enterprise-grade data protection:
 
 - **Row-Level Security (RLS)** on all database tables
-- **Server-side API keys** — Never exposed to client
-- **Stripe webhook verification** — Cryptographic signature validation
-- **File type validation** — Restricted upload formats
-- **Cascade deletion** — Clean account removal
+- **Server-side API keys** -- Never exposed to client
+- **Stripe webhook verification** -- Cryptographic signature validation
+- **File type validation** -- Restricted upload formats
+- **Cascade deletion** -- Clean account removal
