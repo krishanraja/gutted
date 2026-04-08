@@ -57,47 +57,80 @@ function FoodPageContent() {
   const currentLocked = foodTabs.find(t => t.key === activeTab)?.locked
 
   if (!loaded) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="mobile-viewport bg-black items-center justify-center md:min-h-screen md:static">
       <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin"/>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
-      <div className="px-6 pt-12 pb-4">
-        <h1 className="text-2xl font-bold mb-4">Food</h1>
-        <SectionNav tabs={foodTabs} activeTab={activeTab} onTabChange={handleTabChange} />
+    <>
+      {/* Mobile: viewport-locked no-scroll layout */}
+      <div className="mobile-viewport md:hidden">
+        <div className="px-6 pt-12 pb-4">
+          <h1 className="text-2xl font-bold mb-4">Food</h1>
+          <SectionNav tabs={foodTabs} activeTab={activeTab} onTabChange={handleTabChange} />
+        </div>
+
+        <div className="flex-1 overflow-y-auto pb-nav">
+          {currentLocked ? (
+            <div className="px-6 py-8">
+              <Card className="flex flex-col items-center py-8 border-[#00B4B4]/20 bg-gradient-to-b from-[#00B4B4]/5 to-transparent">
+                <svg className="w-8 h-8 text-white/20 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <p className="text-white/60 text-sm text-center mb-2">
+                  {foodTabs.find(t => t.key === activeTab)?.lockMessage}
+                </p>
+              </Card>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'meals' && <MealPlanContent />}
+              {activeTab === 'upload' && <UploadContent />}
+              {activeTab === 'check' && <FoodCheckerContent />}
+              {activeTab === 'supplements' && <SupplementsContent />}
+            </>
+          )}
+        </div>
       </div>
 
-      <div>
-        {currentLocked ? (
-          <div className="px-6 py-8">
-            <Card className="flex flex-col items-center py-8 border-[#00B4B4]/20 bg-gradient-to-b from-[#00B4B4]/5 to-transparent">
-              <svg className="w-8 h-8 text-white/20 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-              </svg>
-              <p className="text-white/60 text-sm text-center mb-2">
-                {foodTabs.find(t => t.key === activeTab)?.lockMessage}
-              </p>
-            </Card>
-          </div>
-        ) : (
-          <>
-            {activeTab === 'meals' && <MealPlanContent />}
-            {activeTab === 'upload' && <UploadContent />}
-            {activeTab === 'check' && <FoodCheckerContent />}
-            {activeTab === 'supplements' && <SupplementsContent />}
-          </>
-        )}
+      {/* Desktop */}
+      <div className="hidden md:block min-h-screen bg-black pb-8 md:ml-60 lg:ml-64">
+        <div className="px-6 pt-12 pb-4">
+          <h1 className="text-2xl font-bold mb-4">Food</h1>
+          <SectionNav tabs={foodTabs} activeTab={activeTab} onTabChange={handleTabChange} />
+        </div>
+
+        <div>
+          {currentLocked ? (
+            <div className="px-6 py-8">
+              <Card className="flex flex-col items-center py-8 border-[#00B4B4]/20 bg-gradient-to-b from-[#00B4B4]/5 to-transparent">
+                <svg className="w-8 h-8 text-white/20 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <p className="text-white/60 text-sm text-center mb-2">
+                  {foodTabs.find(t => t.key === activeTab)?.lockMessage}
+                </p>
+              </Card>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'meals' && <MealPlanContent />}
+              {activeTab === 'upload' && <UploadContent />}
+              {activeTab === 'check' && <FoodCheckerContent />}
+              {activeTab === 'supplements' && <SupplementsContent />}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
 export default function FoodPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="mobile-viewport bg-black items-center justify-center md:min-h-screen md:static">
         <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin"/>
       </div>
     }>
