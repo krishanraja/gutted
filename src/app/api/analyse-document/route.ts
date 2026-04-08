@@ -1,19 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@/lib/openai'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
+import { validateFile, rateLimit } from '@/lib/security'
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+    const { allowed } = rateLimit(`analyse-doc:${user.id}`, { maxRequests: 10, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 })
+
     const fd = await req.formData()
     const file = fd.get('file') as File
     const type = fd.get('type') as string
 
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
-    // Upload to Supabase Storage
-    const supabase = await createServiceClient()
-    const ext = file.name.split('.').pop() || 'bin'
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const { valid, error: fileError, sanitizedExt } = validateFile(file, 'document')
+    if (!valid) return NextResponse.json({ error: fileError }, { status: 400 })
+
+    // Upload to Supabase Storage scoped to user
+    const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${sanitizedExt}`
     const bytes = await file.arrayBuffer()
 
     const { error: uploadError } = await supabase.storage
@@ -31,7 +40,9 @@ export async function POST(req: NextRequest) {
       food_label: `This is a food label, ingredient list, or nutrition panel. Analyse the ingredients for gut health impact. Flag any common gut irritants (gluten, dairy, artificial sweeteners, FODMAPs, preservatives). Rate the overall gut health friendliness.`,
     }
 
-    const prompt = typePrompts[type] || typePrompts.doctor_report
+    const validTypes = new Set(['gut_test', 'doctor_report', 'food_label'])
+    const safeType = validTypes.has(type) ? type : 'doctor_report'
+    const prompt = typePrompts[safeType]
 
     // Use GPT-4o Vision
     const response = await openai.chat.completions.create({

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
 
+const MAX_ENTRIES_PER_REQUEST = 100
+const MAX_DAYS = 365
+
 // POST: Save health data from integrations
 export async function POST(req: NextRequest) {
   try {
@@ -16,11 +19,15 @@ export async function POST(req: NextRequest) {
     const { entries } = await req.json()
     if (!entries?.length) return NextResponse.json({ error: 'No data entries' }, { status: 400 })
 
+    if (entries.length > MAX_ENTRIES_PER_REQUEST) {
+      return NextResponse.json({ error: `Maximum ${MAX_ENTRIES_PER_REQUEST} entries per request` }, { status: 400 })
+    }
+
     const rows = entries.map((e: { source: string; metric: string; value: number; recorded_at: string }) => ({
       user_id: user.id,
-      source: e.source,
-      metric: e.metric,
-      value: e.value,
+      source: String(e.source).slice(0, 100),
+      metric: String(e.metric).slice(0, 100),
+      value: Number(e.value) || 0,
       recorded_at: e.recorded_at,
     }))
 
@@ -41,13 +48,14 @@ export async function GET(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const days = parseInt(req.nextUrl.searchParams.get('days') || '30')
+    const daysParam = parseInt(req.nextUrl.searchParams.get('days') || '30')
+    const days = Math.max(1, Math.min(daysParam || 30, MAX_DAYS))
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - days)
 
     const [{ data: healthData }, { data: logs }] = await Promise.all([
-      supabase.from('health_data').select('*').eq('user_id', user.id).gte('recorded_at', cutoff.toISOString()).order('recorded_at', { ascending: false }),
-      supabase.from('logs').select('gut_score, logged_at').eq('user_id', user.id).gte('logged_at', cutoff.toISOString()).order('logged_at', { ascending: false }),
+      supabase.from('health_data').select('metric, value, recorded_at').eq('user_id', user.id).gte('recorded_at', cutoff.toISOString()).order('recorded_at', { ascending: false }).limit(1000),
+      supabase.from('logs').select('gut_score, logged_at').eq('user_id', user.id).gte('logged_at', cutoff.toISOString()).order('logged_at', { ascending: false }).limit(1000),
     ])
 
     // Group health data by metric

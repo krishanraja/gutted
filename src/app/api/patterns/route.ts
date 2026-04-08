@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server'
 import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit } from '@/lib/security'
 
 export async function POST() {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+    const { allowed } = rateLimit(`patterns:${user.id}`, { maxRequests: 5, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     const { data: logs } = await supabase
       .from('logs')
@@ -32,7 +36,7 @@ export async function POST() {
 User profile: ${JSON.stringify(profile?.gut_profile || {})}
 
 Logs (most recent first, ${logs.length} total):
-${JSON.stringify(logs.map(l => ({ content: l.content, score: l.gut_score, date: l.logged_at })))}
+${JSON.stringify(logs.map(l => ({ content: l.content.slice(0, 200), score: l.gut_score, date: l.logged_at })))}
 
 Return JSON:
 {
@@ -56,7 +60,16 @@ Return max 5 patterns, 5 trigger foods, and 5 beneficial foods. Only include ite
     const jsonMatch = content.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return NextResponse.json({ patterns: [], triggerFoods: [], beneficialFoods: [] })
 
-    return NextResponse.json(JSON.parse(jsonMatch[0]))
+    const parsed = JSON.parse(jsonMatch[0])
+
+    // Validate expected shape — only return known keys
+    return NextResponse.json({
+      patterns: Array.isArray(parsed.patterns) ? parsed.patterns.slice(0, 5) : [],
+      triggerFoods: Array.isArray(parsed.triggerFoods) ? parsed.triggerFoods.slice(0, 5) : [],
+      beneficialFoods: Array.isArray(parsed.beneficialFoods) ? parsed.beneficialFoods.slice(0, 5) : [],
+      weeklyTrend: typeof parsed.weeklyTrend === 'string' ? parsed.weeklyTrend : 'insufficient_data',
+      summary: typeof parsed.summary === 'string' ? parsed.summary : '',
+    })
   } catch (e: unknown) {
     console.error('Patterns error:', e)
     return NextResponse.json({ error: 'Could not detect patterns' }, { status: 500 })

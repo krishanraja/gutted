@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
 import { Resend } from 'resend'
 import crypto from 'crypto'
+import { escapeHtml, isValidEmail, getAppUrl, rateLimit } from '@/lib/security'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -13,24 +14,38 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
+    const { allowed } = rateLimit(`practitioner:${user.id}`, { maxRequests: 10, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+
     const { data: profile } = await supabase.from('profiles').select('plan, name').eq('id', user.id).single()
     const limits = getPlanLimits(profile?.plan || 'free')
     if (!limits.pdfReports) return NextResponse.json({ error: 'Upgrade to Pro for practitioner sharing' }, { status: 403 })
 
     const { practitionerEmail, practitionerName } = await req.json()
-    if (!practitionerEmail) return NextResponse.json({ error: 'Email required' }, { status: 400 })
+
+    // Validate email format
+    if (!practitionerEmail || !isValidEmail(practitionerEmail)) {
+      return NextResponse.json({ error: 'Valid email address required' }, { status: 400 })
+    }
+
+    // Sanitize practitioner name
+    const safeName = practitionerName ? String(practitionerName).slice(0, 100) : null
 
     const accessToken = crypto.randomBytes(32).toString('hex')
 
     const { error } = await supabase.from('practitioner_access').insert({
       user_id: user.id,
       practitioner_email: practitionerEmail,
-      practitioner_name: practitionerName || null,
+      practitioner_name: safeName,
       access_token: accessToken,
     })
     if (error) throw error
 
-    const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://gutted.app'}/practitioner/${accessToken}`
+    const appUrl = getAppUrl()
+    const shareUrl = `${appUrl}/practitioner/${accessToken}`
+
+    // HTML-escape user-supplied values before embedding in email
+    const safeSenderName = escapeHtml(profile?.name || 'Your patient')
 
     // Send invitation email
     await resend.emails.send({
@@ -47,7 +62,7 @@ export async function POST(req: NextRequest) {
       <img src="https://gutted.app/icon.png" alt="gutted." style="height:40px;">
     </div>
     <div style="text-align:center;margin-bottom:32px;">
-      <h1 style="color:#ffffff;font-size:24px;margin:0 0 8px 0;">${profile?.name || 'Your patient'} shared their gut health data</h1>
+      <h1 style="color:#ffffff;font-size:24px;margin:0 0 8px 0;">${safeSenderName} shared their gut health data</h1>
       <p style="color:#a3a3a3;font-size:16px;">They've given you read-only access to their gut health logs, scores, patterns, and test results via gutted.</p>
     </div>
     <div style="text-align:center;margin-bottom:32px;">
@@ -79,7 +94,7 @@ export async function GET() {
 
     const { data } = await supabase
       .from('practitioner_access')
-      .select('*')
+      .select('id, practitioner_email, practitioner_name, is_active, created_at, last_accessed_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -98,6 +113,8 @@ export async function DELETE(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
     const { id } = await req.json()
+    if (!id || typeof id !== 'string') return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
+
     await supabase.from('practitioner_access').delete().eq('id', id).eq('user_id', user.id)
 
     return NextResponse.json({ success: true })

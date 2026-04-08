@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server'
 import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit } from '@/lib/security'
 
 export async function POST() {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+    const { allowed } = rateLimit(`insight:${user.id}`, { maxRequests: 10, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     const [{ data: profile }, { data: logs }] = await Promise.all([
       supabase.from('profiles').select('gut_profile, name').eq('id', user.id).single(),
@@ -25,7 +29,7 @@ export async function POST() {
         role: 'user',
         content: `User: ${profile?.name || 'User'}
 Profile: ${JSON.stringify(profile?.gut_profile || {})}
-Recent logs (newest first): ${JSON.stringify(logs)}
+Recent logs (newest first): ${JSON.stringify(logs.map(l => ({ content: l.content.slice(0, 100), score: l.gut_score, date: l.logged_at })))}
 
 Generate a brief daily gut health insight. Return JSON: {"insight": "<1-2 sentence insight>", "type": "<tip|pattern|encouragement|warning>"}`,
       }],

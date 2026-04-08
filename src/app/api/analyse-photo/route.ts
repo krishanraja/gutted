@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@/lib/openai'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
+import { validateFile, rateLimit } from '@/lib/security'
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,22 +16,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Upgrade to Pro for photo food logging' }, { status: 403 })
     }
 
+    const { allowed } = rateLimit(`photo:${user.id}`, { maxRequests: 10, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+
     const fd = await req.formData()
     const file = fd.get('file') as File
     if (!file) return NextResponse.json({ error: 'No photo provided' }, { status: 400 })
 
-    // Upload to Supabase Storage
-    const serviceClient = await createServiceClient()
-    const ext = file.name.split('.').pop() || 'jpg'
-    const path = `meals/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const { valid, error: fileError, sanitizedExt } = validateFile(file, 'image')
+    if (!valid) return NextResponse.json({ error: fileError }, { status: 400 })
+
+    // Upload to Supabase Storage using user's own client (RLS applies)
+    const path = `meals/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${sanitizedExt}`
     const bytes = await file.arrayBuffer()
 
-    const { error: uploadError } = await serviceClient.storage
+    const { error: uploadError } = await supabase.storage
       .from('documents')
       .upload(path, Buffer.from(bytes), { contentType: file.type })
 
     if (uploadError) throw uploadError
-    const { data: { publicUrl } } = serviceClient.storage.from('documents').getPublicUrl(path)
+    const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
 
     // Use GPT-4o Vision to identify foods
     const response = await openai.chat.completions.create({

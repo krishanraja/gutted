@@ -1,33 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe, resolvePlanFromPriceId, resolvePlanFromAmount } from '@/lib/stripe'
 import { createServiceClient } from '@/lib/supabase/server'
+import { getAppUrl, verifyCronSecret } from '@/lib/security'
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
-  if (!webhookSecret && process.env.NODE_ENV === 'production') {
-    console.error('STRIPE_WEBHOOK_SECRET is not set in production')
+  // Always require webhook signature verification — fail closed
+  if (!webhookSecret) {
+    console.error('STRIPE_WEBHOOK_SECRET is not configured')
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 })
+  }
+
+  if (!sig) {
+    return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 })
   }
 
   let event
   try {
-    event = webhookSecret
-      ? stripe.webhooks.constructEvent(body, sig!, webhookSecret)
-      : JSON.parse(body)
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret)
   } catch {
     return NextResponse.json({ error: 'Webhook signature failed' }, { status: 400 })
   }
 
-  const supabase = await createServiceClient()
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gutted.app'
+  const supabase = createServiceClient()
+  const siteUrl = getAppUrl()
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object
     const { userId, plan } = session.metadata || {}
+
+    // Validate userId exists in profiles before updating
     if (userId && plan) {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single()
+
+      if (!existingProfile) {
+        console.error('Webhook: userId from metadata does not match any profile:', userId)
+        return NextResponse.json({ received: true })
+      }
+
       await supabase.from('profiles').update({
         plan,
         stripe_customer_id: session.customer,
@@ -60,7 +77,7 @@ export async function POST(req: NextRequest) {
         try {
           await fetch(`${siteUrl}/api/send-email`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.SUPABASE_SERVICE_ROLE_KEY || '' },
+            headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.CRON_SECRET || '' },
             body: JSON.stringify({
               type: 'upgrade',
               to: profile.email,
@@ -79,7 +96,6 @@ export async function POST(req: NextRequest) {
     const priceId = sub.items?.data?.[0]?.price?.id
     const amountInCents = sub.items?.data?.[0]?.price?.unit_amount
 
-    // Resolve plan: prefer price ID, fall back to amount matching for legacy subscriptions
     const newPlan = (priceId ? resolvePlanFromPriceId(priceId) : null)
       || (amountInCents ? resolvePlanFromAmount(amountInCents) : null)
 
@@ -117,7 +133,6 @@ export async function POST(req: NextRequest) {
     const invoice = event.data.object
     const customerId = invoice.customer
 
-    // Update subscription status to past_due
     await supabase.from('profiles')
       .update({ subscription_status: 'past_due' })
       .eq('stripe_customer_id', customerId)
@@ -132,7 +147,7 @@ export async function POST(req: NextRequest) {
       try {
         await fetch(`${siteUrl}/api/send-email`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.SUPABASE_SERVICE_ROLE_KEY || '' },
+          headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.CRON_SECRET || '' },
           body: JSON.stringify({
             type: 'payment-failed',
             to: profile.email,

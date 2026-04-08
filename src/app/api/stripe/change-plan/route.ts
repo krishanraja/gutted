@@ -47,9 +47,7 @@ export async function POST(req: NextRequest) {
     const updated = await stripe.subscriptions.update(profile.stripe_subscription_id, {
       items: [{ id: itemId, price: planConfig.priceId }],
       proration_behavior: 'create_prorations',
-      // If resuming from a canceling state, clear the cancellation
       cancel_at_period_end: false,
-      // For upgrades, charge immediately; for downgrades, apply at next billing
       payment_behavior: isUpgrade ? 'error_if_incomplete' : 'default_incomplete',
     })
 
@@ -64,7 +62,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, plan })
   } catch (e: unknown) {
     console.error('Change plan error:', e)
-    const message = e instanceof Error ? e.message : 'Could not change plan'
-    return NextResponse.json({ error: message }, { status: 500 })
+    // Return generic error — don't leak Stripe internals
+    return NextResponse.json({ error: 'Could not change plan' }, { status: 500 })
   }
 }

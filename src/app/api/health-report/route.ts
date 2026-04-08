@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
+import { rateLimit } from '@/lib/security'
 
 export async function POST() {
   try {
@@ -9,17 +10,20 @@ export async function POST() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('plan, name, gut_profile').eq('id', user.id).single()
     const limits = getPlanLimits(profile?.plan || 'free')
     if (!limits.pdfReports) return NextResponse.json({ error: 'Upgrade to Pro for PDF reports' }, { status: 403 })
+
+    const { allowed } = rateLimit(`report:${user.id}`, { maxRequests: 5, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
     const [{ data: logs }, { data: documents }, { data: mealPlans }] = await Promise.all([
-      supabase.from('logs').select('*').eq('user_id', user.id).gte('logged_at', thirtyDaysAgo.toISOString()).order('logged_at', { ascending: false }),
-      supabase.from('documents').select('*').eq('user_id', user.id).order('uploaded_at', { ascending: false }).limit(5),
-      supabase.from('meal_plans').select('*').eq('user_id', user.id).order('generated_at', { ascending: false }).limit(1),
+      supabase.from('logs').select('content, gut_score, logged_at').eq('user_id', user.id).gte('logged_at', thirtyDaysAgo.toISOString()).order('logged_at', { ascending: false }).limit(100),
+      supabase.from('documents').select('type, ai_interpretation, uploaded_at').eq('user_id', user.id).order('uploaded_at', { ascending: false }).limit(5),
+      supabase.from('meal_plans').select('generated_at').eq('user_id', user.id).order('generated_at', { ascending: false }).limit(1),
     ])
 
     const allLogs = logs || []
@@ -53,8 +57,8 @@ export async function POST() {
           content: `Write a monthly gut health summary report for this user.
 
 Profile: ${JSON.stringify(profile?.gut_profile || {})}
-Logs (last 30 days): ${JSON.stringify(allLogs.slice(0, 20).map(l => ({ content: l.content, score: l.gut_score, date: l.logged_at })))}
-Documents: ${JSON.stringify((documents || []).map(d => ({ type: d.type, interpretation: d.ai_interpretation })))}
+Logs (last 30 days): ${JSON.stringify(allLogs.slice(0, 20).map(l => ({ content: l.content.slice(0, 100), score: l.gut_score, date: l.logged_at })))}
+Documents: ${JSON.stringify((documents || []).map(d => ({ type: d.type, interpretation: typeof d.ai_interpretation === 'string' ? d.ai_interpretation.slice(0, 200) : '' })))}
 Average gut score: ${avgScore}/10
 Total logs: ${allLogs.length}
 

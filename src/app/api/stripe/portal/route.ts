@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
+import { getAppUrl } from '@/lib/security'
 
 export async function POST() {
   try {
@@ -41,7 +42,7 @@ export async function POST() {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://gutted.app'}/dashboard/settings`,
+      return_url: `${getAppUrl()}/dashboard/settings`,
     })
 
     return NextResponse.json({ url: session.url })

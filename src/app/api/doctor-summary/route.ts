@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
+import { rateLimit } from '@/lib/security'
 
 export async function POST() {
   try {
@@ -9,9 +10,12 @@ export async function POST() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('plan, name, gut_profile').eq('id', user.id).single()
     const limits = getPlanLimits(profile?.plan || 'free')
     if (!limits.pdfReports) return NextResponse.json({ error: 'Upgrade to Pro for doctor summaries' }, { status: 403 })
+
+    const { allowed } = rateLimit(`doctor:${user.id}`, { maxRequests: 5, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -64,6 +68,7 @@ Return JSON:
     return NextResponse.json({
       summary: {
         ...summary,
+        disclaimer: 'This data is self-reported from a consumer health tracking application and should be considered alongside clinical examination.',
         generatedAt: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
         patientName: profile?.name,
         period: `${thirtyDaysAgo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,

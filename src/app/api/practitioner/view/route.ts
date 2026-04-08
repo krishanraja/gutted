@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit } from '@/lib/security'
 
 // GET: Practitioner views patient data via token (no auth required)
 export async function GET(req: NextRequest) {
   try {
     const token = req.nextUrl.searchParams.get('token')
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 400 })
+    if (!token || token.length !== 64) return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
+
+    // Rate limit by token to prevent brute-force enumeration
+    const { allowed } = rateLimit(`pview:${token.slice(0, 8)}`, { maxRequests: 30, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     const supabase = await createClient()
 
-    // Look up access record
+    // Look up access record — select only needed columns
     const { data: access } = await supabase
       .from('practitioner_access')
-      .select('*')
+      .select('id, user_id, is_active')
       .eq('access_token', token)
       .eq('is_active', true)
       .single()
@@ -29,7 +34,7 @@ export async function GET(req: NextRequest) {
     // Fetch patient data
     const [{ data: profile }, { data: logs }, { data: documents }] = await Promise.all([
       supabase.from('profiles').select('name, gut_profile, created_at').eq('id', userId).single(),
-      supabase.from('logs').select('content, gut_score, logged_at, ai_analysis').eq('user_id', userId).gte('logged_at', thirtyDaysAgo.toISOString()).order('logged_at', { ascending: false }),
+      supabase.from('logs').select('content, gut_score, logged_at, ai_analysis').eq('user_id', userId).gte('logged_at', thirtyDaysAgo.toISOString()).order('logged_at', { ascending: false }).limit(20),
       supabase.from('documents').select('type, ai_interpretation, biomarkers, recommendations, uploaded_at').eq('user_id', userId).order('uploaded_at', { ascending: false }).limit(5),
     ])
 
@@ -49,7 +54,7 @@ export async function GET(req: NextRequest) {
         highestScore: scores.length ? Math.max(...scores) : 0,
         lowestScore: scores.length ? Math.min(...scores) : 0,
       },
-      recentLogs: allLogs.slice(0, 20).map(l => ({
+      recentLogs: allLogs.map(l => ({
         content: l.content,
         score: l.gut_score,
         date: l.logged_at,

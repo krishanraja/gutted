@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
+import { rateLimit } from '@/lib/security'
+
+const HARDCODED_DISCLAIMER = 'These recommendations are informational only. Always consult your healthcare provider before starting any supplement regimen.'
 
 export async function POST() {
   try {
@@ -9,9 +12,12 @@ export async function POST() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('plan, gut_profile').eq('id', user.id).single()
     const limits = getPlanLimits(profile?.plan || 'free')
     if (!limits.pdfReports) return NextResponse.json({ error: 'Upgrade to Pro for supplement recommendations' }, { status: 403 })
+
+    const { allowed } = rateLimit(`supplements:${user.id}`, { maxRequests: 5, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     const [{ data: logs }, { data: documents }] = await Promise.all([
       supabase.from('logs').select('content, gut_score, ai_analysis').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(20),
@@ -41,8 +47,7 @@ Return JSON:
   "dietaryFoods": [
     {"food": "<food name>", "benefit": "<natural source of what and why it helps>"}
   ],
-  "cautions": ["<any interactions or cautions specific to their profile>"],
-  "disclaimer": "These recommendations are informational only. Always consult your healthcare provider before starting any supplement regimen."
+  "cautions": ["<any interactions or cautions specific to their profile>"]
 }
 Return max 3 probiotics, 4 supplements, and 3 dietary foods.`,
       }],
@@ -52,7 +57,16 @@ Return max 3 probiotics, 4 supplements, and 3 dietary foods.`,
     const jsonMatch = content.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('Could not generate recommendations')
 
-    return NextResponse.json(JSON.parse(jsonMatch[0]))
+    const parsed = JSON.parse(jsonMatch[0])
+
+    // Validate shape and enforce disclaimer server-side
+    return NextResponse.json({
+      probiotics: Array.isArray(parsed.probiotics) ? parsed.probiotics.slice(0, 3) : [],
+      supplements: Array.isArray(parsed.supplements) ? parsed.supplements.slice(0, 4) : [],
+      dietaryFoods: Array.isArray(parsed.dietaryFoods) ? parsed.dietaryFoods.slice(0, 3) : [],
+      cautions: Array.isArray(parsed.cautions) ? parsed.cautions : [],
+      disclaimer: HARDCODED_DISCLAIMER,
+    })
   } catch (e: unknown) {
     console.error('Supplements error:', e)
     return NextResponse.json({ error: 'Could not generate recommendations' }, { status: 500 })

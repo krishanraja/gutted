@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe, PLANS } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
+import { getAppUrl } from '@/lib/security'
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,15 +23,16 @@ export async function POST(req: NextRequest) {
       ? { customer: profile.stripe_customer_id }
       : { customer_email: user.email }
 
-    const origin = req.headers.get('origin') || 'https://gutted.app'
+    // Use hardcoded app URL instead of attacker-controlled Origin header
+    const appUrl = getAppUrl()
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       ...customerParams,
       line_items: [{ price: planConfig.priceId, quantity: 1 }],
       metadata: { userId: user.id, plan },
-      success_url: `${origin}/dashboard?upgraded=1`,
-      cancel_url: `${origin}/dashboard`,
+      success_url: `${appUrl}/dashboard?upgraded=1`,
+      cancel_url: `${appUrl}/dashboard`,
     })
 
     return NextResponse.json({ url: session.url })

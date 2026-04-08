@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit, truncate } from '@/lib/security'
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,8 +9,21 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const { food, gutProfile } = await req.json()
+    const { allowed } = rateLimit(`foodgut:${user.id}`, { maxRequests: 20, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+
+    const { food } = await req.json()
     if (!food) return NextResponse.json({ error: 'No food data' }, { status: 400 })
+
+    // Fetch gut profile server-side
+    const { data: profile } = await supabase.from('profiles').select('gut_profile').eq('id', user.id).single()
+
+    // Sanitize food input
+    const safeFood = {
+      label: truncate(food.label, 200),
+      category: truncate(food.category, 100),
+      nutrients: typeof food.nutrients === 'object' ? food.nutrients : {},
+    }
 
     const msg = await anthropic.messages.create({
       model: CLAUDE_MODEL,
@@ -19,9 +33,9 @@ export async function POST(req: NextRequest) {
         role: 'user',
         content: `Rate this food for gut friendliness for a user with this gut profile:
 
-Food: ${food.label} (${food.category})
-Nutrients per 100g: ${JSON.stringify(food.nutrients)}
-User gut profile: ${JSON.stringify(gutProfile || {})}
+Food: ${safeFood.label} (${safeFood.category})
+Nutrients per 100g: ${JSON.stringify(safeFood.nutrients)}
+User gut profile: ${JSON.stringify(profile?.gut_profile || {})}
 
 Return JSON:
 {

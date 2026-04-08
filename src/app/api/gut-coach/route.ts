@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
+import { rateLimit, truncate } from '@/lib/security'
+
+const MAX_MESSAGE_LENGTH = 2000
+const MAX_MESSAGES = 10
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,7 +13,10 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { allowed } = rateLimit(`coach:${user.id}`, { maxRequests: 20, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 })
+
+    const { data: profile } = await supabase.from('profiles').select('plan, name, gut_profile').eq('id', user.id).single()
     const limits = getPlanLimits(profile?.plan || 'free')
     if (!limits.gutCoach) {
       return NextResponse.json({ error: 'Upgrade to Core or Pro to use the Gut Coach' }, { status: 403 })
@@ -18,11 +25,21 @@ export async function POST(req: NextRequest) {
     const { messages: userMessages } = await req.json()
     if (!userMessages?.length) return NextResponse.json({ error: 'No messages' }, { status: 400 })
 
+    // Validate and sanitize messages — only allow role: "user", enforce length limits
+    const sanitizedMessages = userMessages
+      .slice(-MAX_MESSAGES)
+      .filter((m: { role: string }) => m.role === 'user')
+      .map((m: { role: string; content: string }) => ({
+        role: 'user' as const,
+        content: truncate(m.content, MAX_MESSAGE_LENGTH),
+      }))
+
+    if (!sanitizedMessages.length) return NextResponse.json({ error: 'No valid messages' }, { status: 400 })
+
     // Fetch user context
-    const [{ data: logs }, { data: documents }, { data: patterns }] = await Promise.all([
+    const [{ data: logs }, { data: documents }] = await Promise.all([
       supabase.from('logs').select('content, gut_score, logged_at').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(15),
       supabase.from('documents').select('type, ai_interpretation, biomarkers, recommendations').eq('user_id', user.id).order('uploaded_at', { ascending: false }).limit(5),
-      supabase.from('logs').select('content, gut_score, logged_at, ai_analysis').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(30),
     ])
 
     const recentScores = (logs || []).filter(l => l.gut_score > 0).map(l => l.gut_score)
@@ -53,7 +70,7 @@ export async function POST(req: NextRequest) {
       model: CLAUDE_MODEL,
       max_tokens: 1024,
       system: systemPrompt,
-      messages: userMessages.slice(-10), // Keep last 10 messages for context
+      messages: sanitizedMessages,
     })
 
     const content = msg.content[0].type === 'text' ? msg.content[0].text : ''

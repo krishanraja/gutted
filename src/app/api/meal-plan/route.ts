@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
+import { getPlanLimits } from '@/lib/plan-limits'
+import { rateLimit, truncate } from '@/lib/security'
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,13 +10,24 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const { userProfile, documents, recentLogs } = await req.json()
+    const { data: profile } = await supabase.from('profiles').select('plan, gut_profile').eq('id', user.id).single()
+    const limits = getPlanLimits(profile?.plan || 'free')
+    if (!limits.mealPlan) return NextResponse.json({ error: 'Upgrade to Core or Pro for meal plans' }, { status: 403 })
+
+    const { allowed } = rateLimit(`meal:${user.id}`, { maxRequests: 5, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 })
+
+    // Fetch data server-side instead of trusting client-supplied data
+    const [{ data: logs }, { data: documents }] = await Promise.all([
+      supabase.from('logs').select('content, gut_score, logged_at').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(5),
+      supabase.from('documents').select('type, ai_interpretation, biomarkers, recommendations').eq('user_id', user.id).order('uploaded_at', { ascending: false }).limit(3),
+    ])
 
     const prompt = `You are a gut health nutritionist AI. Create a personalised 7-day meal plan based on the user's gut health profile, test results, and recent logs.
 
-User profile: ${JSON.stringify(userProfile || {})}
-Recent gut health test findings: ${JSON.stringify(documents?.slice(0, 3) || [])}
-Recent symptom logs: ${JSON.stringify(recentLogs?.slice(0, 5) || [])}
+User profile: ${JSON.stringify(profile?.gut_profile || {})}
+Recent gut health test findings: ${JSON.stringify((documents || []).map(d => ({ type: d.type, findings: typeof d.ai_interpretation === 'string' ? d.ai_interpretation.slice(0, 300) : '', biomarkers: d.biomarkers })))}
+Recent symptom logs: ${JSON.stringify((logs || []).map(l => ({ content: l.content.slice(0, 150), score: l.gut_score })))}
 
 Create a practical, gut-friendly 7-day meal plan. Be specific with meal names and include gut health benefits for each meal. Also generate a consolidated grocery/shopping list for the entire week, grouped by category.
 
