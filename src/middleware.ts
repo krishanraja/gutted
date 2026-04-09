@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
     '/dashboard/supplements': '/dashboard/food?tab=supplements',
   }
   if (legacyRedirects[pathname]) {
-    return NextResponse.redirect(new URL(legacyRedirects[pathname], request.url))
+    return NextResponse.redirect(new URL(legacyRedirects[pathname], request.url), 301)
   }
 
   // Protect dashboard routes

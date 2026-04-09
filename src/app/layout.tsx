@@ -5,6 +5,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import './globals.css'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.gutted.app'),
   title: 'gutted. - Know your gut.',
   description: 'Voice-log your symptoms. Upload your tests. Get a meal plan that actually fits your gut.',
   manifest: '/manifest.json',
@@ -16,6 +17,9 @@ export const metadata: Metadata = {
     title: 'gutted. - Know your gut.',
     description: 'AI-powered gut health companion.',
     type: 'website',
+  },
+  alternates: {
+    canonical: '/',
   },
 }
 
