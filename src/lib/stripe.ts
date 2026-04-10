@@ -8,7 +8,7 @@ export const PLANS = {
   core: {
     name: 'Core',
     price: 14,
-    priceId: process.env.STRIPE_CORE_PRICE_ID!,
+    priceId: process.env.STRIPE_CORE_PRICE_ID || '',
     features: [
       'Unlimited voice logging',
       '5 document uploads/mo',
@@ -22,7 +22,7 @@ export const PLANS = {
   pro: {
     name: 'Pro',
     price: 29,
-    priceId: process.env.STRIPE_PRO_PRICE_ID!,
+    priceId: process.env.STRIPE_PRO_PRICE_ID || '',
     features: [
       'Everything in Core',
       'Unlimited document uploads',

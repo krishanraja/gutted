@@ -13,6 +13,11 @@ export async function POST(req: NextRequest) {
     const planConfig = PLANS[plan as keyof typeof PLANS]
     if (!planConfig) return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
 
+    if (!planConfig.priceId) {
+      console.error(`Missing Stripe price ID for plan: ${plan}`)
+      return NextResponse.json({ error: `Plan "${plan}" is not configured. Please contact support.` }, { status: 500 })
+    }
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('stripe_customer_id')
@@ -37,7 +42,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url })
   } catch (e: unknown) {
-    console.error('Checkout error:', e)
-    return NextResponse.json({ error: 'Checkout failed' }, { status: 500 })
+    const message = e instanceof Error ? e.message : 'Unknown error'
+    console.error('Checkout error:', message, e)
+    return NextResponse.json({ error: `Checkout failed: ${message}` }, { status: 500 })
   }
 }

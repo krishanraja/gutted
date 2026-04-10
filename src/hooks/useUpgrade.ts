@@ -15,14 +15,24 @@ export function useUpgrade() {
         body: JSON.stringify({ plan }),
       })
       const data = await res.json()
+
+      if (!res.ok) {
+        console.error('Checkout failed:', res.status, data)
+        toast(data.error || `Checkout failed (${res.status})`, 'error')
+        setUpgrading(false)
+        return
+      }
+
       if (data.url) {
         window.location.href = data.url
       } else {
-        toast('Unable to start checkout. Please try again.', 'error')
+        console.error('Checkout response missing URL:', data)
+        toast('Checkout session created but no redirect URL returned.', 'error')
         setUpgrading(false)
       }
-    } catch {
-      toast('Unable to start checkout. Please try again.', 'error')
+    } catch (err) {
+      console.error('Checkout network error:', err)
+      toast('Unable to connect. Please check your internet and try again.', 'error')
       setUpgrading(false)
     }
   }
