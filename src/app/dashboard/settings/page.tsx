@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { BottomSheet } from '@/components/BottomSheet'
+import { Avatar } from '@/components/Avatar'
 import { useUpgrade } from '@/hooks/useUpgrade'
 import { useToast } from '@/components/ToastProvider'
 
@@ -30,23 +31,16 @@ interface SubscriptionInfo {
 
 const PLAN_FEATURES: Record<string, string[]> = {
   core: [
-    'Unlimited voice logging',
-    '5 document uploads/mo',
-    'Weekly meal plan + grocery list',
-    'AI Gut Coach (10 chats/mo)',
-    'Food checker',
-    'Enhanced pattern detection',
-    'Daily reminders & weekly digest',
+    'Unlimited voice logging & food checker',
+    '5 doc uploads + enhanced pattern detection',
+    'Weekly meal plan & grocery list',
+    'AI Gut Coach (10 chats/mo) + reminders',
   ],
   pro: [
-    'Everything in Core',
-    'Unlimited document uploads',
-    'Unlimited AI Gut Coach',
-    'Photo food logging',
-    'PDF health reports',
-    'Doctor visit summary',
-    'Monthly progress reports',
-    'Supplement recommendations',
+    'Everything in Core, unlimited',
+    'Photo food logging + unlimited uploads',
+    'PDF reports & doctor visit summary',
+    'Monthly progress + supplement recs',
   ],
 }
 
@@ -228,8 +222,8 @@ export default function SettingsPage() {
 
         {/* ── Profile Hero ── */}
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00B4B4] to-[#4ADE80] flex items-center justify-center text-black text-2xl font-bold mb-3">
-            {(profile?.name || '?')[0].toUpperCase()}
+          <div className="mb-3">
+            <Avatar name={profile?.name} email={profile?.email} size="lg" />
           </div>
           <h1 className="text-xl font-bold">{profile?.name || 'Your Profile'}</h1>
           <p className="text-white/40 text-sm mt-0.5">{profile?.email}</p>
@@ -590,13 +584,13 @@ export default function SettingsPage() {
         onClose={() => setShowUpgradeSheet(false)}
         title="Choose a plan"
       >
-        <div className="space-y-3">
+        <div className="space-y-2">
           {(['core', 'pro'] as const).map(plan => {
             const isCurrentPlan = currentPlan === plan
             return (
               <div
                 key={plan}
-                className={`p-4 rounded-xl border ${
+                className={`p-3 rounded-xl border ${
                   isCurrentPlan
                     ? 'bg-white/5 border-white/10'
                     : 'bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border-[#00B4B4]/20'
@@ -610,7 +604,7 @@ export default function SettingsPage() {
                     ${plan === 'core' ? '14' : '29'}/mo
                   </span>
                 </div>
-                <ul className="space-y-1.5 mb-3">
+                <ul className="space-y-1 mb-3">
                   {PLAN_FEATURES[plan].map(feature => (
                     <li key={feature} className="flex items-center gap-2 text-xs text-white/60">
                       <span className="text-[#4ADE80]">+</span>

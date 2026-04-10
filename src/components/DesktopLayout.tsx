@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { Badge } from '@/components/ui/Badge'
+import { Avatar } from '@/components/Avatar'
 
 const navItems = [
   {
@@ -84,9 +85,7 @@ export function DesktopSidebar() {
       {/* Plan badge */}
       <div className="px-5 py-4 border-t border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00B4B4] to-[#4ADE80] flex items-center justify-center text-black text-xs font-bold">
-            {(profile?.name || '?')[0].toUpperCase()}
-          </div>
+          <Avatar name={profile?.name} email={profile?.email} size="sm" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{profile?.name || 'User'}</p>
             <Badge variant={profile?.plan === 'free' ? 'neutral' : 'teal'}>
