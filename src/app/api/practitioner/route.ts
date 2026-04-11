@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
 import { Resend } from 'resend'
-import crypto from 'crypto'
 import { escapeHtml, isValidEmail, getAppUrl, rateLimit } from '@/lib/security'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -31,7 +30,9 @@ export async function POST(req: NextRequest) {
     // Sanitize practitioner name
     const safeName = practitionerName ? String(practitionerName).slice(0, 100) : null
 
-    const accessToken = crypto.randomBytes(32).toString('hex')
+    const bytes = new Uint8Array(32)
+    crypto.getRandomValues(bytes)
+    const accessToken = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
 
     const { error } = await supabase.from('practitioner_access').insert({
       user_id: user.id,

@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const { error: uploadError } = await supabase.storage
       .from('documents')
-      .upload(path, Buffer.from(bytes), { contentType: file.type })
+      .upload(path, new Uint8Array(bytes), { contentType: file.type })
 
     if (uploadError) throw uploadError
 

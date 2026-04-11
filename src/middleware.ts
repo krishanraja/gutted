@@ -46,15 +46,30 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Redirect to onboarding if not completed (only for dashboard routes)
+  // Redirect to onboarding if not completed (only for dashboard routes).
+  // Cache result in a cookie to avoid a DB query on every request.
   if (user && pathname.startsWith('/dashboard')) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('onboarding_complete')
-      .eq('id', user.id)
-      .single()
-    if (profile && profile.onboarding_complete === false) {
-      return NextResponse.redirect(new URL('/onboarding', request.url))
+    const onboardingCookie = request.cookies.get('onboarding_complete')?.value
+    if (onboardingCookie === 'true') {
+      // Already verified — skip DB query
+    } else {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_complete')
+        .eq('id', user.id)
+        .single()
+      if (profile && profile.onboarding_complete === false) {
+        return NextResponse.redirect(new URL('/onboarding', request.url))
+      }
+      if (profile?.onboarding_complete) {
+        supabaseResponse.cookies.set('onboarding_complete', 'true', {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+          path: '/',
+        })
+      }
     }
   }
 

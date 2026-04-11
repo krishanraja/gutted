@@ -1,6 +1,4 @@
-import crypto from 'crypto'
-
-// --- Cron / internal secret verification ---
+// --- Cron / internal secret verification (edge-compatible) ---
 
 export function verifyCronSecret(headerValue: string | null): boolean {
   const secret = process.env.CRON_SECRET
@@ -9,32 +7,40 @@ export function verifyCronSecret(headerValue: string | null): boolean {
     return false
   }
   if (!headerValue) return false
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(headerValue, 'utf8'),
-      Buffer.from(secret, 'utf8'),
-    )
-  } catch {
-    return false
+  if (headerValue.length !== secret.length) return false
+  // Constant-time comparison without Node.js crypto
+  const encoder = new TextEncoder()
+  const a = encoder.encode(headerValue)
+  const b = encoder.encode(secret)
+  if (a.byteLength !== b.byteLength) return false
+  let mismatch = 0
+  for (let i = 0; i < a.byteLength; i++) {
+    mismatch |= a[i] ^ b[i]
   }
+  return mismatch === 0
 }
 
-// --- Rate limiting (in-memory, per-instance) ---
+// --- Rate limiting (in-memory, per-instance with lazy cleanup) ---
+// Works with Fluid Compute's instance reuse. Not shared across instances;
+// provides per-instance abuse protection, not a global distributed limit.
 
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
+let lastCleanup = Date.now()
 
-// Clean up expired entries periodically
-setInterval(() => {
+function lazyCleanup() {
   const now = Date.now()
+  if (now - lastCleanup < 60_000) return
+  lastCleanup = now
   for (const [key, entry] of rateLimitStore) {
     if (entry.resetAt <= now) rateLimitStore.delete(key)
   }
-}, 60_000)
+}
 
 export function rateLimit(
   key: string,
   { maxRequests, windowMs }: { maxRequests: number; windowMs: number },
 ): { allowed: boolean; remaining: number } {
+  lazyCleanup()
   const now = Date.now()
   const entry = rateLimitStore.get(key)
 
