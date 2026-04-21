@@ -24,3 +24,8 @@
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# test artifacts
+/.playwright-mcp/
+/supabase/.temp/
+/*.png
