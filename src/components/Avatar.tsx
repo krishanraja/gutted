@@ -1,4 +1,5 @@
 'use client'
+import { getAvatarOption } from '@/components/avatars'
 
 function emailToHue(email: string): number {
   let hash = 0
@@ -16,13 +17,23 @@ const SIZE = {
 interface AvatarProps {
   name?: string | null
   email?: string | null
+  avatarId?: string | null
   size?: 'sm' | 'lg'
 }
 
-export function Avatar({ name, email, size = 'lg' }: AvatarProps) {
+export function Avatar({ name, email, avatarId, size = 'lg' }: AvatarProps) {
   const sizeClass = SIZE[size]
 
-  // Case 1: Name exists — show initial in brand gradient
+  const option = getAvatarOption(avatarId)
+  if (option) {
+    const { Component, gradient } = option
+    return (
+      <div className={`${sizeClass} rounded-full ${gradient} flex items-center justify-center shrink-0 overflow-hidden`}>
+        <Component />
+      </div>
+    )
+  }
+
   if (name && name.trim()) {
     return (
       <div className={`${sizeClass} rounded-full bg-gradient-to-br from-[#00B4B4] to-[#4ADE80] flex items-center justify-center text-black font-bold shrink-0`}>
@@ -31,7 +42,6 @@ export function Avatar({ name, email, size = 'lg' }: AvatarProps) {
     )
   }
 
-  // Case 2: No name but email exists — show email initial with deterministic color
   if (email) {
     const hue = emailToHue(email)
     return (
@@ -44,7 +54,6 @@ export function Avatar({ name, email, size = 'lg' }: AvatarProps) {
     )
   }
 
-  // Case 3: No name or email — generic user silhouette
   return (
     <div className={`${sizeClass} rounded-full bg-white/10 flex items-center justify-center shrink-0`}>
       <svg

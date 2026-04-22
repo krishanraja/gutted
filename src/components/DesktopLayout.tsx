@@ -85,7 +85,7 @@ export function DesktopSidebar() {
       {/* Plan badge */}
       <div className="px-5 py-4 border-t border-white/10">
         <div className="flex items-center gap-3">
-          <Avatar name={profile?.name} email={profile?.email} size="sm" />
+          <Avatar name={profile?.name} email={profile?.email} avatarId={profile?.avatar_id} size="sm" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{profile?.name || 'User'}</p>
             <Badge variant={profile?.plan === 'free' ? 'neutral' : 'teal'}>
