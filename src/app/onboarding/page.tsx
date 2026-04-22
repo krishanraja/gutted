@@ -139,7 +139,7 @@ export default function OnboardingPage() {
     : `Step ${totalSteps} of ${totalSteps}`
 
   return (
-    <div className="min-h-screen bg-black flex flex-col px-6">
+    <div className="mobile-viewport bg-black px-6 md:static md:min-h-screen md:flex md:flex-col">
       <div className="pt-8 pb-4 flex justify-center">
         <Image src="/icon.png" alt="gutted." width={32} height={32} className="h-8 w-8" />
       </div>
@@ -158,7 +158,7 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
+      <div className="flex-1 flex flex-col max-w-md mx-auto w-full overflow-y-auto min-h-0">
         {(step > 0 || phase !== 'questions') && phase !== 'saving' && (
           <button onClick={handleBack} className="text-white/40 text-sm mb-3 flex items-center gap-1 self-start">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
@@ -171,7 +171,7 @@ export default function OnboardingPage() {
           <div className="animate-fade-in">
             <h2 className="text-2xl font-bold mb-2">{currentStep.q}</h2>
             <p className="text-white/40 text-sm mb-6">{currentStep.subtitle}</p>
-            <div className="grid grid-cols-2 gap-3 flex-1">
+            <div className="grid grid-cols-2 gap-3">
               {currentStep.options.map(opt => {
                 const selected = (answers[currentStep.key] || []).includes(opt.value)
                 return (
@@ -279,7 +279,7 @@ export default function OnboardingPage() {
       </div>
 
       {phase !== 'saving' && (
-        <div className="pb-8 pt-4 max-w-md mx-auto w-full space-y-3">
+        <div className="pt-4 pb-safe max-w-md mx-auto w-full space-y-3 shrink-0">
           {phase === 'summary' ? (
             <Button onClick={handleSave} loading={saving} className="w-full" size="lg">
               Let's go

@@ -193,7 +193,7 @@ export default function SettingsPage() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="mobile-viewport bg-black items-center justify-center md:static md:min-h-screen md:flex">
       <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin"/>
     </div>
   )
@@ -217,7 +217,8 @@ export default function SettingsPage() {
   const conditions = (gutProfile.conditions as string[]) || []
 
   return (
-    <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
+    <div className="mobile-viewport bg-black md:ml-60 lg:ml-64">
+      <div className="flex-1 overflow-y-auto pb-nav md:overflow-visible md:pb-8">
       <div className="px-6 pt-12 pb-6 max-w-lg">
 
         {/* ── Profile Hero ── */}
@@ -574,6 +575,7 @@ export default function SettingsPage() {
           gutted. is not a medical service. Always consult a healthcare professional for medical advice.
           <br />© 2026 gutted. All rights reserved.
         </p>
+      </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════ */}
