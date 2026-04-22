@@ -81,17 +81,12 @@ export function UploadContent() {
 
   return (
     <div className="bg-black">
-      <div className="px-6 pt-12 pb-6">
-        <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
-          Back
-        </button>
-        <h1 className="text-2xl font-bold">Upload & analyse</h1>
-        <p className="text-white/40 text-sm mt-1">Upload any health document or food label for instant AI analysis</p>
+      <div className="px-6 pt-2 pb-3">
+        <p className="text-white/40 text-sm">Upload any health document or food label for instant AI analysis</p>
       </div>
 
       {/* Type selector */}
-      <div className="px-6 mb-6">
+      <div className="px-6 mb-4">
         <div className="flex gap-2">
           {docTypes.map(({ type, label, emoji }) => (
             <button
@@ -111,7 +106,7 @@ export function UploadContent() {
       </div>
 
       {/* Uploader */}
-      <div className="px-6 mb-6">
+      <div className="px-6 mb-4">
         {atLimit ? (
           <Card className="text-center py-8">
             <p className="text-2xl mb-3">📄</p>
