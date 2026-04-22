@@ -9,45 +9,30 @@ export function HeroVideo() {
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
-
-    // Use Intersection Observer to only load video when visible
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          video.src = '/Gutted background.mp4'
-          video.load()
-          observer.disconnect()
-        }
-      },
-      { threshold: 0 }
-    )
-
-    observer.observe(video)
-
-    const handleCanPlay = () => {
+    const onReady = () => {
       setLoaded(true)
       video.play().catch(() => {})
     }
-    video.addEventListener('canplay', handleCanPlay)
-
-    return () => {
-      observer.disconnect()
-      video.removeEventListener('canplay', handleCanPlay)
+    if (video.readyState >= 2) {
+      queueMicrotask(onReady)
+    } else {
+      video.addEventListener('loadeddata', onReady, { once: true })
     }
+    return () => video.removeEventListener('loadeddata', onReady)
   }, [])
 
   return (
     <>
       <video
         ref={videoRef}
+        src="/gutted-bg.mp4"
         autoPlay
         loop
         muted
         playsInline
-        preload="none"
-        className={`absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-700 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        preload="auto"
+        className={`absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
       />
-      {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/60 z-0" />
     </>
   )

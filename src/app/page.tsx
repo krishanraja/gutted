@@ -54,6 +54,13 @@ const plans = [
 export default function LandingPage() {
   return (
     <>
+      <link
+        rel="preload"
+        as="video"
+        href="/gutted-bg.mp4"
+        type="video/mp4"
+        fetchPriority="high"
+      />
       {/* ===== MOBILE: viewport-locked, no scroll ===== */}
       <div className="mobile-viewport md:hidden bg-black text-white">
         {/* Video background */}
