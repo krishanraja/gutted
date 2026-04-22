@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { BottomSheet } from '@/components/BottomSheet'
 import { Avatar } from '@/components/Avatar'
+import { AVATAR_OPTIONS } from '@/components/avatars'
 import { useUpgrade } from '@/hooks/useUpgrade'
 import { useToast } from '@/components/ToastProvider'
 
@@ -19,6 +20,7 @@ interface Profile {
   subscription_status?: string | null
   current_period_end?: string | null
   created_at?: string
+  avatar_id?: string | null
 }
 
 interface SubscriptionInfo {
@@ -56,6 +58,8 @@ export default function SettingsPage() {
   const [showDowngradeConfirm, setShowDowngradeConfirm] = useState(false)
   const [showUpgradeSheet, setShowUpgradeSheet] = useState(false)
   const [showManageSheet, setShowManageSheet] = useState(false)
+  const [showAvatarSheet, setShowAvatarSheet] = useState(false)
+  const [savingAvatar, setSavingAvatar] = useState<string | null>(null)
   const [logCount, setLogCount] = useState(0)
   const [docCount, setDocCount] = useState(0)
   const { upgrade, upgrading } = useUpgrade()
@@ -83,7 +87,7 @@ export default function SettingsPage() {
       if (!user) { router.push('/auth/login'); return }
 
       const [{ data }, { count: lc }, { count: dc }] = await Promise.all([
-        supabase.from('profiles').select('name, email, plan, gut_profile, subscription_status, current_period_end, created_at').eq('id', user.id).single(),
+        supabase.from('profiles').select('name, email, plan, gut_profile, subscription_status, current_period_end, created_at, avatar_id').eq('id', user.id).single(),
         supabase.from('logs').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('documents').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
       ])
@@ -175,6 +179,23 @@ export default function SettingsPage() {
     }
   }
 
+  const handleSelectAvatar = async (avatarId: string) => {
+    setSavingAvatar(avatarId)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setSavingAvatar(null); return }
+    const previous = profile?.avatar_id ?? null
+    setProfile(prev => prev ? { ...prev, avatar_id: avatarId } : prev)
+    const { error } = await supabase.from('profiles').update({ avatar_id: avatarId }).eq('id', user.id)
+    setSavingAvatar(null)
+    if (error) {
+      setProfile(prev => prev ? { ...prev, avatar_id: previous } : prev)
+      toast('Could not save your avatar. Please try again.', 'error')
+      return
+    }
+    setShowAvatarSheet(false)
+  }
+
   const handleUpdatePayment = async () => {
     setActionLoading('portal')
     try {
@@ -223,9 +244,13 @@ export default function SettingsPage() {
 
         {/* ── Profile Hero ── */}
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="mb-3">
-            <Avatar name={profile?.name} email={profile?.email} size="lg" />
-          </div>
+          <button
+            onClick={() => setShowAvatarSheet(true)}
+            aria-label="Change avatar"
+            className="mb-3 rounded-full transition-transform active:scale-95 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4ADE80]/50"
+          >
+            <Avatar name={profile?.name} email={profile?.email} avatarId={profile?.avatar_id} size="lg" />
+          </button>
           <h1 className="text-xl font-bold">{profile?.name || 'Your Profile'}</h1>
           <p className="text-white/40 text-sm mt-0.5">{profile?.email}</p>
           <div className="flex items-center gap-2 mt-2">
@@ -800,6 +825,40 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+        </div>
+      </BottomSheet>
+
+      {/* ══════════════════════════════════════════════════════════ */}
+      {/* BottomSheet: Pick Avatar                                  */}
+      {/* ══════════════════════════════════════════════════════════ */}
+      <BottomSheet
+        open={showAvatarSheet}
+        onClose={() => setShowAvatarSheet(false)}
+        title="Pick your gut"
+      >
+        <p className="text-white/40 text-xs mb-4">A little personality for your profile.</p>
+        <div className="grid grid-cols-3 gap-3">
+          {AVATAR_OPTIONS.map(opt => {
+            const selected = profile?.avatar_id === opt.id
+            const saving = savingAvatar === opt.id
+            return (
+              <button
+                key={opt.id}
+                onClick={() => handleSelectAvatar(opt.id)}
+                disabled={savingAvatar !== null}
+                className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${
+                  selected
+                    ? 'bg-white/10 border-[#4ADE80]/60'
+                    : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.06]'
+                } ${savingAvatar !== null && !saving ? 'opacity-50' : ''}`}
+              >
+                <div className={`w-16 h-16 rounded-full ${opt.gradient} flex items-center justify-center overflow-hidden ${saving ? 'animate-pulse' : ''}`}>
+                  <opt.Component />
+                </div>
+                <span className="text-[11px] text-white/70 leading-tight text-center">{opt.name}</span>
+              </button>
+            )
+          })}
         </div>
       </BottomSheet>
     </div>

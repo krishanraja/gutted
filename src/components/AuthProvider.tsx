@@ -9,6 +9,7 @@ interface Profile {
   plan: string
   gut_profile: Record<string, unknown> | null
   onboarding_complete: boolean
+  avatar_id: string | null
 }
 
 interface AuthContextType {
