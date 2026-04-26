@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@/lib/openai'
 import { createClient } from '@/lib/supabase/server'
 import { validateFile, rateLimit } from '@/lib/security'
+import { aiAbort, extractJsonObject, isAbortError } from '@/lib/ai-response'
 
 export async function POST(req: NextRequest) {
   try {
@@ -70,15 +71,17 @@ Return exactly this JSON:
           },
         ],
       }],
-    })
+    }, { signal: aiAbort() })
 
     const content = response.choices[0].message.content || ''
-    const jsonMatch = content.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error('Invalid AI response')
-    const parsed = JSON.parse(jsonMatch[0])
+    const parsed = extractJsonObject(content)
+    if (!parsed || typeof parsed !== 'object') {
+      return NextResponse.json({ error: 'Model returned an invalid response' }, { status: 502 })
+    }
 
     return NextResponse.json({ ...parsed, fileUrl: publicUrl })
   } catch (e: unknown) {
+    if (isAbortError(e)) return NextResponse.json({ error: 'Analysis timed out' }, { status: 504 })
     console.error('Analyse document error:', e)
     return NextResponse.json({ error: 'Analysis failed. Please try again.' }, { status: 500 })
   }
