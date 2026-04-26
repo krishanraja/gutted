@@ -32,9 +32,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const colors: Record<ToastType, string> = {
-    success: 'from-[#4ADE80]/20 to-[#4ADE80]/5 border-[#4ADE80]/30 text-[#4ADE80]',
+    success: 'from-[#4ADE80]/20 to-[#4ADE80]/5 border-accent/30 text-accent',
     error: 'from-red-500/20 to-red-500/5 border-red-500/30 text-red-400',
-    info: 'from-[#00B4B4]/20 to-[#00B4B4]/5 border-[#00B4B4]/30 text-[#00B4B4]',
+    info: 'from-[#00B4B4]/20 to-[#00B4B4]/5 border-accent-30 text-accent',
   }
 
   const icons: Record<ToastType, string> = {

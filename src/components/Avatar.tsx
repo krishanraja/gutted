@@ -36,7 +36,7 @@ export function Avatar({ name, email, avatarId, size = 'lg' }: AvatarProps) {
 
   if (name && name.trim()) {
     return (
-      <div className={`${sizeClass} rounded-full bg-gradient-to-br from-[#00B4B4] to-[#4ADE80] flex items-center justify-center text-black font-bold shrink-0`}>
+      <div className={`${sizeClass} rounded-full bg-white/[0.06] border border-white/[0.10] flex items-center justify-center text-white font-medium tracking-tight shrink-0`}>
         {name.trim()[0].toUpperCase()}
       </div>
     )
@@ -46,8 +46,8 @@ export function Avatar({ name, email, avatarId, size = 'lg' }: AvatarProps) {
     const hue = emailToHue(email)
     return (
       <div
-        className={`${sizeClass} rounded-full flex items-center justify-center text-white font-bold shrink-0`}
-        style={{ backgroundColor: `hsl(${hue}, 55%, 40%)` }}
+        className={`${sizeClass} rounded-full flex items-center justify-center text-white font-medium tracking-tight shrink-0`}
+        style={{ backgroundColor: `hsl(${hue}, 35%, 28%)` }}
       >
         {email[0].toUpperCase()}
       </div>

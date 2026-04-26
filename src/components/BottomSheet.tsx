@@ -91,7 +91,7 @@ export function BottomSheet({ open, onClose, children, title }: BottomSheetProps
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
-        className={`relative w-full max-h-[80vh] bg-[#111] border-t border-white/10 rounded-t-2xl animate-fade-up overflow-hidden focus:outline-none ${isDragging ? '' : 'transition-transform duration-300'}`}
+        className={`relative w-full max-h-[80vh] bg-[#0d0d0d] border-t border-white/[0.08] rounded-t-2xl animate-fade-up overflow-hidden focus:outline-none ${isDragging ? '' : 'transition-transform duration-300'}`}
         style={{ transform: `translateY(${dragY}px)` }}
       >
         {/* Drag handle */}
@@ -101,18 +101,18 @@ export function BottomSheet({ open, onClose, children, title }: BottomSheetProps
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          <div className="w-8 h-1 rounded-full bg-white/20" />
+          <div className="w-8 h-1 rounded-full bg-white/15" />
         </div>
 
         {/* Title */}
         {title && (
-          <div className="px-6 pb-3">
-            <h3 id={titleId} className="text-lg font-semibold">{title}</h3>
+          <div className="px-5 md:px-6 pb-3">
+            <h3 id={titleId} className="text-base font-medium tracking-tight">{title}</h3>
           </div>
         )}
 
         {/* Content */}
-        <div className="px-6 pb-8 overflow-y-auto max-h-[calc(80vh-60px)]">
+        <div className="px-5 md:px-6 pb-8 overflow-y-auto max-h-[calc(80vh-60px)]">
           {children}
         </div>
       </div>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { getPlanLimits } from '@/lib/plan-limits'
 import Link from 'next/link'
+import { ShareIcon, ArrowRightIcon } from '@/components/icons'
 
 interface MetricSummary { metric: string; count: number; avg: number; latest: number }
 interface Correlation { metric: string; correlation: string; detail: string }
@@ -81,7 +82,7 @@ export default function IntegrationsPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin" />
+      <div className="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
     </div>
   )
 
@@ -97,12 +98,12 @@ export default function IntegrationsPage() {
       </div>
 
       {!limits.pdfReports ? (
-        <div className="px-6">
+        <div className="px-5 md:px-6">
           <Card className="text-center py-10">
-            <div className="text-4xl mb-4">🔗</div>
-            <p className="font-semibold mb-2">Unlock health integrations</p>
-            <p className="text-white/40 text-sm mb-6">Upgrade to Pro to track sleep, exercise, stress, and more - and see how they affect your gut health.</p>
-            <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade to Pro →</Link>
+            <ShareIcon size={28} className="mx-auto text-white/35 mb-3" />
+            <p className="font-medium mb-2">Unlock health integrations</p>
+            <p className="text-white/55 text-sm mb-6">Upgrade to Pro to track sleep, exercise, stress, and more, and see how they affect your gut health.</p>
+            <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-accent text-sm font-medium hover:text-white transition-colors">Upgrade to Pro <ArrowRightIcon size={14} /></Link>
           </Card>
         </div>
       ) : (
@@ -178,12 +179,12 @@ export default function IntegrationsPage() {
 
           {/* Gut correlations */}
           {correlations.length > 0 && (
-            <Card className="border-[#00B4B4]/20 bg-[#00B4B4]/5">
+            <Card className="border-accent/20 bg-[#00B4B4]/5">
               <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Gut health correlations</p>
               <div className="space-y-3">
                 {correlations.map((c, i) => (
                   <div key={i} className="flex items-start gap-2">
-                    <span className={c.correlation === 'positive' ? 'text-[#4ADE80]' : 'text-red-400'}>
+                    <span className={c.correlation === 'positive' ? 'text-accent' : 'text-red-400'}>
                       {c.correlation === 'positive' ? '📈' : '📉'}
                     </span>
                     <p className="text-sm text-white/70">{c.detail}</p>

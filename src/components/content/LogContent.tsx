@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { getPlanLimits } from '@/lib/plan-limits'
 import { useToast } from '@/components/ToastProvider'
 import { haptic } from '@/lib/haptics'
-import { MicIcon, PencilIcon, FileTextIcon } from '@/components/icons'
+import { MicIcon, PencilIcon, FileTextIcon, CheckIcon, AlertIcon, BulbIcon, ArrowRightIcon } from '@/components/icons'
 
 const quickTags = ['Bloated', 'Cramps', 'Irregular', 'Fatigue', 'Feeling good', 'Heartburn', 'Nausea', 'Well hydrated']
 
@@ -156,32 +156,32 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
   }
 
   const photoUpgradePrompt = (
-    <div className="text-center py-8 bg-white/5 border border-white/10 rounded-2xl">
-      <p className="text-2xl mb-2">📸</p>
-      <p className="font-semibold mb-1">Photo logging is a Pro feature</p>
-      <p className="text-white/40 text-sm mb-3">Snap a photo of your meal and we&apos;ll identify the foods and log them automatically.</p>
-      <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade to Pro →</Link>
+    <div className="text-center py-8 bg-white/[0.04] border border-white/[0.08] rounded-xl">
+      <FileTextIcon size={24} className="mx-auto text-white/35 mb-2" />
+      <p className="font-medium mb-1">Photo logging is a Pro feature</p>
+      <p className="text-white/55 text-sm mb-3">Snap a photo of your meal. We&apos;ll identify the foods and log them.</p>
+      <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-accent text-sm font-medium hover:text-white transition-colors">Upgrade to Pro <ArrowRightIcon size={14} /></Link>
     </div>
   )
 
   const photoUploadUI = (
     <div>
       <label className="block w-full cursor-pointer">
-        <div className="border-2 border-dashed border-white/20 rounded-2xl p-8 text-center hover:border-[#00B4B4]/40 transition-colors">
+        <div className="border border-dashed border-white/15 rounded-xl p-8 text-center hover:border-accent-50 hover:bg-white/[0.02] transition-colors">
           {photoAnalysing ? (
             <>
-              <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin mx-auto mb-3" />
-              <p className="text-white/50 text-sm">Analysing your meal...</p>
+              <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin mx-auto mb-3" />
+              <p className="text-white/55 text-sm">Analysing your meal…</p>
             </>
           ) : photoResult ? (
             <>
-              <p className="text-2xl mb-2">✅</p>
-              <p className="text-white/70 text-sm">{photoResult.mealName}</p>
+              <CheckIcon size={22} className="mx-auto text-[#3FBE6F] mb-2" />
+              <p className="text-white/75 text-sm">{photoResult.mealName}</p>
             </>
           ) : (
             <>
-              <p className="text-3xl mb-2">📸</p>
-              <p className="text-white/50 text-sm">Tap to take a photo or select from gallery</p>
+              <FileTextIcon size={28} className="mx-auto text-white/40 mb-2" />
+              <p className="text-white/55 text-sm">Tap to take a photo or choose from gallery.</p>
             </>
           )}
         </div>
@@ -199,28 +199,30 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
       </label>
       {photoResult && (
         <div className="mt-4 space-y-3">
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-            <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Foods identified</p>
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4">
+            <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">Foods identified</p>
             <div className="space-y-2">
               {photoResult.foods.map((f, i) => (
                 <div key={i} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <span className={f.gutImpact === 'positive' ? 'text-[#4ADE80]' : f.gutImpact === 'negative' ? 'text-red-400' : 'text-white/40'}>
-                      {f.gutImpact === 'positive' ? '✓' : f.gutImpact === 'negative' ? '⚠' : '•'}
-                    </span>
-                    <span className="text-white/70">{f.name}</span>
-                    <span className="text-white/30 text-xs">{f.portion}</span>
+                    {f.gutImpact === 'positive' ? <CheckIcon size={12} className="text-[#3FBE6F]" /> : f.gutImpact === 'negative' ? <AlertIcon size={12} className="text-[#E96363]" /> : <span className="text-white/40">•</span>}
+                    <span className="text-white/75">{f.name}</span>
+                    <span className="num text-white/35 text-xs">{f.portion}</span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
           {photoResult.tips.length > 0 && (
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Tips</p>
-              {photoResult.tips.map((t, i) => (
-                <p key={i} className="text-sm text-white/60 flex gap-2"><span className="text-[#4ADE80]">💡</span>{t}</p>
-              ))}
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4">
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">Tips</p>
+              <div className="space-y-1.5">
+                {photoResult.tips.map((t, i) => (
+                  <p key={i} className="text-sm text-white/65 flex gap-2">
+                    <BulbIcon size={14} className="text-[#E8AE1E] shrink-0 mt-0.5" />{t}
+                  </p>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -264,7 +266,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
         {/* Phase: Input */}
         {phase === 'input' && (
-          <div className="flex-1 flex flex-col px-6 pb-nav min-h-0 animate-fade-in">
+          <div className="flex-1 flex flex-col px-5 pb-nav min-h-0 animate-fade-in">
             {/* Mode toggle */}
             <div className="flex-none mb-4">
               {modeToggle('max-w-sm')}
@@ -281,9 +283,9 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
                   <textarea
                     value={transcript}
                     onChange={e => setTranscript(e.target.value)}
-                    placeholder="How is your gut feeling today? Describe any symptoms, what you ate, your energy levels..."
+                    placeholder="How is your gut feeling today? Describe any symptoms, what you ate, your energy levels…"
                     rows={4}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 resize-none transition-colors"
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-accent-50 resize-none transition-colors"
                   />
                   <Button onClick={() => analyseText(transcript)} variant="outline" className="w-full" disabled={!transcript.trim()}>
                     Analyse
@@ -293,12 +295,12 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
               {mode === 'voice' && transcript && (
                 <div className="mt-4">
-                  <p className="text-white/40 text-xs mb-2">Transcription</p>
+                  <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">Transcription</p>
                   <textarea
                     value={transcript}
                     onChange={e => setTranscript(e.target.value)}
                     rows={2}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#00B4B4]/50 resize-none"
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent-50 resize-none"
                   />
                 </div>
               )}
@@ -306,14 +308,14 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
             {/* Quick tags -- horizontal scroll strip */}
             <div className="flex-none mt-4">
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Quick tags</p>
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">Quick tags</p>
               <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
                 {quickTags.map(tag => (
                   <button
                     key={tag}
                     onClick={() => toggleTag(tag)}
-                    className={`shrink-0 px-3 py-1.5 rounded-xl border text-sm transition-all ${
-                      tags.includes(tag) ? 'border-[#00B4B4] bg-[#00B4B4]/20 text-[#4ADE80]' : 'border-white/15 text-white/50'
+                    className={`shrink-0 px-3 py-1.5 rounded-md border text-sm transition-all ${
+                      tags.includes(tag) ? 'border-accent bg-accent/[0.08] text-white' : 'border-white/[0.08] bg-white/[0.04] text-white/55 hover:text-white/80 hover:border-white/15'
                     }`}
                   >
                     {tag}
@@ -338,12 +340,12 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
         {/* Phase: Processing */}
         {phase === 'processing' && (
           <div className="flex-1 flex flex-col items-center justify-center px-6 animate-scale-in">
-            <div className="w-14 h-14 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin mb-4" />
-            <p className="text-white/50 text-sm mb-1">Analysing your gut health...</p>
-            <div className="w-48 h-1 rounded-full mt-3 animate-shimmer" />
+            <div className="w-12 h-12 rounded-full border-2 border-accent border-t-transparent animate-spin mb-4" />
+            <p className="text-white/55 text-sm mb-1">Analysing your gut health…</p>
+            <div className="w-44 h-1 rounded-full mt-3 animate-shimmer" />
             <button
               onClick={() => setPhase('input')}
-              className="text-white/30 text-xs mt-6 hover:text-white/50 transition-colors"
+              className="text-white/35 text-xs mt-6 hover:text-white/55 transition-colors"
             >
               Cancel
             </button>
@@ -352,12 +354,12 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
         {/* Phase: Results */}
         {phase === 'results' && analysis && (
-          <div className="flex-1 flex flex-col px-6 pb-nav min-h-0 overflow-y-auto animate-scale-in">
+          <div className="flex-1 flex flex-col px-5 pb-nav min-h-0 overflow-y-auto animate-scale-in">
             {/* Score card */}
-            <Card glow className="flex-none flex items-center gap-4 mb-4">
+            <Card className="flex-none flex items-center gap-4 mb-3">
               <GutScore score={analysis.gutScore} size="lg" />
               <div>
-                <p className="text-white/40 text-xs mb-1">Gut score for this log</p>
+                <p className="text-white/40 text-[11px] uppercase tracking-wider mb-1">Gut score for this log</p>
                 <p className="text-sm text-white/80">{analysis.summary}</p>
               </div>
             </Card>
@@ -366,14 +368,14 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
             {analysis.insights.length > 0 && (
               <Card className="flex-none mb-3">
                 <button onClick={() => toggleSection('insights')} className="w-full flex items-center justify-between">
-                  <p className="text-white/40 text-xs uppercase tracking-wide">Insights</p>
-                  <svg className={`w-4 h-4 text-white/30 transition-transform ${expandedSection === 'insights' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+                  <p className="text-white/40 text-[11px] uppercase tracking-wider">Insights</p>
+                  <svg className={`w-4 h-4 text-white/35 transition-transform ${expandedSection === 'insights' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 {expandedSection === 'insights' && (
                   <ul className="space-y-2 mt-3 animate-fade-up">
                     {analysis.insights.map((insight, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-white/70">
-                        <span className="text-[#4ADE80] mt-0.5">•</span>{insight}
+                      <li key={i} className="flex gap-2 text-sm text-white/75">
+                        <span className="text-accent mt-0.5">•</span>{insight}
                       </li>
                     ))}
                   </ul>
@@ -385,14 +387,14 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
             {analysis.recommendations.length > 0 && (
               <Card className="flex-none mb-3">
                 <button onClick={() => toggleSection('recommendations')} className="w-full flex items-center justify-between">
-                  <p className="text-white/40 text-xs uppercase tracking-wide">Recommendations</p>
-                  <svg className={`w-4 h-4 text-white/30 transition-transform ${expandedSection === 'recommendations' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+                  <p className="text-white/40 text-[11px] uppercase tracking-wider">Recommendations</p>
+                  <svg className={`w-4 h-4 text-white/35 transition-transform ${expandedSection === 'recommendations' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 {expandedSection === 'recommendations' && (
                   <ul className="space-y-2 mt-3 animate-fade-up">
                     {analysis.recommendations.map((rec, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-white/70">
-                        <span className="text-[#00B4B4] mt-0.5">→</span>{rec}
+                      <li key={i} className="flex gap-2 text-sm text-white/75">
+                        <ArrowRightIcon size={12} className="text-accent shrink-0 mt-1" />{rec}
                       </li>
                     ))}
                   </ul>
@@ -402,9 +404,9 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
             {/* Flagged warning */}
             {analysis.flagged && (
-              <div className="flex-none flex items-center gap-2 mb-3 px-1">
-                <span className="text-amber-400 text-sm">⚠️</span>
-                <p className="text-amber-400 text-xs">Some symptoms may benefit from a chat with your doctor.</p>
+              <div className="flex-none flex items-start gap-2 mb-3 px-1">
+                <AlertIcon size={14} className="text-[#E8AE1E] shrink-0 mt-0.5" />
+                <p className="text-[#E8AE1E] text-xs">Some symptoms may benefit from a chat with your doctor.</p>
               </div>
             )}
           </div>
@@ -412,13 +414,13 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
         {/* Save button -- anchored at bottom for results phase */}
         {phase === 'results' && transcript && (
-          <div className="flex-none px-6 pb-nav">
+          <div className="flex-none px-5 pb-nav">
             {atLimit ? (
-              <div className="bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border border-[#00B4B4]/20 rounded-2xl p-3 text-center">
-                <p className="font-semibold text-sm mb-1">Daily log limit reached</p>
-                <p className="text-white/50 text-xs mb-2">Free plan includes {limits.maxLogsPerDay} logs per day.</p>
-                <Link href="/dashboard/settings" className="text-[#4ADE80] text-xs font-medium hover:underline">Upgrade now →</Link>
-              </div>
+              <Card className="text-center">
+                <p className="font-medium text-sm mb-1">Daily log limit reached</p>
+                <p className="text-white/55 text-xs mb-2">Free plan includes <span className="num">{limits.maxLogsPerDay}</span> logs per day.</p>
+                <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-accent text-xs font-medium hover:text-white transition-colors">Upgrade now <ArrowRightIcon size={12} /></Link>
+              </Card>
             ) : (
               <Button onClick={save} loading={saving} className="w-full" size="lg">Save log</Button>
             )}
@@ -428,13 +430,13 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
       {/* Desktop: original layout */}
       <div className="hidden md:block bg-black">
-        <div className="px-6 pt-12 pb-6">
-          <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+        <div className="px-6 pt-10 pb-6">
+          <button onClick={() => router.back()} className="text-white/45 text-sm mb-4 inline-flex items-center gap-1 hover:text-white transition-colors">
+            <svg width={16} height={16} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
             Back
           </button>
-          <h1 className="text-2xl font-bold">How&apos;s your gut today?</h1>
-          <p className="text-white/40 text-sm mt-1">Voice-log or type how you&apos;re feeling</p>
+          <h1 className="text-2xl font-medium tracking-tight">How&apos;s your gut today?</h1>
+          <p className="text-white/45 text-sm mt-1">Voice-log or type how you&apos;re feeling.</p>
         </div>
 
         <div className="px-6 mb-6">
@@ -451,9 +453,9 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
               <textarea
                 value={transcript}
                 onChange={e => setTranscript(e.target.value)}
-                placeholder="How is your gut feeling today? Describe any symptoms, what you ate, your energy levels..."
+                placeholder="How is your gut feeling today? Describe any symptoms, what you ate, your energy levels…"
                 rows={5}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 resize-none transition-colors"
+                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-accent-50 resize-none transition-colors"
               />
               <Button onClick={() => analyseText(transcript)} loading={phase === 'processing'} variant="outline" className="w-full" disabled={!transcript.trim()}>
                 Analyse
@@ -463,26 +465,26 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
           {mode === 'voice' && transcript && (
             <div className="mt-4">
-              <p className="text-white/40 text-xs mb-2">Transcription</p>
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">Transcription</p>
               <textarea
                 value={transcript}
                 onChange={e => setTranscript(e.target.value)}
                 rows={3}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#00B4B4]/50 resize-none"
+                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent-50 resize-none"
               />
             </div>
           )}
         </div>
 
         <div className="px-6 mb-6">
-          <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Quick tags</p>
+          <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Quick tags</p>
           <div className="flex flex-wrap gap-2">
             {quickTags.map(tag => (
               <button
                 key={tag}
                 onClick={() => toggleTag(tag)}
-                className={`px-3 py-1.5 rounded-xl border text-sm transition-all ${
-                  tags.includes(tag) ? 'border-[#00B4B4] bg-[#00B4B4]/20 text-[#4ADE80]' : 'border-white/15 text-white/50 hover:border-white/30'
+                className={`px-3 py-1.5 rounded-md border text-sm transition-all ${
+                  tags.includes(tag) ? 'border-accent bg-accent/[0.08] text-white' : 'border-white/[0.08] bg-white/[0.04] text-white/55 hover:text-white/80 hover:border-white/15'
                 }`}
               >
                 {tag}
@@ -498,44 +500,47 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
 
         {error && (
           <div className="px-6 mb-4">
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-[#E96363] text-sm">{error}</p>
           </div>
         )}
 
         {phase === 'processing' && (
           <div className="px-6 mb-6">
             <Card className="text-center py-6">
-              <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin mx-auto mb-3"/>
-              <p className="text-white/50 text-sm">Analysing your gut health...</p>
+              <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin mx-auto mb-3"/>
+              <p className="text-white/55 text-sm">Analysing your gut health…</p>
             </Card>
           </div>
         )}
 
         {analysis && phase === 'results' && (
-          <div className="px-6 mb-6 space-y-4 animate-fade-up">
-            <Card glow className="flex items-center gap-4">
+          <div className="px-6 mb-6 space-y-3 animate-fade-up">
+            <Card className="flex items-center gap-4">
               <GutScore score={analysis.gutScore} size="lg" />
               <div>
-                <p className="text-white/40 text-xs mb-1">Gut score for this log</p>
+                <p className="text-white/40 text-[11px] uppercase tracking-wider mb-1">Gut score for this log</p>
                 <p className="text-sm text-white/80">{analysis.summary}</p>
               </div>
             </Card>
             {analysis.insights.length > 0 && (
               <Card>
-                <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Insights</p>
+                <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Insights</p>
                 <ul className="space-y-2">
                   {analysis.insights.map((insight, i) => (
-                    <li key={i} className="flex gap-2 text-sm text-white/70">
-                      <span className="text-[#4ADE80] mt-0.5">•</span>{insight}
+                    <li key={i} className="flex gap-2 text-sm text-white/75">
+                      <span className="text-accent mt-0.5">•</span>{insight}
                     </li>
                   ))}
                 </ul>
               </Card>
             )}
             {analysis.flagged && (
-              <Card className="border-amber-500/30 bg-amber-500/5">
-                <p className="text-amber-400 text-sm">⚠️ Some symptoms you mentioned may benefit from a chat with your doctor.</p>
-              </Card>
+              <div className="rounded-xl bg-[#E8AE1E]/8 border border-[#E8AE1E]/25 p-4">
+                <p className="text-[#E8AE1E] text-sm inline-flex items-start gap-2">
+                  <AlertIcon size={14} className="shrink-0 mt-0.5" />
+                  <span>Some symptoms you mentioned may benefit from a chat with your doctor.</span>
+                </p>
+              </div>
             )}
           </div>
         )}
@@ -543,11 +548,11 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
         {transcript && (
           <div className="px-6 pb-4">
             {atLimit ? (
-              <div className="bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border border-[#00B4B4]/20 rounded-2xl p-4 text-center">
-                <p className="font-semibold mb-1">Daily log limit reached</p>
-                <p className="text-white/50 text-sm mb-3">Free plan includes {limits.maxLogsPerDay} logs per day. Upgrade for unlimited logging.</p>
-                <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade now →</Link>
-              </div>
+              <Card className="text-center">
+                <p className="font-medium mb-1">Daily log limit reached</p>
+                <p className="text-white/55 text-sm mb-3">Free plan includes <span className="num">{limits.maxLogsPerDay}</span> logs per day. Upgrade for unlimited logging.</p>
+                <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-accent text-sm font-medium hover:text-white transition-colors">Upgrade now <ArrowRightIcon size={14} /></Link>
+              </Card>
             ) : (
               <Button onClick={save} loading={saving} className="w-full" size="lg">Save log</Button>
             )}

@@ -138,21 +138,23 @@ export default function OnboardingPage() {
     ? `Step ${steps.length + 1} of ${totalSteps}`
     : `Step ${totalSteps} of ${totalSteps}`
 
+  const scoreColor = gutScore >= 7 ? '#3FBE6F' : gutScore >= 4 ? '#E8AE1E' : '#E96363'
+
   return (
-    <div className="mobile-viewport bg-black px-6 md:static md:min-h-screen md:flex md:flex-col">
-      <div className="pt-8 pb-4 flex justify-center">
-        <Image src="/icon.png" alt="gutted." width={32} height={32} className="h-8 w-8" />
+    <div className="mobile-viewport bg-black px-5 md:px-6 md:static md:min-h-screen md:flex md:flex-col">
+      <div className="pt-safe flex justify-center">
+        <Image src="/icon.png" alt="gutted." width={28} height={28} className="h-7 w-7 mt-3" />
       </div>
 
       {/* Progress bar */}
-      <div className="w-full max-w-md mx-auto mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-white/30 text-xs">{stepLabel}</p>
-          <p className="text-white/30 text-xs">{Math.round(progress)}%</p>
+      <div className="w-full max-w-md mx-auto mb-6 mt-5">
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="num text-white/35 text-[11px] uppercase tracking-wider">{stepLabel}</p>
+          <p className="num text-white/35 text-[11px]">{Math.round(progress)}%</p>
         </div>
-        <div className="w-full bg-white/10 rounded-full h-1.5">
+        <div className="w-full bg-white/[0.06] rounded-full h-1">
           <div
-            className="h-1.5 rounded-full bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] transition-all duration-500"
+            className="h-1 rounded-full bg-accent transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -160,8 +162,8 @@ export default function OnboardingPage() {
 
       <div className="flex-1 flex flex-col max-w-md mx-auto w-full overflow-y-auto min-h-0">
         {(step > 0 || phase !== 'questions') && phase !== 'saving' && (
-          <button onClick={handleBack} className="text-white/40 text-sm mb-3 flex items-center gap-1 self-start">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+          <button onClick={handleBack} className="text-white/45 text-sm mb-3 inline-flex items-center gap-1 self-start hover:text-white transition-colors">
+            <svg width={16} height={16} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
             Back
           </button>
         )}
@@ -169,26 +171,26 @@ export default function OnboardingPage() {
         {/* Question steps */}
         {phase === 'questions' && (
           <div className="animate-fade-in">
-            <h2 className="text-2xl font-bold mb-2">{currentStep.q}</h2>
-            <p className="text-white/40 text-sm mb-6">{currentStep.subtitle}</p>
-            <div className="grid grid-cols-2 gap-3">
+            <h2 className="text-xl md:text-2xl font-medium tracking-tight mb-2">{currentStep.q}</h2>
+            <p className="text-white/50 text-sm mb-6">{currentStep.subtitle}</p>
+            <div className="grid grid-cols-2 gap-2">
               {currentStep.options.map(opt => {
                 const selected = (answers[currentStep.key] || []).includes(opt.value)
                 return (
                   <button
                     key={opt.value}
                     onClick={() => toggle(currentStep.key, opt.value)}
-                    className={`p-4 rounded-2xl border text-left transition-all ${
+                    className={`p-4 rounded-xl border text-left transition-all active:scale-[0.98] ${
                       selected
-                        ? 'border-[#00B4B4] bg-[#00B4B4]/10 shadow-lg shadow-[#00B4B4]/10'
-                        : 'border-white/10 bg-white/5 hover:border-white/20'
+                        ? 'border-accent bg-accent/[0.08]'
+                        : 'border-white/[0.08] bg-white/[0.04] hover:border-white/15 hover:bg-white/[0.06]'
                     }`}
                   >
-                    <div className="text-xl mb-2">{opt.icon}</div>
-                    <p className={`text-sm font-medium mb-0.5 ${selected ? 'text-[#4ADE80]' : 'text-white/80'}`}>
+                    <div className="text-lg mb-2 opacity-80">{opt.icon}</div>
+                    <p className={`text-sm font-medium mb-0.5 ${selected ? 'text-white' : 'text-white/80'}`}>
                       {opt.value}
                     </p>
-                    <p className="text-[11px] text-white/30">{opt.desc}</p>
+                    <p className="text-[11px] text-white/40">{opt.desc}</p>
                   </button>
                 )
               })}
@@ -199,20 +201,20 @@ export default function OnboardingPage() {
         {/* Gut score step */}
         {phase === 'gut-score' && (
           <div className="animate-fade-in">
-            <h2 className="text-2xl font-bold mb-2">How is your gut right now?</h2>
-            <p className="text-white/40 text-sm mb-10">Be honest - this is your starting point, not your goal.</p>
+            <h2 className="text-xl md:text-2xl font-medium tracking-tight mb-2">How is your gut right now?</h2>
+            <p className="text-white/50 text-sm mb-10">Be honest. This is your starting point, not your goal.</p>
             <div className="flex flex-col items-center gap-8">
-              <div className="relative">
-                <div className="text-7xl font-bold gradient-text">{gutScore}</div>
-                <p className="text-white/30 text-sm text-center mt-1">/ 10</p>
+              <div className="relative flex flex-col items-center">
+                <div className="num text-6xl md:text-7xl font-semibold tracking-tight" style={{ color: scoreColor }}>{gutScore}</div>
+                <p className="num text-white/35 text-sm text-center mt-1">/ 10</p>
               </div>
               <div className="w-full">
                 <input
                   type="range" min={1} max={10} value={gutScore}
                   onChange={e => setGutScore(Number(e.target.value))}
-                  className="w-full accent-[#00B4B4]"
+                  className="w-full accent-accent"
                 />
-                <div className="flex justify-between w-full text-white/30 text-xs mt-2">
+                <div className="flex justify-between w-full text-white/35 text-xs mt-2">
                   <span>Rough</span><span>Okay</span><span>Great</span>
                 </div>
               </div>
@@ -223,21 +225,23 @@ export default function OnboardingPage() {
         {/* Summary step */}
         {phase === 'summary' && (
           <div className="animate-fade-in">
-            <h2 className="text-2xl font-bold mb-2">Here&apos;s your gut profile</h2>
-            <p className="text-white/40 text-sm mb-6">Everything looks good? You can always update this later in settings.</p>
+            <h2 className="text-xl md:text-2xl font-medium tracking-tight mb-2">Here&apos;s your gut profile</h2>
+            <p className="text-white/50 text-sm mb-6">Looks good? You can always update this later in settings.</p>
 
             <div className="space-y-3">
               <Card>
-                <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Current gut score</p>
-                <p className="text-3xl font-bold gradient-text">{gutScore}<span className="text-lg text-white/30"> / 10</span></p>
+                <p className="text-white/45 text-[11px] uppercase tracking-wider mb-2">Current gut score</p>
+                <p className="num text-3xl font-semibold tracking-tight" style={{ color: scoreColor }}>
+                  {gutScore}<span className="text-lg text-white/35"> / 10</span>
+                </p>
               </Card>
 
               {answers.goals?.length > 0 && (
                 <Card>
-                  <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Goals</p>
-                  <div className="flex flex-wrap gap-2">
+                  <p className="text-white/45 text-[11px] uppercase tracking-wider mb-2">Goals</p>
+                  <div className="flex flex-wrap gap-1.5">
                     {answers.goals.map(g => (
-                      <span key={g} className="px-3 py-1 rounded-full bg-[#00B4B4]/15 border border-[#00B4B4]/20 text-xs text-[#4ADE80]">{g}</span>
+                      <span key={g} className="px-2.5 py-1 rounded-md bg-accent/10 border border-accent/20 text-xs text-white/85">{g}</span>
                     ))}
                   </div>
                 </Card>
@@ -245,10 +249,10 @@ export default function OnboardingPage() {
 
               {answers.restrictions?.length > 0 && (
                 <Card>
-                  <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Dietary restrictions</p>
-                  <div className="flex flex-wrap gap-2">
+                  <p className="text-white/45 text-[11px] uppercase tracking-wider mb-2">Dietary restrictions</p>
+                  <div className="flex flex-wrap gap-1.5">
                     {answers.restrictions.map(r => (
-                      <span key={r} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-white/60">{r}</span>
+                      <span key={r} className="px-2.5 py-1 rounded-md bg-white/[0.06] text-xs text-white/75">{r}</span>
                     ))}
                   </div>
                 </Card>
@@ -256,10 +260,10 @@ export default function OnboardingPage() {
 
               {answers.conditions?.length > 0 && (
                 <Card>
-                  <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Conditions</p>
-                  <div className="flex flex-wrap gap-2">
+                  <p className="text-white/45 text-[11px] uppercase tracking-wider mb-2">Conditions</p>
+                  <div className="flex flex-wrap gap-1.5">
                     {answers.conditions.map(c => (
-                      <span key={c} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-white/60">{c}</span>
+                      <span key={c} className="px-2.5 py-1 rounded-md bg-white/[0.06] text-xs text-white/75">{c}</span>
                     ))}
                   </div>
                 </Card>
@@ -271,15 +275,15 @@ export default function OnboardingPage() {
         {/* Saving state */}
         {phase === 'saving' && (
           <div className="flex-1 flex flex-col items-center justify-center animate-fade-in">
-            <div className="w-12 h-12 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin mb-4"/>
-            <p className="text-white/70 font-medium">Building your gut profile...</p>
-            <p className="text-white/30 text-sm mt-1">This only takes a moment</p>
+            <div className="w-10 h-10 rounded-full border-2 border-accent border-t-transparent animate-spin mb-4"/>
+            <p className="text-white/75 font-medium">Building your gut profile…</p>
+            <p className="text-white/35 text-sm mt-1">This only takes a moment.</p>
           </div>
         )}
       </div>
 
       {phase !== 'saving' && (
-        <div className="pt-4 pb-safe max-w-md mx-auto w-full space-y-3 shrink-0">
+        <div className="pt-4 pb-safe max-w-md mx-auto w-full space-y-2 shrink-0">
           {phase === 'summary' ? (
             <Button onClick={handleSave} loading={saving} className="w-full" size="lg">
               Let&apos;s go
@@ -290,7 +294,7 @@ export default function OnboardingPage() {
             </Button>
           )}
           {phase === 'questions' && (
-            <button onClick={handleNext} className="w-full text-center text-white/30 text-sm hover:text-white/50 transition-colors">
+            <button onClick={handleNext} className="w-full text-center text-white/35 text-sm hover:text-white/55 transition-colors">
               Skip for now
             </button>
           )}

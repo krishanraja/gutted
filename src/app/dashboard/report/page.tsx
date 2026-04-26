@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { GutScore } from '@/components/GutScore'
 import { getPlanLimits } from '@/lib/plan-limits'
 import Link from 'next/link'
+import { FileTextIcon, ArrowRightIcon } from '@/components/icons'
 
 interface ReportStats { avgScore: number; highestScore: number; lowestScore: number; totalLogs: number; totalDocuments: number }
 interface WeeklyScore { week: string; avg: number; count: number }
@@ -78,38 +79,38 @@ export default function ReportPage() {
       </div>
 
       {!limits.pdfReports ? (
-        <div className="px-6">
+        <div className="px-5 md:px-6">
           <Card className="text-center py-10">
-            <div className="text-4xl mb-4">📊</div>
-            <p className="font-semibold mb-2">Unlock PDF health reports</p>
-            <p className="text-white/40 text-sm mb-6">Upgrade to Pro to generate detailed monthly gut health reports you can share with your doctor.</p>
-            <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade to Pro →</Link>
+            <FileTextIcon size={28} className="mx-auto text-white/35 mb-3" />
+            <p className="font-medium mb-2">Unlock PDF health reports</p>
+            <p className="text-white/55 text-sm mb-6">Upgrade to Pro to generate detailed monthly gut health reports you can share with your doctor.</p>
+            <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-accent text-sm font-medium hover:text-white transition-colors">Upgrade to Pro <ArrowRightIcon size={14} /></Link>
           </Card>
         </div>
       ) : !report ? (
-        <div className="px-6">
+        <div className="px-5 md:px-6">
           <Card className="text-center py-10">
-            <div className="text-4xl mb-4">📊</div>
-            <p className="font-semibold mb-2">Generate your monthly report</p>
-            <p className="text-white/40 text-sm mb-6">Get an AI-powered summary of the last 30 days including trends, patterns, and recommendations.</p>
+            <FileTextIcon size={28} className="mx-auto text-white/35 mb-3" />
+            <p className="font-medium mb-2">Generate your monthly report</p>
+            <p className="text-white/55 text-sm mb-6">Get an AI-powered summary of the last 30 days including trends, patterns, and recommendations.</p>
             <Button onClick={generate} loading={generating}>Generate report</Button>
           </Card>
-          {error && <p className="text-red-400 text-sm mt-4 text-center">{error}</p>}
+          {error && <p className="text-[#E96363] text-sm mt-4 text-center">{error}</p>}
         </div>
       ) : (
-        <div ref={reportRef} className="px-6 space-y-4 mb-6">
+        <div ref={reportRef} className="px-5 md:px-6 space-y-3 mb-6">
           {/* Report header */}
-          <Card glow>
+          <Card>
             <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-white/40 text-xs uppercase tracking-wide">Monthly gut health report</p>
-                <p className="font-semibold text-lg mt-1">{report.userName}</p>
-                <p className="text-white/40 text-sm">{report.period}</p>
+                <p className="text-white/40 text-[11px] uppercase tracking-wider">Monthly gut health report</p>
+                <p className="font-medium tracking-tight text-lg mt-1">{report.userName}</p>
+                <p className="text-white/45 text-sm">{report.period}</p>
               </div>
               <Badge variant="teal">Pro</Badge>
             </div>
             {report.ai.overview && (
-              <p className="text-white/70 text-sm leading-relaxed">{report.ai.overview}</p>
+              <p className="text-white/75 text-sm leading-relaxed">{report.ai.overview}</p>
             )}
           </Card>
 
@@ -117,44 +118,47 @@ export default function ReportPage() {
           <div className="grid grid-cols-2 gap-3">
             <Card className="text-center py-4">
               <GutScore score={report.stats.avgScore} size="lg" />
-              <p className="text-white/40 text-xs mt-2">Avg score</p>
+              <p className="text-white/45 text-[11px] uppercase tracking-wider mt-2">Avg score</p>
             </Card>
             <Card className="text-center py-4">
-              <p className="text-3xl font-bold gradient-text">{report.stats.totalLogs}</p>
-              <p className="text-white/40 text-xs mt-2">Total logs</p>
+              <p className="num text-3xl font-semibold tracking-tight">{report.stats.totalLogs}</p>
+              <p className="text-white/45 text-[11px] uppercase tracking-wider mt-2">Total logs</p>
             </Card>
             <Card className="text-center py-4">
-              <p className="text-3xl font-bold text-[#4ADE80]">{report.stats.highestScore}</p>
-              <p className="text-white/40 text-xs mt-2">Best score</p>
+              <p className="num text-3xl font-semibold tracking-tight text-[#3FBE6F]">{report.stats.highestScore}</p>
+              <p className="text-white/45 text-[11px] uppercase tracking-wider mt-2">Best score</p>
             </Card>
             <Card className="text-center py-4">
-              <p className="text-3xl font-bold text-red-400">{report.stats.lowestScore}</p>
-              <p className="text-white/40 text-xs mt-2">Lowest score</p>
+              <p className="num text-3xl font-semibold tracking-tight text-[#E96363]">{report.stats.lowestScore}</p>
+              <p className="text-white/45 text-[11px] uppercase tracking-wider mt-2">Lowest score</p>
             </Card>
           </div>
 
           {/* Weekly trend */}
           {report.weeklyScores.length > 1 && (
             <Card>
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Weekly averages</p>
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Weekly averages</p>
               <div className="space-y-2">
-                {report.weeklyScores.map((w) => (
-                  <div key={w.week} className="flex items-center gap-3">
-                    <p className="text-white/40 text-xs w-20 shrink-0">
-                      {new Date(w.week + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </p>
-                    <div className="flex-1 bg-white/5 rounded-full h-3 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-[#00B4B4] to-[#4ADE80]"
-                        style={{ width: `${(w.avg / 10) * 100}%` }}
-                      />
+                {report.weeklyScores.map((w) => {
+                  const c = w.avg >= 7 ? '#3FBE6F' : w.avg >= 4 ? '#E8AE1E' : '#E96363'
+                  return (
+                    <div key={w.week} className="flex items-center gap-3">
+                      <p className="num text-white/45 text-xs w-20 shrink-0">
+                        {new Date(w.week + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                      <div className="flex-1 bg-white/[0.06] rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${(w.avg / 10) * 100}%`, background: c }}
+                        />
+                      </div>
+                      <p className="num text-white/75 text-sm font-medium w-8 text-right">{w.avg}</p>
                     </div>
-                    <p className="text-white/60 text-sm font-medium w-8 text-right">{w.avg}</p>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
               {report.ai.trends && (
-                <p className="text-white/50 text-sm mt-4 leading-relaxed">{report.ai.trends}</p>
+                <p className="text-white/55 text-sm mt-4 leading-relaxed">{report.ai.trends}</p>
               )}
             </Card>
           )}
@@ -166,7 +170,7 @@ export default function ReportPage() {
               <div className="space-y-2">
                 {report.ai.topPatterns.map((p, i) => (
                   <div key={i} className="flex gap-2 text-sm text-white/70">
-                    <span className="text-[#00B4B4] shrink-0">🔍</span>{p}
+                    <span className="text-accent shrink-0">🔍</span>{p}
                   </div>
                 ))}
               </div>
@@ -180,7 +184,7 @@ export default function ReportPage() {
               <ul className="space-y-2">
                 {report.ai.recommendations.map((r, i) => (
                   <li key={i} className="flex gap-2 text-sm text-white/70">
-                    <span className="text-[#4ADE80] shrink-0">✓</span>{r}
+                    <span className="text-accent shrink-0">✓</span>{r}
                   </li>
                 ))}
               </ul>
@@ -209,7 +213,7 @@ export default function ReportPage() {
 
           {/* Encouragement */}
           {report.ai.encouragement && (
-            <Card className="border-[#4ADE80]/20 bg-[#4ADE80]/5">
+            <Card className="border-accent/20 bg-[#4ADE80]/5">
               <div className="flex gap-3">
                 <span className="text-lg">🌟</span>
                 <p className="text-sm text-white/70 leading-relaxed">{report.ai.encouragement}</p>

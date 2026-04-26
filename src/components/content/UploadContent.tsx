@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { getPlanLimits } from '@/lib/plan-limits'
 import { useToast } from '@/components/ToastProvider'
+import { FileTextIcon, CheckIcon, AlertIcon, ArrowRightIcon } from '@/components/icons'
 
 type DocType = 'gut_test' | 'doctor_report' | 'food_label'
 
@@ -69,36 +70,40 @@ export function UploadContent() {
       biomarkers: result.biomarkers || {},
       recommendations: result.recommendations,
     })
-    toast('Document saved to profile', 'success')
+    toast('Document saved to profile.', 'success')
     router.push('/dashboard')
   }
 
-  const docTypes: { type: DocType; label: string; emoji: string }[] = [
-    { type: 'gut_test', label: 'Gut Test', emoji: '🧬' },
-    { type: 'doctor_report', label: "Doctor's Report", emoji: '🏥' },
-    { type: 'food_label', label: 'Food Label', emoji: '🍎' },
+  const docTypes: { type: DocType; label: string }[] = [
+    { type: 'gut_test', label: 'Gut test' },
+    { type: 'doctor_report', label: "Doctor's report" },
+    { type: 'food_label', label: 'Food label' },
   ]
+
+  const ratingColor = (() => {
+    const r = result?.gutFriendlyRating ?? 0
+    return r >= 7 ? '#3FBE6F' : r >= 4 ? '#E8AE1E' : '#E96363'
+  })()
 
   return (
     <div className="bg-black">
-      <div className="px-6 pt-2 pb-3">
-        <p className="text-white/40 text-sm">Upload any health document or food label for instant AI analysis</p>
+      <div className="px-5 md:px-6 pt-2 pb-3">
+        <p className="text-white/45 text-sm">Upload any health document or food label for instant AI analysis.</p>
       </div>
 
       {/* Type selector */}
-      <div className="px-6 mb-4">
+      <div className="px-5 md:px-6 mb-4">
         <div className="flex gap-2">
-          {docTypes.map(({ type, label, emoji }) => (
+          {docTypes.map(({ type, label }) => (
             <button
               key={type}
               onClick={() => { setActiveType(type); setResult(null); setError('') }}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl border text-xs font-medium transition-all ${
+              className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-medium transition-all ${
                 activeType === type
-                  ? 'border-[#00B4B4] bg-[#00B4B4]/10 text-[#4ADE80]'
-                  : 'border-white/10 text-white/40 hover:border-white/20'
+                  ? 'border-accent bg-accent/[0.08] text-white'
+                  : 'border-white/[0.08] bg-white/[0.04] text-white/55 hover:border-white/15 hover:text-white/80'
               }`}
             >
-              <span className="text-lg">{emoji}</span>
               {label}
             </button>
           ))}
@@ -106,13 +111,13 @@ export function UploadContent() {
       </div>
 
       {/* Uploader */}
-      <div className="px-6 mb-4">
+      <div className="px-5 md:px-6 mb-4">
         {atLimit ? (
           <Card className="text-center py-8">
-            <p className="text-2xl mb-3">📄</p>
-            <p className="font-semibold mb-1">Upload limit reached</p>
-            <p className="text-white/50 text-sm mb-3">Free plan includes {limits.maxUploadsPerMonth} upload per month. Upgrade for more.</p>
-            <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade now →</Link>
+            <FileTextIcon size={24} className="mx-auto text-white/35 mb-3" />
+            <p className="font-medium mb-1">Upload limit reached</p>
+            <p className="text-white/55 text-sm mb-3">Free plan includes <span className="num">{limits.maxUploadsPerMonth}</span> upload per month. Upgrade for more.</p>
+            <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-accent text-sm font-medium hover:text-white transition-colors">Upgrade now <ArrowRightIcon size={14} /></Link>
           </Card>
         ) : (
           <DocumentUploader
@@ -123,24 +128,24 @@ export function UploadContent() {
         )}
       </div>
 
-      {error && <p className="px-6 text-red-400 text-sm mb-4">{error}</p>}
+      {error && <p className="px-5 md:px-6 text-[#E96363] text-sm mb-4">{error}</p>}
 
       {/* Results */}
       {result && (
-        <div className="px-6 space-y-4 mb-6">
-          <Card glow>
-            <p className="text-white/40 text-xs uppercase tracking-wide mb-2">AI Interpretation</p>
+        <div className="px-5 md:px-6 space-y-3 mb-6">
+          <Card>
+            <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">AI interpretation</p>
             <p className="text-white/80 text-sm leading-relaxed">{result.summary}</p>
           </Card>
 
           {result.biomarkers && Object.keys(result.biomarkers).length > 0 && (
             <Card>
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Key Findings</p>
-              <div className="space-y-2">
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Key findings</p>
+              <div className="space-y-2.5">
                 {Object.entries(result.biomarkers).map(([k, v]) => (
                   <div key={k} className="flex flex-col gap-0.5">
-                    <span className="text-xs text-[#00B4B4] font-medium">{k}</span>
-                    <span className="text-sm text-white/70">{v}</span>
+                    <span className="text-[11px] uppercase tracking-wider text-accent font-medium">{k}</span>
+                    <span className="text-sm text-white/75">{v}</span>
                   </div>
                 ))}
               </div>
@@ -149,11 +154,13 @@ export function UploadContent() {
 
           {result.gutFriendlyRating && (
             <Card>
-              <p className="text-white/40 text-xs mb-2">Gut Friendliness</p>
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">Gut friendliness</p>
               <div className="flex items-center gap-3">
-                <div className="text-3xl font-bold gradient-text">{result.gutFriendlyRating}/10</div>
-                <p className="text-sm text-white/50">
-                  {result.gutFriendlyRating >= 7 ? 'Great choice for your gut' : result.gutFriendlyRating >= 4 ? 'Moderate - okay occasionally' : 'Consider a gut-friendlier alternative'}
+                <div className="num text-3xl font-semibold tracking-tight" style={{ color: ratingColor }}>
+                  {result.gutFriendlyRating}<span className="text-lg text-white/35">/10</span>
+                </div>
+                <p className="text-sm text-white/55">
+                  {result.gutFriendlyRating >= 7 ? 'Great choice for your gut.' : result.gutFriendlyRating >= 4 ? 'Moderate. Okay occasionally.' : 'Consider a gut-friendlier alternative.'}
                 </p>
               </div>
             </Card>
@@ -161,11 +168,11 @@ export function UploadContent() {
 
           {result.recommendations?.length > 0 && (
             <Card>
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Recommendations</p>
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Recommendations</p>
               <ul className="space-y-2">
                 {result.recommendations.map((r, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-white/70">
-                    <span className="text-[#4ADE80] mt-0.5 shrink-0">✓</span>{r}
+                  <li key={i} className="flex gap-2 text-sm text-white/75">
+                    <CheckIcon size={14} className="text-[#3FBE6F] mt-0.5 shrink-0" />{r}
                   </li>
                 ))}
               </ul>
@@ -173,13 +180,20 @@ export function UploadContent() {
           )}
 
           {result.flags && result.flags.length > 0 && (
-            <Card className="border-amber-500/30 bg-amber-500/5">
-              <p className="text-amber-400 text-xs uppercase tracking-wide mb-2">Worth noting</p>
-              {result.flags.map((f, i) => <p key={i} className="text-amber-300/70 text-sm">⚠️ {f}</p>)}
-            </Card>
+            <div className="rounded-xl bg-[#E8AE1E]/8 border border-[#E8AE1E]/25 p-4">
+              <p className="text-[#E8AE1E] text-[11px] uppercase tracking-wider mb-2">Worth noting</p>
+              <div className="space-y-1.5">
+                {result.flags.map((f, i) => (
+                  <p key={i} className="text-[#E8AE1E]/85 text-sm inline-flex gap-2">
+                    <AlertIcon size={14} className="shrink-0 mt-0.5" />
+                    <span>{f}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button onClick={save} loading={saving} className="flex-1">Save to profile</Button>
             <Button variant="outline" onClick={() => router.push('/dashboard/meal-plan')} className="flex-1">Generate meal plan</Button>
           </div>

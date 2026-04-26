@@ -37,7 +37,7 @@ export default function PractitionerViewPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin" />
+      <div className="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
     </div>
   )
 
@@ -82,7 +82,7 @@ export default function PractitionerViewPage() {
             <p className="text-white/40 text-xs mt-2">Logs (30d)</p>
           </Card>
           <Card className="text-center py-4">
-            <p className="text-3xl font-bold text-[#4ADE80]">{data.stats.highestScore}</p>
+            <p className="text-3xl font-bold text-accent">{data.stats.highestScore}</p>
             <p className="text-white/40 text-xs mt-2">Best score</p>
           </Card>
           <Card className="text-center py-4">
@@ -122,7 +122,7 @@ export default function PractitionerViewPage() {
                     <div className="ml-4 space-y-1">
                       {Object.entries(doc.biomarkers).map(([k, v]) => (
                         <div key={k} className="text-xs">
-                          <span className="text-[#00B4B4]">{k}:</span> <span className="text-white/50">{v}</span>
+                          <span className="text-accent">{k}:</span> <span className="text-white/50">{v}</span>
                         </div>
                       ))}
                     </div>

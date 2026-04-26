@@ -24,7 +24,7 @@ export function PhaseView({ phase, input, processing, results, processingText = 
         <div className="flex-1 flex flex-col items-center justify-center animate-scale-in">
           {processing || (
             <>
-              <div className="w-12 h-12 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin mb-4" />
+              <div className="w-12 h-12 rounded-full border-2 border-accent border-t-transparent animate-spin mb-4" />
               <p className="text-white/50 text-sm">{processingText}</p>
               <div className="w-48 h-1 rounded-full mt-4 animate-shimmer" />
             </>

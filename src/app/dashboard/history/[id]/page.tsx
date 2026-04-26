@@ -41,7 +41,7 @@ export default function LogDetailPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin"/>
+      <div className="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin"/>
     </div>
   )
 
@@ -50,7 +50,7 @@ export default function LogDetailPage() {
       <div className="text-center">
         <p className="text-2xl mb-2">📝</p>
         <p className="text-white/50">Log not found</p>
-        <button onClick={() => router.push('/dashboard/history')} className="text-[#4ADE80] text-sm mt-3">Back to history</button>
+        <button onClick={() => router.push('/dashboard/history')} className="text-accent text-sm mt-3">Back to history</button>
       </div>
     </div>
   )
@@ -101,7 +101,7 @@ export default function LogDetailPage() {
             <ul className="space-y-2">
               {analysis.insights.map((insight, i) => (
                 <li key={i} className="flex gap-2 text-sm text-white/70">
-                  <span className="text-[#4ADE80] mt-0.5">•</span>{insight}
+                  <span className="text-accent mt-0.5">•</span>{insight}
                 </li>
               ))}
             </ul>
@@ -115,7 +115,7 @@ export default function LogDetailPage() {
             <ul className="space-y-2">
               {analysis.recommendations.map((rec, i) => (
                 <li key={i} className="flex gap-2 text-sm text-white/70">
-                  <span className="text-[#00B4B4] mt-0.5 shrink-0">✓</span>{rec}
+                  <span className="text-accent mt-0.5 shrink-0">✓</span>{rec}
                 </li>
               ))}
             </ul>

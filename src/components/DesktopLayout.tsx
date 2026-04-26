@@ -70,7 +70,7 @@ export function DesktopSidebar() {
             <Link key={item.href} href={item.href}>
               <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 active
-                  ? 'bg-gradient-to-r from-[#00B4B4]/15 to-[#4ADE80]/10 text-[#4ADE80] border border-[#00B4B4]/20'
+                  ? 'bg-gradient-to-r from-[#00B4B4]/15 to-[#4ADE80]/10 text-accent border border-accent/20'
                   : 'text-white/50 hover:text-white/80 hover:bg-white/5'
               }`}>
                 {item.icon}

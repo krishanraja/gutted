@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { getPlanLimits } from '@/lib/plan-limits'
 import Link from 'next/link'
+import { FileTextIcon, ArrowRightIcon, CheckIcon, AlertIcon } from '@/components/icons'
 
 interface DoctorSummary {
   patientSummary: string; keySymptoms: string[]; testResults: string[]
@@ -70,55 +71,63 @@ export default function DoctorSummaryPage() {
       </div>
 
       {!limits.pdfReports ? (
-        <div className="px-6">
+        <div className="px-5 md:px-6">
           <Card className="text-center py-10">
-            <div className="text-4xl mb-4">🏥</div>
-            <p className="font-semibold mb-2">Unlock doctor visit summaries</p>
-            <p className="text-white/40 text-sm mb-6">Upgrade to Pro to generate shareable summaries for your doctor with your symptoms, patterns, and test results.</p>
-            <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade to Pro →</Link>
+            <FileTextIcon size={28} className="mx-auto text-white/35 mb-3" />
+            <p className="font-medium mb-2">Unlock doctor visit summaries</p>
+            <p className="text-white/55 text-sm mb-6">Upgrade to Pro to generate shareable summaries for your doctor with your symptoms, patterns, and test results.</p>
+            <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-accent text-sm font-medium hover:text-white transition-colors">Upgrade to Pro <ArrowRightIcon size={14} /></Link>
           </Card>
         </div>
       ) : !summary ? (
-        <div className="px-6">
+        <div className="px-5 md:px-6">
           <Card className="text-center py-10">
-            <div className="text-4xl mb-4">🏥</div>
-            <p className="font-semibold mb-2">Prepare for your doctor visit</p>
-            <p className="text-white/40 text-sm mb-6">Generate a clinical-friendly summary of the last 30 days to share with your healthcare provider.</p>
+            <FileTextIcon size={28} className="mx-auto text-white/35 mb-3" />
+            <p className="font-medium mb-2">Prepare for your doctor visit</p>
+            <p className="text-white/55 text-sm mb-6">Generate a clinical-friendly summary of the last 30 days to share with your healthcare provider.</p>
             <Button onClick={generate} loading={generating}>Generate summary</Button>
           </Card>
-          {error && <p className="text-red-400 text-sm mt-4 text-center">{error}</p>}
+          {error && <p className="text-[#E96363] text-sm mt-4 text-center">{error}</p>}
         </div>
       ) : (
-        <div className="px-6 space-y-4 mb-6">
+        <div className="px-5 md:px-6 space-y-3 mb-6">
           {/* Header */}
-          <Card glow>
+          <Card>
             <div className="flex items-start justify-between mb-3">
               <div>
-                <p className="text-white/40 text-xs uppercase tracking-wide">Doctor visit summary</p>
-                <p className="font-semibold mt-1">{summary.patientName}</p>
-                <p className="text-white/40 text-sm">{summary.period}</p>
+                <p className="text-white/40 text-[11px] uppercase tracking-wider">Doctor visit summary</p>
+                <p className="font-medium tracking-tight mt-1">{summary.patientName}</p>
+                <p className="text-white/45 text-sm">{summary.period}</p>
               </div>
               <Badge variant="teal">Pro</Badge>
             </div>
-            <div className="flex gap-4 mt-3">
-              <div><span className="text-white/40 text-xs">Avg Score</span><p className="font-semibold text-[#4ADE80]">{summary.avgScore}/10</p></div>
-              <div><span className="text-white/40 text-xs">Logs</span><p className="font-semibold">{summary.totalLogs}</p></div>
+            <div className="flex gap-6 mt-3">
+              <div>
+                <span className="text-white/45 text-[11px] uppercase tracking-wider">Avg score</span>
+                <p className="num font-medium text-accent">{summary.avgScore}/10</p>
+              </div>
+              <div>
+                <span className="text-white/45 text-[11px] uppercase tracking-wider">Logs</span>
+                <p className="num font-medium">{summary.totalLogs}</p>
+              </div>
             </div>
           </Card>
 
           {/* Patient summary */}
           <Card>
-            <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Overview</p>
-            <p className="text-white/70 text-sm leading-relaxed">{summary.patientSummary}</p>
+            <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">Overview</p>
+            <p className="text-white/75 text-sm leading-relaxed">{summary.patientSummary}</p>
           </Card>
 
           {/* Key symptoms */}
           {summary.keySymptoms.length > 0 && (
             <Card>
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Key symptoms reported</p>
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Key symptoms reported</p>
               <ul className="space-y-1.5">
                 {summary.keySymptoms.map((s, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-white/70"><span className="text-amber-400">•</span>{s}</li>
+                  <li key={i} className="flex gap-2 text-sm text-white/75">
+                    <AlertIcon size={12} className="text-[#E8AE1E] shrink-0 mt-1" />{s}
+                  </li>
                 ))}
               </ul>
             </Card>
@@ -127,10 +136,12 @@ export default function DoctorSummaryPage() {
           {/* Test results */}
           {summary.testResults.length > 0 && (
             <Card>
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Relevant test findings</p>
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Relevant test findings</p>
               <ul className="space-y-1.5">
                 {summary.testResults.map((t, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-white/70"><span className="text-[#00B4B4]">🔬</span>{t}</li>
+                  <li key={i} className="flex gap-2 text-sm text-white/75">
+                    <span className="text-accent mt-0.5">•</span>{t}
+                  </li>
                 ))}
               </ul>
             </Card>
@@ -139,18 +150,20 @@ export default function DoctorSummaryPage() {
           {/* Score history */}
           {summary.scoreHistory && (
             <Card>
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Score trends</p>
-              <p className="text-white/70 text-sm leading-relaxed">{summary.scoreHistory}</p>
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">Score trends</p>
+              <p className="text-white/75 text-sm leading-relaxed">{summary.scoreHistory}</p>
             </Card>
           )}
 
           {/* Dietary notes */}
           {summary.dietaryNotes.length > 0 && (
             <Card>
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Dietary patterns noted</p>
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Dietary patterns noted</p>
               <ul className="space-y-1.5">
                 {summary.dietaryNotes.map((n, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-white/70"><span className="text-[#4ADE80]">🥗</span>{n}</li>
+                  <li key={i} className="flex gap-2 text-sm text-white/75">
+                    <CheckIcon size={12} className="text-[#3FBE6F] shrink-0 mt-1" />{n}
+                  </li>
                 ))}
               </ul>
             </Card>
@@ -158,11 +171,13 @@ export default function DoctorSummaryPage() {
 
           {/* Questions for doctor */}
           {summary.questionsForDoctor.length > 0 && (
-            <Card className="border-[#00B4B4]/20 bg-[#00B4B4]/5">
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Suggested questions for your doctor</p>
+            <Card className="border-accent/30">
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Suggested questions for your doctor</p>
               <ul className="space-y-2">
                 {summary.questionsForDoctor.map((q, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-white/70"><span className="text-[#00B4B4]">❓</span>{q}</li>
+                  <li key={i} className="flex gap-2 text-sm text-white/75">
+                    <span className="text-accent mt-0.5">?</span>{q}
+                  </li>
                 ))}
               </ul>
             </Card>

@@ -11,6 +11,7 @@ import { MealPlanSkeleton } from '@/components/ui/Skeleton'
 import { CardCarousel } from '@/components/CardCarousel'
 import { BottomSheet } from '@/components/BottomSheet'
 import { useToast } from '@/components/ToastProvider'
+import { UtensilsIcon, BulbIcon, CheckIcon, ArrowRightIcon, CalendarIcon } from '@/components/icons'
 
 interface Meal { name: string; description: string; gutBenefits: string; prepTime: string }
 interface Day { day: string; breakfast: Meal; lunch: Meal; dinner: Meal; snacks: string[] }
@@ -128,13 +129,17 @@ export function MealPlanContent() {
       <Card className="flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-2">
           <div>
-            <p className="text-white/30 text-xs uppercase tracking-wide mb-0.5">{label}</p>
-            <p className="font-semibold">{meal.name}</p>
+            <p className="text-white/40 text-[11px] uppercase tracking-wider mb-0.5">{label}</p>
+            <p className="font-medium tracking-tight">{meal.name}</p>
           </div>
-          <span className="text-white/30 text-xs shrink-0 ml-2">⏱ {meal.prepTime}</span>
+          <span className="num text-white/40 text-xs shrink-0 ml-2 inline-flex items-center gap-1">
+            <CalendarIcon size={11} /> {meal.prepTime}
+          </span>
         </div>
-        <p className="text-white/50 text-sm mb-3 flex-1">{meal.description}</p>
-        <p className="text-[#4ADE80] text-xs">✓ {meal.gutBenefits}</p>
+        <p className="text-white/55 text-sm mb-3 flex-1">{meal.description}</p>
+        <p className="text-[#3FBE6F] text-xs inline-flex items-center gap-1">
+          <CheckIcon size={11} /> {meal.gutBenefits}
+        </p>
       </Card>
     </div>
   )
@@ -144,54 +149,55 @@ export function MealPlanContent() {
       {/* Mobile: viewport-locked with meal carousel */}
       <div className="mobile-viewport md:hidden">
         {/* Header */}
-        <div className="flex-none px-6 pt-10 pb-3 animate-fade-in">
-          <div className="flex items-center justify-between">
+        <div className="flex-none px-5 pt-safe pb-3 animate-fade-in">
+          <div className="flex items-center justify-between pt-3">
             <div>
-              <button onClick={() => router.back()} className="text-white/40 text-sm mb-1 flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+              <button onClick={() => router.back()} className="text-white/45 text-sm mb-1 inline-flex items-center gap-1 hover:text-white transition-colors">
+                <svg width={16} height={16} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
                 Back
               </button>
-              <h1 className="text-xl font-bold">Your meal plan</h1>
+              <h1 className="text-xl font-medium tracking-tight">Your meal plan</h1>
             </div>
             {plan?.gutTips && plan.gutTips.length > 0 && (
               <button
                 onClick={() => { haptic.tap(); setTipsOpen(true) }}
-                className="p-2 rounded-lg bg-white/5 text-white/40 hover:text-white/70 transition-colors"
+                className="p-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white/45 hover:text-white/80 transition-colors"
+                aria-label="View tips"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
+                <BulbIcon size={18} />
               </button>
             )}
           </div>
         </div>
 
         {!plan ? (
-          <div className="flex-1 flex items-center justify-center px-6">
+          <div className="flex-1 flex items-center justify-center px-5">
             {!limits.mealPlan ? (
               <Card className="text-center py-10 w-full animate-fade-up">
-                <div className="text-4xl mb-4">🍽️</div>
-                <p className="font-semibold mb-2">Unlock personalised meal plans</p>
-                <p className="text-white/40 text-sm mb-6">Upgrade to Core or Pro to get AI-generated weekly meal plans tailored to your gut profile.</p>
-                <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade now →</Link>
+                <UtensilsIcon size={28} className="mx-auto text-white/35 mb-3" />
+                <p className="font-medium mb-2">Unlock personalised meal plans</p>
+                <p className="text-white/55 text-sm mb-6">Upgrade to Core or Pro to get AI-generated weekly meal plans tailored to your gut profile.</p>
+                <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-accent text-sm font-medium hover:text-white transition-colors">Upgrade now <ArrowRightIcon size={14} /></Link>
               </Card>
             ) : (
               <Card className="text-center py-10 w-full animate-fade-up">
-                <div className="text-4xl mb-4">🍽️</div>
-                <p className="font-semibold mb-2">No meal plan yet</p>
-                <p className="text-white/40 text-sm mb-6">Upload a gut test or log a few days to generate your personalised plan.</p>
+                <UtensilsIcon size={28} className="mx-auto text-white/35 mb-3" />
+                <p className="font-medium mb-2">No meal plan yet</p>
+                <p className="text-white/55 text-sm mb-6">Upload a gut test or log a few days to generate your personalised plan.</p>
                 <Button onClick={generate} loading={generating} className="mx-auto">Generate my meal plan</Button>
               </Card>
             )}
-            {error && <p className="text-red-400 text-sm mt-4 text-center">{error}</p>}
+            {error && <p className="text-[#E96363] text-sm mt-4 text-center">{error}</p>}
           </div>
         ) : (
           <>
             {/* Stale plan banner */}
             {planAge >= 7 && (
-              <div className="flex-none px-6 mb-2">
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 flex items-center justify-between">
-                  <p className="text-amber-300 text-xs">{planAge} days old</p>
-                  <button onClick={generate} disabled={generating} className="text-[#4ADE80] text-xs font-medium">
-                    {generating ? 'Generating...' : 'Refresh →'}
+              <div className="flex-none px-5 mb-2">
+                <div className="bg-[#E8AE1E]/8 border border-[#E8AE1E]/25 rounded-lg p-2.5 flex items-center justify-between">
+                  <p className="num text-[#E8AE1E] text-xs">{planAge} days old</p>
+                  <button onClick={generate} disabled={generating} className="text-accent text-xs font-medium hover:text-white transition-colors">
+                    {generating ? 'Generating…' : 'Refresh'}
                   </button>
                 </div>
               </div>
@@ -199,19 +205,19 @@ export function MealPlanContent() {
 
             {/* View toggle: Meals / Grocery List */}
             {plan.groceryList && plan.groceryList.length > 0 && (
-              <div className="flex-none px-6 mb-3">
-                <div className="flex bg-white/5 rounded-xl p-1 max-w-xs">
+              <div className="flex-none px-5 mb-3">
+                <div className="flex bg-white/[0.04] border border-white/[0.08] rounded-xl p-1 max-w-xs">
                   <button
                     onClick={() => setShowGroceryList(false)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${!showGroceryList ? 'bg-white/10 text-white' : 'text-white/40'}`}
+                    className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all ${!showGroceryList ? 'bg-white/[0.06] text-white' : 'text-white/45'}`}
                   >
                     Meals
                   </button>
                   <button
                     onClick={() => setShowGroceryList(true)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${showGroceryList ? 'bg-white/10 text-white' : 'text-white/40'}`}
+                    className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all ${showGroceryList ? 'bg-white/[0.06] text-white' : 'text-white/45'}`}
                   >
-                    Grocery List
+                    Grocery list
                   </button>
                 </div>
               </div>
@@ -219,18 +225,18 @@ export function MealPlanContent() {
 
             {/* Day tabs */}
             {!showGroceryList && (
-              <div className="flex-none px-6 mb-3">
+              <div className="flex-none px-5 mb-3">
                 <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
                   {days.map((d, i) => (
                     <button
                       key={d}
                       onClick={() => { setActiveDay(i); haptic.tap() }}
-                      className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                      className={`shrink-0 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                         activeDay === i
-                          ? 'bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] text-black'
+                          ? 'bg-white/[0.10] text-white border border-white/15'
                           : i === todayIndex
-                          ? 'border border-[#00B4B4]/50 text-[#4ADE80]'
-                          : 'bg-white/5 text-white/40'
+                          ? 'border border-accent-50 text-accent'
+                          : 'bg-white/[0.04] border border-white/[0.08] text-white/55 hover:text-white/80'
                       }`}
                     >
                       {d}
@@ -242,7 +248,7 @@ export function MealPlanContent() {
 
             {/* Meal carousel -- one meal at a time */}
             {!showGroceryList && currentDay && (
-              <div className="flex-1 px-6 pb-nav min-h-0 animate-fade-up">
+              <div className="flex-1 px-5 pb-nav min-h-0 animate-fade-up">
                 <CardCarousel>
                   {renderMealCard(currentDay.breakfast, 'Breakfast')}
                   {renderMealCard(currentDay.lunch, 'Lunch')}
@@ -250,15 +256,15 @@ export function MealPlanContent() {
                   {/* Snacks card */}
                   <div className="h-full flex flex-col">
                     <Card className="flex-1">
-                      <p className="text-white/30 text-xs uppercase tracking-wide mb-3">Snacks</p>
+                      <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Snacks</p>
                       {currentDay.snacks?.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {currentDay.snacks.map((s, i) => (
-                            <span key={i} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white/60">{s}</span>
+                            <span key={i} className="bg-white/[0.04] border border-white/[0.08] rounded-md px-3 py-1.5 text-sm text-white/65">{s}</span>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-white/40 text-sm">No snacks planned for today</p>
+                        <p className="text-white/45 text-sm">No snacks planned for today.</p>
                       )}
                     </Card>
                   </div>
@@ -268,14 +274,14 @@ export function MealPlanContent() {
 
             {/* Grocery list (mobile) */}
             {showGroceryList && plan.groceryList && (
-              <div className="flex-1 px-6 pb-nav min-h-0 space-y-3 overflow-y-auto">
+              <div className="flex-1 px-5 pb-nav min-h-0 space-y-3 overflow-y-auto">
                 {plan.groceryList.map((cat) => (
                   <Card key={cat.category}>
-                    <p className="text-white/40 text-xs uppercase tracking-wide mb-2">{cat.category}</p>
+                    <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">{cat.category}</p>
                     <ul className="space-y-1.5">
                       {cat.items.map((item, i) => (
-                        <li key={i} className="flex items-center gap-2 text-sm text-white/70">
-                          <span className="w-4 h-4 rounded border border-white/20 shrink-0" />
+                        <li key={i} className="flex items-center gap-2 text-sm text-white/75">
+                          <span className="w-3.5 h-3.5 rounded-sm border border-white/20 shrink-0" />
                           {item}
                         </li>
                       ))}
@@ -297,7 +303,7 @@ export function MealPlanContent() {
             )}
 
             {/* Regenerate & email buttons */}
-            <div className="flex-none px-6 pb-nav flex gap-3">
+            <div className="flex-none px-5 pb-nav flex gap-2">
               <Button onClick={generate} loading={generating} variant="outline" className="flex-1">Regenerate</Button>
               {limits.emailMealPlans && (
                 <Button
@@ -316,68 +322,68 @@ export function MealPlanContent() {
 
       {/* Desktop: original layout */}
       <div className="hidden md:block bg-black">
-        <div className="px-6 pt-12 pb-4">
-          <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+        <div className="px-6 pt-10 pb-4">
+          <button onClick={() => router.back()} className="text-white/45 text-sm mb-4 inline-flex items-center gap-1 hover:text-white transition-colors">
+            <svg width={16} height={16} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
             Back
           </button>
-          <h1 className="text-2xl font-bold">Your meal plan</h1>
-          <p className="text-white/40 text-sm mt-1">Personalised for your gut profile</p>
+          <h1 className="text-2xl font-medium tracking-tight">Your meal plan</h1>
+          <p className="text-white/45 text-sm mt-1">Personalised for your gut profile.</p>
         </div>
 
         {!plan ? (
           <div className="px-6">
             {!limits.mealPlan ? (
               <Card className="text-center py-10 animate-fade-up">
-                <div className="text-4xl mb-4">🍽️</div>
-                <p className="font-semibold mb-2">Unlock personalised meal plans</p>
-                <p className="text-white/40 text-sm mb-6">Upgrade to Core or Pro to get AI-generated weekly meal plans tailored to your gut profile.</p>
-                <Link href="/dashboard/settings" className="text-[#4ADE80] text-sm font-medium hover:underline">Upgrade now →</Link>
+                <UtensilsIcon size={28} className="mx-auto text-white/35 mb-3" />
+                <p className="font-medium mb-2">Unlock personalised meal plans</p>
+                <p className="text-white/55 text-sm mb-6">Upgrade to Core or Pro to get AI-generated weekly meal plans tailored to your gut profile.</p>
+                <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-accent text-sm font-medium hover:text-white transition-colors">Upgrade now <ArrowRightIcon size={14} /></Link>
               </Card>
             ) : (
               <Card className="text-center py-10 animate-fade-up">
-                <div className="text-4xl mb-4">🍽️</div>
-                <p className="font-semibold mb-2">No meal plan yet</p>
-                <p className="text-white/40 text-sm mb-6">Upload a gut test or log a few days to generate your personalised plan.</p>
+                <UtensilsIcon size={28} className="mx-auto text-white/35 mb-3" />
+                <p className="font-medium mb-2">No meal plan yet</p>
+                <p className="text-white/55 text-sm mb-6">Upload a gut test or log a few days to generate your personalised plan.</p>
                 <Button onClick={generate} loading={generating} className="mx-auto">Generate my meal plan</Button>
               </Card>
             )}
-            {error && <p className="text-red-400 text-sm mt-4 text-center">{error}</p>}
+            {error && <p className="text-[#E96363] text-sm mt-4 text-center">{error}</p>}
           </div>
         ) : (
           <>
             {planAge >= 7 && (
               <div className="px-6 mb-4">
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-center justify-between">
-                  <p className="text-amber-300 text-sm">This plan is {planAge} days old</p>
-                  <button onClick={generate} disabled={generating} className="text-[#4ADE80] text-sm font-medium hover:underline shrink-0 ml-2">
-                    {generating ? 'Generating...' : 'Refresh →'}
+                <div className="bg-[#E8AE1E]/8 border border-[#E8AE1E]/25 rounded-lg p-3 flex items-center justify-between">
+                  <p className="num text-[#E8AE1E] text-sm">This plan is {planAge} days old.</p>
+                  <button onClick={generate} disabled={generating} className="text-accent text-sm font-medium hover:text-white transition-colors shrink-0 ml-2">
+                    {generating ? 'Generating…' : 'Refresh'}
                   </button>
                 </div>
               </div>
             )}
 
             <div className="px-6 mb-4">
-              <Card className="bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border-[#00B4B4]/20 animate-fade-up">
-                <p className="text-sm text-white/70 leading-relaxed">{plan.weekSummary}</p>
+              <Card className="animate-fade-up">
+                <p className="text-sm text-white/75 leading-relaxed">{plan.weekSummary}</p>
               </Card>
             </div>
 
             {/* View toggle: Meals / Grocery List (desktop) */}
             {plan.groceryList && plan.groceryList.length > 0 && (
               <div className="px-6 mb-4">
-                <div className="flex bg-white/5 rounded-xl p-1 max-w-xs">
+                <div className="flex bg-white/[0.04] border border-white/[0.08] rounded-xl p-1 max-w-xs">
                   <button
                     onClick={() => setShowGroceryList(false)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${!showGroceryList ? 'bg-white/10 text-white' : 'text-white/40'}`}
+                    className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all ${!showGroceryList ? 'bg-white/[0.06] text-white' : 'text-white/45'}`}
                   >
                     Meals
                   </button>
                   <button
                     onClick={() => setShowGroceryList(true)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${showGroceryList ? 'bg-white/10 text-white' : 'text-white/40'}`}
+                    className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all ${showGroceryList ? 'bg-white/[0.06] text-white' : 'text-white/45'}`}
                   >
-                    Grocery List
+                    Grocery list
                   </button>
                 </div>
               </div>
@@ -391,12 +397,12 @@ export function MealPlanContent() {
                       <button
                         key={d}
                         onClick={() => { setActiveDay(i); haptic.tap() }}
-                        className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        className={`shrink-0 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                           activeDay === i
-                            ? 'bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] text-black'
+                            ? 'bg-white/[0.10] text-white border border-white/15'
                             : i === todayIndex
-                            ? 'border border-[#00B4B4]/50 text-[#4ADE80]'
-                            : 'bg-white/5 text-white/40'
+                            ? 'border border-accent-50 text-accent'
+                            : 'bg-white/[0.04] border border-white/[0.08] text-white/55 hover:text-white/80'
                         }`}
                       >
                         {d}
@@ -413,23 +419,27 @@ export function MealPlanContent() {
                         <Card key={meal} entrance="fade-up">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <p className="text-white/30 text-xs uppercase tracking-wide mb-0.5 capitalize">{meal}</p>
-                              <p className="font-semibold">{m.name}</p>
+                              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-0.5 capitalize">{meal}</p>
+                              <p className="font-medium tracking-tight">{m.name}</p>
                             </div>
-                            <span className="text-white/30 text-xs shrink-0 ml-2">⏱ {m.prepTime}</span>
+                            <span className="num text-white/40 text-xs shrink-0 ml-2 inline-flex items-center gap-1">
+                              <CalendarIcon size={11} /> {m.prepTime}
+                            </span>
                           </div>
-                          <p className="text-white/50 text-sm mb-2">{m.description}</p>
-                          <p className="text-[#4ADE80] text-xs">✓ {m.gutBenefits}</p>
+                          <p className="text-white/55 text-sm mb-2">{m.description}</p>
+                          <p className="text-[#3FBE6F] text-xs inline-flex items-center gap-1">
+                            <CheckIcon size={11} /> {m.gutBenefits}
+                          </p>
                         </Card>
                       )
                     })}
 
                     {currentDay.snacks?.length > 0 && (
                       <Card>
-                        <p className="text-white/30 text-xs uppercase tracking-wide mb-2">Snacks</p>
+                        <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">Snacks</p>
                         <div className="flex flex-wrap gap-2">
                           {currentDay.snacks.map((s, i) => (
-                            <span key={i} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm text-white/60">{s}</span>
+                            <span key={i} className="bg-white/[0.04] border border-white/[0.08] rounded-md px-3 py-1 text-sm text-white/65">{s}</span>
                           ))}
                         </div>
                       </Card>
@@ -439,11 +449,11 @@ export function MealPlanContent() {
 
                 {plan.gutTips?.length > 0 && (
                   <div className="px-6 mb-4">
-                    <p className="text-white/40 text-xs uppercase tracking-wide mb-3">This week&apos;s gut tips</p>
+                    <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">This week&apos;s gut tips</p>
                     <div className="space-y-2">
                       {plan.gutTips.map((tip, i) => (
-                        <div key={i} className="flex gap-2 text-sm text-white/60">
-                          <span className="text-[#00B4B4] shrink-0">💡</span>{tip}
+                        <div key={i} className="flex gap-2 text-sm text-white/75">
+                          <BulbIcon size={14} className="text-[#E8AE1E] shrink-0 mt-0.5" />{tip}
                         </div>
                       ))}
                     </div>
@@ -457,11 +467,11 @@ export function MealPlanContent() {
               <div className="px-6 space-y-3 mb-4">
                 {plan.groceryList.map((cat) => (
                   <Card key={cat.category}>
-                    <p className="text-white/40 text-xs uppercase tracking-wide mb-2">{cat.category}</p>
+                    <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">{cat.category}</p>
                     <ul className="space-y-1.5">
                       {cat.items.map((item, i) => (
-                        <li key={i} className="flex items-center gap-2 text-sm text-white/70">
-                          <span className="w-4 h-4 rounded border border-white/20 shrink-0" />
+                        <li key={i} className="flex items-center gap-2 text-sm text-white/75">
+                          <span className="w-3.5 h-3.5 rounded-sm border border-white/20 shrink-0" />
                           {item}
                         </li>
                       ))}
@@ -482,7 +492,7 @@ export function MealPlanContent() {
               </div>
             )}
 
-            <div className="px-6 flex gap-3 flex-wrap">
+            <div className="px-6 flex gap-2 flex-wrap">
               <Button onClick={generate} loading={generating} variant="outline" className="flex-1">Regenerate</Button>
               <Button variant="outline" className="flex-1" onClick={() => window.print()}>Print plan</Button>
               {limits.emailMealPlans && (
@@ -504,14 +514,14 @@ export function MealPlanContent() {
       <BottomSheet open={tipsOpen} onClose={() => setTipsOpen(false)} title="This week's gut tips">
         <div className="space-y-3">
           {plan?.gutTips?.map((tip, i) => (
-            <div key={i} className="flex gap-2 text-sm text-white/60">
-              <span className="text-[#00B4B4] shrink-0">💡</span>{tip}
+            <div key={i} className="flex gap-2 text-sm text-white/75">
+              <BulbIcon size={14} className="text-[#E8AE1E] shrink-0 mt-0.5" />{tip}
             </div>
           ))}
           {plan?.weekSummary && (
-            <div className="mt-4 pt-4 border-t border-white/10">
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Week summary</p>
-              <p className="text-sm text-white/60 leading-relaxed">{plan.weekSummary}</p>
+            <div className="mt-4 pt-4 hairline border-t">
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">Week summary</p>
+              <p className="text-sm text-white/75 leading-relaxed">{plan.weekSummary}</p>
             </div>
           )}
         </div>
