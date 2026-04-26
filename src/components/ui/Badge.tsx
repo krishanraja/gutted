@@ -7,14 +7,14 @@ interface BadgeProps {
 
 export function Badge({ children, variant = 'neutral' }: BadgeProps) {
   const variants = {
-    green: 'bg-green-500/20 text-green-400 border-green-500/30',
-    amber: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    red: 'bg-red-500/20 text-red-400 border-red-500/30',
-    teal: 'bg-[#00B4B4]/20 text-[#00B4B4] border-[#00B4B4]/30',
-    neutral: 'bg-white/10 text-white/70 border-white/20',
+    green: 'bg-[#3FBE6F]/12 text-[#3FBE6F]',
+    amber: 'bg-[#E8AE1E]/12 text-[#E8AE1E]',
+    red: 'bg-[#E96363]/12 text-[#E96363]',
+    teal: 'bg-[#00B4B4]/12 text-[#00B4B4]',
+    neutral: 'bg-white/8 text-white/70',
   }
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${variants[variant]}`}>
+    <span className={`num inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${variants[variant]}`}>
       {children}
     </span>
   )

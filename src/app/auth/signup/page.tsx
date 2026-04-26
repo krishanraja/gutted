@@ -88,8 +88,8 @@ function SignupForm() {
         <div className="flex justify-center mb-8">
           <Image src="/icon.png" alt="gutted." width={40} height={40} className="h-10 w-10" />
         </div>
-        <h1 className="text-2xl font-bold text-center mb-2">Know your gut.</h1>
-        <p className="text-white/40 text-center mb-8 text-sm">Free to start - no card needed</p>
+        <h1 className="text-2xl font-medium tracking-tight text-center mb-2">Know your gut.</h1>
+        <p className="text-white/45 text-center mb-8 text-sm">Free to start. No card needed.</p>
 
         <button
           onClick={signupWithGoogle}
@@ -147,7 +147,7 @@ function SignupForm() {
 
         <p className="text-center text-white/40 text-sm mt-6">
           Already have an account?{' '}
-          <Link href="/auth/login" className="text-[#4ADE80] hover:underline">Sign in</Link>
+          <Link href="/auth/login" className="text-accent hover:underline">Sign in</Link>
         </p>
         <p className="text-center text-white/20 text-xs mt-4">
           By signing up you agree to our terms. gutted. is not a medical service.

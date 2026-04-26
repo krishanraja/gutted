@@ -62,19 +62,19 @@ export default function ReportPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full border-2 border-[#00B4B4] border-t-transparent animate-spin" />
+      <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
     </div>
   )
 
   return (
     <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
-      <div className="px-6 pt-12 pb-6">
-        <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+      <div className="px-5 pt-safe pb-5 md:px-6 md:pt-10">
+        <button onClick={() => router.back()} className="text-white/45 text-sm mb-4 inline-flex items-center gap-1 pt-3 md:pt-0 hover:text-white transition-colors">
+          <svg width={16} height={16} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           Back
         </button>
-        <h1 className="text-2xl font-bold">Health Report</h1>
-        <p className="text-white/40 text-sm mt-1">Your monthly gut health summary</p>
+        <h1 className="text-xl md:text-2xl font-medium tracking-tight">Health report</h1>
+        <p className="text-white/45 text-sm mt-1">Your monthly gut health summary.</p>
       </div>
 
       {!limits.pdfReports ? (

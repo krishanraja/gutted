@@ -59,8 +59,8 @@ export default function LoginPage() {
         <div className="flex justify-center mb-8">
           <Image src="/icon.png" alt="gutted." width={40} height={40} className="h-10 w-10" />
         </div>
-        <h1 className="text-2xl font-bold text-center mb-2">Welcome back</h1>
-        <p className="text-white/40 text-center mb-8 text-sm">Sign in to your gut health dashboard</p>
+        <h1 className="text-2xl font-medium tracking-tight text-center mb-2">Welcome back</h1>
+        <p className="text-white/45 text-center mb-8 text-sm">Sign in to your gut health dashboard.</p>
 
         <button
           onClick={loginWithGoogle}
@@ -84,9 +84,9 @@ export default function LoginPage() {
 
         {magicLinkSent ? (
           <div className="text-center py-4">
-            <p className="text-[#4ADE80] font-medium mb-2">Check your email</p>
+            <p className="text-accent font-medium mb-2">Check your email</p>
             <p className="text-white/40 text-sm">We sent a sign-in link to <span className="text-white/60">{email}</span></p>
-            <button onClick={() => setMagicLinkSent(false)} className="text-[#4ADE80] text-sm mt-4 hover:underline">
+            <button onClick={() => setMagicLinkSent(false)} className="text-accent text-sm mt-4 hover:underline">
               Try a different method
             </button>
           </div>
@@ -113,7 +113,7 @@ export default function LoginPage() {
                 error={error || null}
               />
               <div className="flex justify-end">
-                <Link href="/auth/forgot-password" className="text-[#4ADE80] text-sm hover:underline">Forgot password?</Link>
+                <Link href="/auth/forgot-password" className="text-accent text-sm hover:underline">Forgot password?</Link>
               </div>
               <Button type="submit" loading={loading} className="w-full">Sign in</Button>
             </form>
@@ -144,7 +144,7 @@ export default function LoginPage() {
 
         <p className="text-center text-white/40 text-sm mt-6">
           No account?{' '}
-          <Link href="/auth/signup" className="text-[#4ADE80] hover:underline">Start free</Link>
+          <Link href="/auth/signup" className="text-accent hover:underline">Start free</Link>
         </p>
       </div>
     </div>

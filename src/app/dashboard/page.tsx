@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
@@ -19,6 +19,10 @@ import { haptic } from '@/lib/haptics'
 import { useToast } from '@/components/ToastProvider'
 import { getUnlockStatus } from '@/lib/unlock-status'
 import { GuidedLogWizard } from '@/components/GuidedLogWizard'
+import {
+  MicIcon, FileTextIcon, UtensilsIcon, SearchIcon, FlameIcon, BulbIcon,
+  AlertIcon, CheckIcon, PencilIcon, SettingsIcon, ArrowRightIcon, ChatIcon,
+} from '@/components/icons'
 
 interface Profile { name: string; plan: string; gut_profile: Record<string, unknown> }
 interface Log { id: string; type: string; content: string; gut_score: number; logged_at: string }
@@ -35,7 +39,6 @@ export default function DashboardPage() {
 }
 
 function DashboardContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const initialTab = searchParams.get('tab') || 'overview'
@@ -62,7 +65,7 @@ function DashboardContent() {
 
   useEffect(() => {
     if (searchParams.get('upgraded') === '1') {
-      toast('Welcome to your new plan! Your premium features are now active.', 'success')
+      toast("You're on the new plan. Premium features are active.", 'success')
       window.history.replaceState({}, '', '/dashboard')
     }
   }, [searchParams, toast])
@@ -104,7 +107,6 @@ function DashboardContent() {
     }
     setStreak(streakCount)
 
-    // Calculate profile completeness
     const gutProfile = p?.gut_profile || {} as Record<string, unknown>
     const { count: dc } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
     setDocCount(dc || 0)
@@ -154,19 +156,18 @@ function DashboardContent() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   const getNudge = () => {
-    if (!hasLoggedToday) return { text: "You haven't logged today - how's your gut feeling?", action: '/dashboard/log', cta: 'Log now' }
+    if (!hasLoggedToday) return { text: "You haven't logged today. How's your gut?", action: '/dashboard/log', cta: 'New log' }
     const recentScores = logs.slice(0, 5).filter(l => l.gut_score).map(l => l.gut_score)
     const avgRecent = recentScores.length ? recentScores.reduce((a, b) => a + b, 0) / recentScores.length : 0
-    if (avgRecent > 0 && avgRecent < 4) return { text: "Your scores have been low. Let's look at what might be causing it.", action: '/dashboard/history', cta: 'View history' }
+    if (avgRecent > 0 && avgRecent < 4) return { text: 'Your scores have been low. Take a look at the pattern.', action: '/dashboard/history', cta: 'View history' }
     return null
   }
   const nudge = getNudge()
-  const insightIcons: Record<string, string> = { tip: '💡', pattern: '🔍', encouragement: '🌟', warning: '⚠️' }
 
   // Contextual line below score -- show the most important one
   const contextLine = nudge?.text
-    || (dailyInsight ? `${insightIcons[dailyInsight.type] || '💡'} ${dailyInsight.insight}` : null)
-    || (todayScore === 0 ? 'Log your first entry to get your score' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day - take it easy')
+    || dailyInsight?.insight
+    || (todayScore === 0 ? 'Log your first entry to get your score' : todayScore >= 7 ? 'Gut feeling good.' : todayScore >= 4 ? 'Room to improve.' : 'Rough day. Take it easy.')
 
   const unlock = getUnlockStatus(logCount, docCount, hasRestrictions)
   const gutTabs = [
@@ -176,8 +177,6 @@ function DashboardContent() {
     { key: 'coach', label: 'Coach', locked: !unlock.coach.unlocked, lockMessage: unlock.coach.requirement },
   ]
 
-  // If user selects a locked tab, show the lock message instead
-  const activeTabLocked = gutTabs.find(t => t.key === activeTab)?.locked
   const handleTabChange = (key: string) => {
     const tab = gutTabs.find(t => t.key === key)
     if (tab?.locked) return
@@ -191,34 +190,34 @@ function DashboardContent() {
       {/* Mobile: viewport-locked no-scroll layout */}
       <div className="mobile-viewport md:hidden">
         {/* Zone 1: Compact Header */}
-        <div className="px-6 pt-10 pb-2 animate-fade-in">
-          <div className="flex items-center justify-between">
+        <div className="px-5 pt-safe pb-2 animate-fade-in">
+          <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-3">
               <Image src="/icon.png" alt="gutted." width={28} height={28} className="h-7 w-7" />
               <div>
-                <p className="text-white/50 text-xs">{greeting},</p>
-                <h1 className="text-lg font-bold leading-tight">{profile?.name || 'friend'}</h1>
+                <p className="text-white/45 text-[11px] uppercase tracking-wider">{greeting}</p>
+                <h1 className="text-base font-medium leading-tight">{profile?.name || 'You'}</h1>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {streak > 1 && (
-                <div className="flex items-center gap-1 bg-orange-500/10 border border-orange-500/20 rounded-lg px-2 py-0.5">
-                  <span className="text-xs">🔥</span>
-                  <span className="text-[10px] font-semibold text-orange-400">{streak}</span>
+                <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] rounded-md px-2 py-1">
+                  <FlameIcon size={12} className="text-[#E8AE1E]" />
+                  <span className="num text-[11px] font-medium text-white/75">{streak}</span>
                 </div>
               )}
               <Link href="/dashboard/settings" aria-label="Profile" className="rounded-full hover:bg-white/5 transition-colors">
                 <Avatar size="sm" name={profile?.name} />
               </Link>
-              <Link href="/dashboard/settings" aria-label="Settings" className="p-1.5 rounded-lg hover:bg-white/5 transition-colors text-white/40">
-                <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <Link href="/dashboard/settings" aria-label="Settings" className="p-1.5 rounded-md hover:bg-white/5 transition-colors text-white/40">
+                <SettingsIcon size={18} />
               </Link>
             </div>
           </div>
         </div>
 
         {/* Section Nav */}
-        <div className="px-6 pb-2">
+        <div className="px-5">
           <SectionNav tabs={gutTabs} activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
 
@@ -229,7 +228,7 @@ function DashboardContent() {
 
         {activeTab === 'overview' && <div className="flex-1 flex flex-col min-h-0 overflow-hidden pb-nav">
         {/* Zone 2: Hero Score or Welcome */}
-        <div className={`px-6 py-2 ${logCount < 3 ? 'flex-1 min-h-0' : 'flex-none'}`}>
+        <div className={`px-5 py-3 ${logCount < 3 ? 'flex-1 min-h-0' : 'flex-none'}`}>
           {logCount < 3 ? (
             <GuidedLogWizard
               logCount={logCount}
@@ -238,14 +237,17 @@ function DashboardContent() {
               onComplete={() => load()}
             />
           ) : (
-            <Card glow className="flex flex-col items-center py-6 animate-fade-up">
+            <Card className="flex flex-col items-center py-5 animate-fade-up">
               <GutScore score={todayScore} size="lg" />
-              <p className="text-white/50 text-sm mt-3 text-center line-clamp-2 px-4 animate-fade-up stagger-1">
+              <p className="text-white/55 text-sm mt-4 text-center line-clamp-2 px-4 animate-fade-up stagger-1">
                 {contextLine}
               </p>
               {nudge && (
-                <button onClick={() => { haptic.tap(); setActiveTab('log') }} className="text-[#4ADE80] text-xs mt-2 hover:underline animate-fade-up stagger-2">
-                  {nudge.cta} →
+                <button
+                  onClick={() => { haptic.tap(); setActiveTab('log') }}
+                  className="inline-flex items-center gap-1 text-accent text-xs mt-2 hover:text-white transition-colors animate-fade-up stagger-2"
+                >
+                  {nudge.cta} <ArrowRightIcon size={12} />
                 </button>
               )}
               {patterns.length > 0 && (
@@ -254,9 +256,9 @@ function DashboardContent() {
                     <button
                       key={i}
                       onClick={() => { haptic.tap(); setPatternSheetOpen(true) }}
-                      className="bg-white/5 border border-white/10 rounded-full px-2.5 py-0.5 text-[10px] text-white/50 active:scale-[0.97]"
+                      className="inline-flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] rounded-md px-2 py-1 text-[11px] text-white/55 hover:text-white/80 active:scale-[0.98]"
                     >
-                      🔍 {p.trigger}
+                      <SearchIcon size={11} /> {p.trigger}
                     </button>
                   ))}
                 </div>
@@ -266,20 +268,20 @@ function DashboardContent() {
         </div>
 
         {/* Zone 3: Quick Actions + Carousel (hidden during onboarding wizard) */}
-        {logCount >= 3 && <div className="flex-1 min-h-0 flex flex-col px-6">
+        {logCount >= 3 && <div className="flex-1 min-h-0 flex flex-col px-5">
           {/* Quick actions */}
           <div className="flex-none mb-3 animate-fade-up stagger-2">
             <div className="grid grid-cols-4 gap-2">
               {[
-                { href: '/dashboard/log', emoji: '🎤', label: 'Log now' },
-                { href: '/dashboard/upload', emoji: '📄', label: 'Upload' },
-                { href: '/dashboard/meal-plan', emoji: '🍽️', label: 'Meals' },
-                { href: '/dashboard/food-checker', emoji: '🔍', label: 'Food check' },
-              ].map(({ href, emoji, label }) => (
+                { href: '/dashboard/log', Icon: MicIcon, label: 'Log' },
+                { href: '/dashboard/upload', Icon: FileTextIcon, label: 'Upload' },
+                { href: '/dashboard/meal-plan', Icon: UtensilsIcon, label: 'Meals' },
+                { href: '/dashboard/food-checker', Icon: SearchIcon, label: 'Check' },
+              ].map(({ href, Icon, label }) => (
                 <Link key={href} href={href} onClick={() => haptic.light()}>
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center hover:border-[#00B4B4]/30 transition-colors active:scale-[0.97]">
-                    <div className="text-xl mb-0.5">{emoji}</div>
-                    <p className="text-[10px] text-white/60">{label}</p>
+                  <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-3 text-center hover:bg-white/[0.06] hover:border-white/15 transition-all active:scale-[0.98]">
+                    <Icon size={18} className="mx-auto text-white/70" />
+                    <p className="text-[11px] text-white/60 mt-1.5">{label}</p>
                   </div>
                 </Link>
               ))}
@@ -292,14 +294,14 @@ function DashboardContent() {
               {/* Card 1: Recent logs */}
               <div className="h-full flex flex-col">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-white/40 text-xs uppercase tracking-wide">Recent logs</p>
-                  <Link href="/dashboard/history" className="text-[#4ADE80] text-xs">View all</Link>
+                  <p className="text-white/40 text-[11px] uppercase tracking-wider">Recent logs</p>
+                  <Link href="/dashboard/history" className="text-accent text-xs hover:text-white transition-colors">All logs</Link>
                 </div>
                 {logs.length === 0 ? (
                   <Card className="flex-1 flex flex-col items-center justify-center">
-                    <p className="text-xl mb-1">🎤</p>
-                    <p className="text-white/50 text-xs">No logs yet</p>
-                    <Link href="/dashboard/log" className="text-[#4ADE80] text-xs mt-2">Log now</Link>
+                    <MicIcon size={20} className="text-white/30" />
+                    <p className="text-white/55 text-xs mt-2">No logs yet</p>
+                    <Link href="/dashboard/log" className="text-accent text-xs mt-2 hover:text-white transition-colors">New log</Link>
                   </Card>
                 ) : (
                   <div className="space-y-2 flex-1">
@@ -307,8 +309,8 @@ function DashboardContent() {
                       <Card key={log.id}>
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <span className="text-xs shrink-0">{log.type === 'voice' ? '🎤' : '✏️'}</span>
-                            <p className="text-xs text-white/60 truncate">{log.content}</p>
+                            {log.type === 'voice' ? <MicIcon size={12} className="text-white/40 shrink-0" /> : <PencilIcon size={12} className="text-white/40 shrink-0" />}
+                            <p className="text-xs text-white/65 truncate">{log.content}</p>
                           </div>
                           {log.gut_score > 0 && (
                             <Badge variant={log.gut_score >= 7 ? 'green' : log.gut_score >= 4 ? 'amber' : 'red'}>
@@ -325,52 +327,52 @@ function DashboardContent() {
               {/* Card 2: Daily insight or patterns */}
               <div className="h-full flex flex-col">
                 {dailyInsight ? (
-                  <Card className="flex-1 border-[#4ADE80]/20 bg-[#4ADE80]/5">
+                  <Card className="flex-1">
                     <div className="flex items-start gap-3">
-                      <span className="text-lg">{insightIcons[dailyInsight.type] || '💡'}</span>
+                      <BulbIcon size={16} className="text-[#E8AE1E] shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-white/40 text-xs uppercase tracking-wide mb-1">Daily insight</p>
-                        <p className="text-sm text-white/70 leading-relaxed">{dailyInsight.insight}</p>
+                        <p className="text-white/40 text-[11px] uppercase tracking-wider mb-1">Daily insight</p>
+                        <p className="text-sm text-white/75 leading-relaxed">{dailyInsight.insight}</p>
                       </div>
                     </div>
                   </Card>
                 ) : patterns.length > 0 ? (
                   <Card className="flex-1">
-                    <p className="text-white/40 text-xs uppercase tracking-wide mb-2">Patterns</p>
+                    <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">Patterns</p>
                     <div className="space-y-2">
                       {patterns.slice(0, 3).map((p, i) => (
                         <div key={i} className="flex items-start gap-2">
-                          <span className="text-[#00B4B4] text-xs shrink-0">🔍</span>
-                          <p className="text-xs text-white/60">{p.detail}</p>
+                          <SearchIcon size={12} className="text-accent shrink-0 mt-0.5" />
+                          <p className="text-xs text-white/65">{p.detail}</p>
                         </div>
                       ))}
                     </div>
                   </Card>
                 ) : (
                   <Card className="flex-1 flex flex-col items-center justify-center">
-                    <p className="text-xl mb-1">💡</p>
-                    <p className="text-white/50 text-xs text-center">Log a few more days to unlock AI insights</p>
+                    <BulbIcon size={20} className="text-white/30" />
+                    <p className="text-white/55 text-xs text-center mt-2">Log a few more days to unlock AI insights.</p>
                   </Card>
                 )}
               </div>
 
-              {/* Card 3: Streak + refresh */}
+              {/* Card 3: Streak + upgrade + refresh */}
               <div className="h-full flex flex-col">
                 {streak > 1 && (
                   <Card className="mb-2">
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl">{streak >= 7 ? '🔥' : streak >= 3 ? '✨' : '📝'}</div>
+                      <FlameIcon size={20} className="text-[#E8AE1E]" />
                       <div>
-                        <p className="font-semibold text-sm">{streak}-day streak</p>
-                        <p className="text-white/40 text-xs">{streak >= 7 ? 'Amazing consistency!' : 'Keep it going!'}</p>
+                        <p className="font-medium text-sm"><span className="num">{streak}</span>-day streak</p>
+                        <p className="text-white/45 text-xs">{streak >= 7 ? 'Solid consistency.' : 'Keep going.'}</p>
                       </div>
                     </div>
                   </Card>
                 )}
                 {profile?.plan === 'free' && (
-                  <Card className="flex-1 bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border-[#00B4B4]/20">
-                    <p className="font-semibold text-sm mb-1">Unlock your full gut profile</p>
-                    <p className="text-white/50 text-xs mb-2">Upload a gut test and get a personalised weekly meal plan.</p>
+                  <Card className="flex-1">
+                    <p className="font-medium text-sm mb-1">Unlock your full gut profile</p>
+                    <p className="text-white/55 text-xs mb-3">Upload a gut test and get a weekly meal plan built from your data.</p>
                     <button
                       disabled={upgrading}
                       onClick={async () => {
@@ -386,16 +388,16 @@ function DashboardContent() {
                           else setUpgrading(false)
                         } catch { setUpgrading(false) }
                       }}
-                      className="text-[#4ADE80] text-xs font-medium hover:underline disabled:opacity-50"
-                    >{upgrading ? 'Redirecting...' : 'Upgrade to Core - $14/mo →'}</button>
+                      className="inline-flex items-center gap-1 text-accent text-xs font-medium hover:text-white transition-colors disabled:opacity-50"
+                    >{upgrading ? 'Redirecting…' : <>Upgrade to Core – $14/mo <ArrowRightIcon size={12} /></>}</button>
                   </Card>
                 )}
                 <button
                   onClick={refresh}
                   disabled={refreshing}
-                  className="mt-auto text-center text-white/20 text-xs hover:text-white/40 transition-colors py-2"
+                  className="mt-auto text-center text-white/25 text-xs hover:text-white/50 transition-colors py-2"
                 >
-                  {refreshing ? 'Refreshing...' : 'Refresh dashboard'}
+                  {refreshing ? 'Refreshing…' : 'Refresh'}
                 </button>
               </div>
             </CardCarousel>
@@ -404,33 +406,33 @@ function DashboardContent() {
         </div>}
       </div>
 
-      {/* Desktop: original layout preserved */}
+      {/* Desktop layout */}
       <div className="hidden md:block min-h-screen bg-black pb-8 md:ml-60 lg:ml-64">
         {/* Header */}
-        <div className="px-6 pt-12 pb-6">
+        <div className="px-6 pt-10 pb-6">
           <div className="flex items-center justify-between mb-6">
             <Image src="/icon.png" alt="gutted." width={32} height={32} className="h-8 w-8" />
             <div className="flex items-center gap-2">
               {streak > 1 && (
-                <div className="flex items-center gap-1 bg-orange-500/10 border border-orange-500/20 rounded-lg px-2.5 py-1">
-                  <span className="text-sm">🔥</span>
-                  <span className="text-xs font-semibold text-orange-400">{streak}</span>
+                <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.08] rounded-md px-2.5 py-1">
+                  <FlameIcon size={14} className="text-[#E8AE1E]" />
+                  <span className="num text-xs font-medium text-white/75">{streak}</span>
                 </div>
               )}
               <Link href="/dashboard/settings" aria-label="Profile" className="rounded-full hover:bg-white/5 transition-colors">
                 <Avatar size="sm" name={profile?.name} />
               </Link>
-              <Link href="/dashboard/settings" aria-label="Settings" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/40 hover:text-white/70">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <Link href="/dashboard/settings" aria-label="Settings" className="p-2 rounded-md hover:bg-white/5 transition-colors text-white/40 hover:text-white/70">
+                <SettingsIcon size={18} />
               </Link>
             </div>
           </div>
-          <p className="text-white/50 text-sm">{greeting},</p>
-          <h1 className="text-2xl font-bold mt-0.5">{profile?.name || 'friend'}</h1>
+          <p className="text-white/45 text-xs uppercase tracking-wider">{greeting}</p>
+          <h1 className="text-2xl font-medium mt-1">{profile?.name || 'You'}</h1>
         </div>
 
         {/* Section Nav - Desktop */}
-        <div className="px-6 pb-4">
+        <div className="px-6 mb-6">
           <SectionNav tabs={gutTabs} activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
 
@@ -449,37 +451,37 @@ function DashboardContent() {
                 onComplete={() => load()}
               />
             ) : (
-            <Card glow className="flex items-center gap-6 py-6 animate-fade-up">
+            <Card className="flex items-center gap-6 py-6 animate-fade-up">
               <GutScore score={todayScore} size="lg" />
               <div>
-                <p className="text-white/40 text-sm mb-1">Today&apos;s gut score</p>
-                <p className="text-lg font-semibold">
-                  {todayScore === 0 ? 'Log your first entry' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day - take it easy'}
+                <p className="text-white/45 text-xs uppercase tracking-wider mb-1">Today&apos;s gut score</p>
+                <p className="text-base font-medium">
+                  {todayScore === 0 ? 'Log your first entry' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day. Take it easy.'}
                 </p>
-                {todayScore === 0 && <p className="text-white/30 text-xs mt-1">Tap &ldquo;Log now&rdquo; to get your score</p>}
+                {todayScore === 0 && <p className="text-white/35 text-xs mt-1">Log to get your score.</p>}
               </div>
             </Card>
             )}
 
             {nudge && (
-              <Card className="border-[#00B4B4]/20 bg-[#00B4B4]/5 animate-fade-up stagger-1">
+              <Card className="animate-fade-up stagger-1">
                 <div className="flex items-start gap-3">
-                  <span className="text-lg">💬</span>
+                  <ChatIcon size={16} className="text-accent shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm text-white/70">{nudge.text}</p>
-                    <Link href={nudge.action} className="text-[#4ADE80] text-xs mt-2 inline-block hover:underline">{nudge.cta} →</Link>
+                    <p className="text-sm text-white/75">{nudge.text}</p>
+                    <Link href={nudge.action} className="inline-flex items-center gap-1 text-accent text-xs mt-2 hover:text-white transition-colors">{nudge.cta} <ArrowRightIcon size={12} /></Link>
                   </div>
                 </div>
               </Card>
             )}
 
             {dailyInsight && (
-              <Card className="border-[#4ADE80]/20 bg-[#4ADE80]/5 animate-fade-up stagger-2">
+              <Card className="animate-fade-up stagger-2">
                 <div className="flex items-start gap-3">
-                  <span className="text-lg">{insightIcons[dailyInsight.type] || '💡'}</span>
+                  <BulbIcon size={16} className="text-[#E8AE1E] shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-white/40 text-xs uppercase tracking-wide mb-1">Daily insight</p>
-                    <p className="text-sm text-white/70 leading-relaxed">{dailyInsight.insight}</p>
+                    <p className="text-white/40 text-[11px] uppercase tracking-wider mb-1">Daily insight</p>
+                    <p className="text-sm text-white/75 leading-relaxed">{dailyInsight.insight}</p>
                   </div>
                 </div>
               </Card>
@@ -487,16 +489,16 @@ function DashboardContent() {
 
             {patterns.length > 0 && (
               <Card className="animate-fade-up stagger-3">
-                <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Patterns detected</p>
+                <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Patterns detected</p>
                 <div className="space-y-3">
                   {patterns.map((p, i) => (
                     <div key={i} className="flex items-start gap-2">
-                      <span className="text-[#00B4B4] shrink-0 mt-0.5">🔍</span>
+                      <SearchIcon size={14} className="text-accent shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-sm text-white/70">{p.detail}</p>
+                        <p className="text-sm text-white/75">{p.detail}</p>
                         <div className="flex gap-2 mt-1">
                           <Badge variant={p.confidence === 'high' ? 'green' : 'amber'}>{p.confidence}</Badge>
-                          {p.occurrences && <span className="text-white/30 text-xs">{p.occurrences}x observed</span>}
+                          {p.occurrences && <span className="num text-white/35 text-xs">{p.occurrences}× observed</span>}
                         </div>
                       </div>
                     </div>
@@ -506,14 +508,14 @@ function DashboardContent() {
             )}
 
             {triggerFoods.length > 0 && (
-              <Card className="border-red-500/20 bg-red-500/5">
-                <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Trigger foods</p>
+              <Card>
+                <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Trigger foods</p>
                 <div className="space-y-2">
                   {triggerFoods.map((f, i) => (
                     <div key={i} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-red-400 text-sm">⚠️</span>
-                        <span className="text-sm text-white/70">{f.food}</span>
+                        <AlertIcon size={14} className="text-[#E96363]" />
+                        <span className="text-sm text-white/75">{f.food}</span>
                       </div>
                       <Badge variant="red">{f.avgScoreAfter}/10</Badge>
                     </div>
@@ -523,14 +525,14 @@ function DashboardContent() {
             )}
 
             {beneficialFoods.length > 0 && (
-              <Card className="border-[#4ADE80]/20 bg-[#4ADE80]/5">
-                <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Gut-friendly foods</p>
+              <Card>
+                <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Gut-friendly foods</p>
                 <div className="space-y-2">
                   {beneficialFoods.map((f, i) => (
                     <div key={i} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-[#4ADE80] text-sm">✓</span>
-                        <span className="text-sm text-white/70">{f.food}</span>
+                        <CheckIcon size={14} className="text-[#3FBE6F]" />
+                        <span className="text-sm text-white/75">{f.food}</span>
                       </div>
                       <Badge variant="green">{f.avgScoreAfter}/10</Badge>
                     </div>
@@ -542,16 +544,16 @@ function DashboardContent() {
             {profileCompleteness < 100 && (
               <Card>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-white/40 text-xs uppercase tracking-wide">Gut profile</p>
-                  <span className="text-[#4ADE80] text-xs font-medium">{profileCompleteness}%</span>
+                  <p className="text-white/40 text-[11px] uppercase tracking-wider">Gut profile</p>
+                  <span className="num text-accent text-xs font-medium">{profileCompleteness}%</span>
                 </div>
-                <div className="w-full bg-white/5 rounded-full h-2 mb-3">
-                  <div className="h-full rounded-full bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] transition-all" style={{ width: `${profileCompleteness}%` }} />
+                <div className="w-full bg-white/5 rounded-full h-1.5 mb-3">
+                  <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${profileCompleteness}%` }} />
                 </div>
                 <div className="space-y-1.5">
                   {completenessItems.filter(i => !i.done).slice(0, 2).map((item) => (
-                    <Link key={item.label} href={item.href} className="flex items-center gap-2 text-sm text-white/50 hover:text-white/70 transition-colors">
-                      <span className="w-4 h-4 rounded border border-white/20 shrink-0" />
+                    <Link key={item.label} href={item.href} className="flex items-center gap-2 text-sm text-white/55 hover:text-white/80 transition-colors">
+                      <span className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0" />
                       {item.label}
                     </Link>
                   ))}
@@ -562,17 +564,17 @@ function DashboardContent() {
 
           <div className="space-y-4 mb-6 md:mb-0">
             <div className="animate-fade-up stagger-1">
-              <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Quick actions</p>
-              <div className="grid grid-cols-4 gap-3">
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Quick actions</p>
+              <div className="grid grid-cols-3 gap-3">
                 {[
-                  { href: '/dashboard/log', emoji: '🎤', label: 'Log now' },
-                  { href: '/dashboard/upload', emoji: '📄', label: 'Upload test' },
-                  { href: '/dashboard/meal-plan', emoji: '🍽️', label: 'Meal plan' },
-                ].map(({ href, emoji, label }) => (
+                  { href: '/dashboard/log', Icon: MicIcon, label: 'New log' },
+                  { href: '/dashboard/upload', Icon: FileTextIcon, label: 'Upload test' },
+                  { href: '/dashboard/meal-plan', Icon: UtensilsIcon, label: 'Meal plan' },
+                ].map(({ href, Icon, label }) => (
                   <Link key={href} href={href}>
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center hover:border-[#00B4B4]/30 transition-colors active:scale-[0.97]">
-                      <div className="text-2xl mb-1">{emoji}</div>
-                      <p className="text-xs text-white/60">{label}</p>
+                    <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4 text-center hover:bg-white/[0.06] hover:border-white/15 transition-all active:scale-[0.98]">
+                      <Icon size={20} className="mx-auto text-white/70" />
+                      <p className="text-xs text-white/65 mt-2">{label}</p>
                     </div>
                   </Link>
                 ))}
@@ -581,14 +583,14 @@ function DashboardContent() {
 
             <div className="animate-fade-up stagger-2">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-white/40 text-xs uppercase tracking-wide">Recent logs</p>
-                <Link href="/dashboard/history" className="text-[#4ADE80] text-xs">View all</Link>
+                <p className="text-white/40 text-[11px] uppercase tracking-wider">Recent logs</p>
+                <Link href="/dashboard/history" className="text-accent text-xs hover:text-white transition-colors">All logs</Link>
               </div>
               {logs.length === 0 ? (
                 <Card className="text-center py-8">
-                  <p className="text-2xl mb-2">🎤</p>
-                  <p className="text-white/50 text-sm">No logs yet. Start by recording how you feel.</p>
-                  <Link href="/dashboard/log" className="inline-block mt-3 text-[#4ADE80] text-sm">Log now</Link>
+                  <MicIcon size={22} className="mx-auto text-white/30" />
+                  <p className="text-white/55 text-sm mt-2">No logs yet. Start by recording how you feel.</p>
+                  <Link href="/dashboard/log" className="inline-block mt-3 text-accent text-sm hover:text-white transition-colors">New log</Link>
                 </Card>
               ) : (
                 <div className="space-y-3">
@@ -597,10 +599,10 @@ function DashboardContent() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm">{log.type === 'voice' ? '🎤' : '✏️'}</span>
-                            <span className="text-white/30 text-xs">{new Date(log.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                            {log.type === 'voice' ? <MicIcon size={12} className="text-white/40" /> : <PencilIcon size={12} className="text-white/40" />}
+                            <span className="num text-white/35 text-xs">{new Date(log.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                           </div>
-                          <p className="text-sm text-white/70 truncate">{log.content}</p>
+                          <p className="text-sm text-white/75 truncate">{log.content}</p>
                         </div>
                         {log.gut_score > 0 && (
                           <Badge variant={log.gut_score >= 7 ? 'green' : log.gut_score >= 4 ? 'amber' : 'red'}>
@@ -618,29 +620,29 @@ function DashboardContent() {
           <div className="space-y-4 hidden lg:block">
             {streak > 0 && (
               <Card className="text-center py-6 animate-fade-up">
-                <div className="text-4xl mb-2">{streak >= 90 ? '🏆' : streak >= 30 ? '💎' : streak >= 7 ? '🔥' : streak >= 3 ? '✨' : '📝'}</div>
-                <p className="text-3xl font-bold gradient-text mb-1">{streak}</p>
-                <p className="text-white/40 text-sm">day{streak !== 1 ? 's' : ''} logging streak</p>
-                {streak >= 90 && <p className="text-[#4ADE80] text-xs mt-2">Gut health master! 90+ days</p>}
-                {streak >= 30 && streak < 90 && <p className="text-[#4ADE80] text-xs mt-2">Incredible! 30+ day streak</p>}
-                {streak >= 7 && streak < 30 && <p className="text-[#4ADE80] text-xs mt-2">Amazing consistency!</p>}
-                {streak >= 3 && streak < 7 && <p className="text-[#4ADE80] text-xs mt-2">Keep it going!</p>}
+                <FlameIcon size={28} className="mx-auto text-[#E8AE1E]" />
+                <p className="num text-3xl font-semibold mt-2 tracking-tight">{streak}</p>
+                <p className="text-white/45 text-sm">day{streak !== 1 ? 's' : ''} logging streak</p>
+                {streak >= 90 && <p className="text-[#3FBE6F] text-xs mt-2">Gut-health master. 90+ days.</p>}
+                {streak >= 30 && streak < 90 && <p className="text-[#3FBE6F] text-xs mt-2">30+ day streak.</p>}
+                {streak >= 7 && streak < 30 && <p className="text-[#3FBE6F] text-xs mt-2">Solid consistency.</p>}
+                {streak >= 3 && streak < 7 && <p className="text-[#3FBE6F] text-xs mt-2">Keep it going.</p>}
                 <div className="mt-4 px-4">
-                  <div className="flex justify-between text-xs text-white/30 mb-1">
+                  <div className="flex justify-between text-xs text-white/30 mb-1.5 num">
                     {[7, 30, 90].map(m => (
-                      <span key={m} className={streak >= m ? 'text-[#4ADE80]' : ''}>{m}d{streak >= m ? ' ✓' : ''}</span>
+                      <span key={m} className={streak >= m ? 'text-[#3FBE6F]' : ''}>{m}d{streak >= m ? ' ✓' : ''}</span>
                     ))}
                   </div>
-                  <div className="w-full bg-white/5 rounded-full h-1.5">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#00B4B4] to-[#4ADE80] transition-all" style={{ width: `${Math.min((streak / 90) * 100, 100)}%` }} />
+                  <div className="w-full bg-white/5 rounded-full h-1">
+                    <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${Math.min((streak / 90) * 100, 100)}%` }} />
                   </div>
                 </div>
               </Card>
             )}
             {profile?.plan === 'free' && (
-              <div className="bg-gradient-to-r from-[#00B4B4]/10 to-[#4ADE80]/10 border border-[#00B4B4]/20 rounded-2xl p-4 animate-fade-up stagger-1">
-                <p className="font-semibold mb-1">Unlock your full gut profile</p>
-                <p className="text-white/50 text-sm mb-3">Upload a gut test and get a personalised weekly meal plan.</p>
+              <Card>
+                <p className="font-medium mb-1">Unlock your full gut profile</p>
+                <p className="text-white/55 text-sm mb-3">Upload a gut test and get a weekly meal plan built from your data.</p>
                 <button
                   disabled={upgrading}
                   onClick={async () => {
@@ -656,16 +658,16 @@ function DashboardContent() {
                       else setUpgrading(false)
                     } catch { setUpgrading(false) }
                   }}
-                  className="text-[#4ADE80] text-sm font-medium hover:underline disabled:opacity-50"
-                >{upgrading ? 'Redirecting...' : 'Upgrade to Core - $14/mo →'}</button>
-              </div>
+                  className="inline-flex items-center gap-1 text-accent text-sm font-medium hover:text-white transition-colors disabled:opacity-50"
+                >{upgrading ? 'Redirecting…' : <>Upgrade to Core – $14/mo <ArrowRightIcon size={14} /></>}</button>
+              </Card>
             )}
             <button
               onClick={refresh}
               disabled={refreshing}
-              className="w-full text-center text-white/20 text-xs hover:text-white/40 transition-colors py-2"
+              className="w-full text-center text-white/25 text-xs hover:text-white/50 transition-colors py-2"
             >
-              {refreshing ? 'Refreshing...' : 'Refresh dashboard'}
+              {refreshing ? 'Refreshing…' : 'Refresh'}
             </button>
           </div>
         </div>}
@@ -676,9 +678,9 @@ function DashboardContent() {
         <div className="space-y-4">
           {patterns.map((p, i) => (
             <div key={i} className="flex items-start gap-3">
-              <span className="text-[#00B4B4] shrink-0 mt-0.5">🔍</span>
+              <SearchIcon size={14} className="text-accent shrink-0 mt-1" />
               <div>
-                <p className="text-sm text-white/70">{p.detail}</p>
+                <p className="text-sm text-white/75">{p.detail}</p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant={p.confidence === 'high' ? 'green' : 'amber'}>{p.confidence}</Badge>
                 </div>

@@ -14,7 +14,7 @@ export function Card({ children, className = '', glow, entrance, delay }: CardPr
 
   return (
     <div
-      className={`bg-white/5 border border-white/10 rounded-2xl p-4 ${glow ? 'shadow-lg shadow-[#00B4B4]/10 animate-glow-pulse' : ''} ${animClass} ${className}`}
+      className={`bg-white/[0.04] border border-white/[0.08] rounded-xl p-4 ${glow ? 'bg-white/[0.06] border-white/15' : ''} ${animClass} ${className}`}
       style={style}
     >
       {children}

@@ -1,6 +1,7 @@
 'use client'
 import { haptic } from '@/lib/haptics'
 import { useToast } from '@/components/ToastProvider'
+import { LockIcon } from '@/components/icons'
 
 interface Tab {
   key: string
@@ -19,7 +20,7 @@ export function SectionNav({ tabs, activeTab, onTabChange }: SectionNavProps) {
   const { toast } = useToast()
 
   return (
-    <div className="flex gap-1 overflow-x-auto scrollbar-hide px-1 py-1 bg-white/5 rounded-xl">
+    <div className="flex gap-1 overflow-x-auto hide-scrollbar border-b border-white/[0.06]">
       {tabs.map(tab => {
         const active = tab.key === activeTab
         return (
@@ -34,20 +35,18 @@ export function SectionNav({ tabs, activeTab, onTabChange }: SectionNavProps) {
               haptic.tap()
               onTabChange(tab.key)
             }}
-            className={`relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+            className={`relative inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${
               active
-                ? 'bg-gradient-to-r from-[#00B4B4]/20 to-[#4ADE80]/15 text-[#4ADE80] shadow-sm'
+                ? 'text-white'
                 : tab.locked
-                ? 'text-white/20 cursor-not-allowed'
-                : 'text-white/50 hover:text-white/70 hover:bg-white/5'
+                ? 'text-white/25 cursor-not-allowed'
+                : 'text-white/55 hover:text-white/80'
             }`}
+            aria-current={active ? 'page' : undefined}
           >
-            {tab.locked && (
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-              </svg>
-            )}
+            {tab.locked && <LockIcon size={12} />}
             {tab.label}
+            {active && <span className="absolute -bottom-px left-3 right-3 h-[2px] bg-accent rounded-full" />}
           </button>
         )
       })}

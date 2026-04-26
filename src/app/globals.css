@@ -2,19 +2,24 @@
 
 /* Tailwind v4 design tokens. Once defined here, `bg-accent`, `text-positive`,
  * `from-accent`, `to-positive`, etc. all work without arbitrary-value escapes
- * (`bg-[#00B4B4]`). New code should prefer these aliases; existing arbitrary
- * values can be migrated incrementally with a grep-and-replace.
+ * (`bg-[#00B4B4]`). New code should prefer these aliases.
  */
 @theme {
   --color-accent: #00B4B4;
   --color-accent-50: rgba(0, 180, 180, 0.5);
   --color-accent-30: rgba(0, 180, 180, 0.3);
-  --color-positive: #4ADE80;
+  --color-positive: #3FBE6F;
+  --color-warn: #E8AE1E;
+  --color-danger: #E96363;
 }
 
 :root {
   --background: #000000;
   --foreground: #ffffff;
+  --space-edge: 1.25rem;
+  --space-section: 0.75rem;
+  --nav-height: 3.5rem;
+  --hairline: rgba(255, 255, 255, 0.08);
 }
 
 * {
@@ -26,20 +31,36 @@ body {
   color: #ffffff;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'ss01', 'cv11';
   overscroll-behavior: none;
 }
 
-/* Safe area padding for mobile */
+/* Tabular numerics for any element marked .num */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* Safe-area-aware padding */
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 0.5rem);
+}
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 .pb-nav {
-  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 16px));
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 16px));
 }
 
-/* Gradient text utility */
+/* Hairline divider utility */
+.hairline {
+  border-color: var(--hairline);
+}
+
+/* Brand gradient — reserved for primary CTA, wordmark, single hero accent */
 .gradient-text {
-  background: linear-gradient(to right, #00B4B4, #4ADE80);
+  background: linear-gradient(to right, #00B4B4, #3FBE6F);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -82,22 +103,22 @@ html { overscroll-behavior-y: none; }
 
 /* === ENTRANCE ANIMATIONS === */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.animate-fade-up { animation: fade-up 0.5s ease-out both; }
+.animate-fade-up { animation: fade-up 0.35s ease-out both; }
 
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-.animate-fade-in { animation: fade-in 0.4s ease-out both; }
+.animate-fade-in { animation: fade-in 0.3s ease-out both; }
 
 @keyframes scale-in {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
 }
-.animate-scale-in { animation: scale-in 0.3s ease-out both; }
+.animate-scale-in { animation: scale-in 0.25s ease-out both; }
 
 /* === CAROUSEL / SWIPE TRANSITIONS === */
 @keyframes slide-in-right {
@@ -117,39 +138,6 @@ html { overscroll-behavior-y: none; }
   to { opacity: 0; transform: translateX(-100%); }
 }
 
-/* === AMBIENT / CONTINUOUS === */
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(0,180,180,0.1); }
-  50% { box-shadow: 0 0 40px rgba(0,180,180,0.3); }
-}
-.animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-.animate-float { animation: float 6s ease-in-out infinite; }
-
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-.animate-pulse-soft { animation: pulse-soft 3s ease-in-out infinite; }
-
-/* === SCORE REVEAL === */
-@keyframes score-glow {
-  0% { box-shadow: 0 0 0 0 rgba(0,180,180,0.5); }
-  50% { box-shadow: 0 0 40px 15px rgba(0,180,180,0.3); }
-  100% { box-shadow: 0 0 20px 5px rgba(0,180,180,0.1); }
-}
-.animate-score-glow { animation: score-glow 1.2s ease-out both; }
-
-@keyframes score-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
-}
-.animate-score-pulse { animation: score-pulse 0.6s ease-in-out; }
-
 /* === SHIMMER (loading) === */
 @keyframes shimmer {
   from { background-position: -200% 0; }
@@ -161,12 +149,12 @@ html { overscroll-behavior-y: none; }
   background-size: 200% 100%;
 }
 
-/* === STAGGER UTILITIES (80ms base) === */
-.stagger-1 { animation-delay: 80ms; }
-.stagger-2 { animation-delay: 160ms; }
-.stagger-3 { animation-delay: 240ms; }
-.stagger-4 { animation-delay: 320ms; }
-.stagger-5 { animation-delay: 400ms; }
+/* === STAGGER UTILITIES (60ms base, single soft stagger) === */
+.stagger-1 { animation-delay: 60ms; }
+.stagger-2 { animation-delay: 120ms; }
+.stagger-3 { animation-delay: 180ms; }
+.stagger-4 { animation-delay: 240ms; }
+.stagger-5 { animation-delay: 300ms; }
 
 /* === ACCESSIBILITY === */
 @media (prefers-reduced-motion: reduce) {

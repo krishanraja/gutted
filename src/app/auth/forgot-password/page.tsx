@@ -34,13 +34,13 @@ export default function ForgotPasswordPage() {
 
         {sent ? (
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-2">Check your email</h1>
+            <h1 className="text-2xl font-medium tracking-tight mb-2">Check your email</h1>
             <p className="text-white/40 text-sm mb-8">We sent a password reset link to <span className="text-white/70">{email}</span></p>
-            <Link href="/auth/login" className="text-[#4ADE80] text-sm hover:underline">Back to sign in</Link>
+            <Link href="/auth/login" className="text-accent text-sm hover:underline">Back to sign in</Link>
           </div>
         ) : (
           <>
-            <h1 className="text-2xl font-bold text-center mb-2">Reset your password</h1>
+            <h1 className="text-2xl font-medium tracking-tight text-center mb-2">Reset your password</h1>
             <p className="text-white/40 text-center mb-8 text-sm">Enter your email and we&apos;ll send you a reset link</p>
 
             <form onSubmit={handleReset} className="space-y-4" noValidate>
@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
             </form>
 
             <p className="text-center text-white/40 text-sm mt-6">
-              <Link href="/auth/login" className="text-[#4ADE80] hover:underline">Back to sign in</Link>
+              <Link href="/auth/login" className="text-accent hover:underline">Back to sign in</Link>
             </p>
           </>
         )}

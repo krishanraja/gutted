@@ -10,13 +10,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export function Button({ variant = 'gradient', size = 'md', loading, children, className = '', disabled, ...props }: ButtonProps) {
-  const base = 'inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
-  const sizes = { sm: 'px-4 py-2 text-sm', md: 'px-6 py-3 text-base', lg: 'px-8 py-4 text-lg' }
+  const base = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+  const sizes = { sm: 'px-4 py-2 text-sm', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-base' }
   const variants = {
-    gradient: 'bg-gradient-to-r from-accent to-positive text-black hover:opacity-90 active:scale-[0.97]',
-    outline: 'border border-white/20 text-white hover:bg-white/10 active:scale-[0.97]',
-    ghost: 'text-white/70 hover:text-white hover:bg-white/5 active:scale-[0.97]',
-    danger: 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 active:scale-[0.97]',
+    gradient: 'bg-gradient-to-r from-accent to-positive text-black hover:opacity-90 active:scale-[0.98]',
+    outline: 'border border-white/15 text-white hover:bg-white/5 active:scale-[0.98]',
+    ghost: 'text-white/70 hover:text-white hover:bg-white/5 active:scale-[0.98]',
+    danger: 'bg-red-500/10 text-[#E96363] border border-red-500/25 hover:bg-red-500/15 active:scale-[0.98]',
   }
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     haptic.light()

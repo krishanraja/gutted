@@ -4,7 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { GutScore } from '@/components/GutScore'
 import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
+import { MicIcon, PencilIcon } from '@/components/icons'
 
 interface LogDetail {
   id: string
@@ -59,30 +59,30 @@ export default function LogDetailPage() {
 
   return (
     <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
-      <div className="px-6 pt-12 pb-6">
-        <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+      <div className="px-5 pt-safe pb-5 md:px-6 md:pt-10">
+        <button onClick={() => router.back()} className="text-white/45 text-sm mb-4 inline-flex items-center gap-1 pt-3 md:pt-0 hover:text-white transition-colors">
+          <svg width={16} height={16} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
           Back
         </button>
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-lg">{log.type === 'voice' ? '🎤' : '✏️'}</span>
-          <span className="text-white/30 text-sm">
+        <div className="flex items-center gap-2 mb-2 text-white/40 text-xs">
+          {log.type === 'voice' ? <MicIcon size={14} /> : <PencilIcon size={14} />}
+          <span className="num">
             {new Date(log.logged_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </span>
-          <span className="text-white/20 text-sm">
+          <span className="num text-white/30">
             {new Date(log.logged_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
-        <h1 className="text-2xl font-bold">Log details</h1>
+        <h1 className="text-xl md:text-2xl font-medium tracking-tight">Log details</h1>
       </div>
 
-      <div className="px-6 space-y-4">
+      <div className="px-5 md:px-6 space-y-4">
         {/* Score + summary */}
         {analysis && (
-          <Card glow className="flex items-center gap-4">
+          <Card className="flex items-center gap-4">
             <GutScore score={analysis.gutScore} size="lg" />
             <div>
-              <p className="text-white/40 text-xs mb-1">Gut score</p>
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-1">Gut score</p>
               <p className="text-sm text-white/80">{analysis.summary}</p>
             </div>
           </Card>

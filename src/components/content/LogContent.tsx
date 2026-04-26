@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/Button'
 import { getPlanLimits } from '@/lib/plan-limits'
 import { useToast } from '@/components/ToastProvider'
 import { haptic } from '@/lib/haptics'
+import { MicIcon, PencilIcon, FileTextIcon } from '@/components/icons'
 
-const quickTags = ['🫧 Bloated', '😫 Cramps', '💩 Irregular', '😴 Fatigue', '✨ Feeling good', '🔥 Heartburn', '🤢 Nausea', '💧 Well hydrated']
+const quickTags = ['Bloated', 'Cramps', 'Irregular', 'Fatigue', 'Feeling good', 'Heartburn', 'Nausea', 'Well hydrated']
 
 interface Analysis {
   gutScore: number
@@ -228,13 +229,14 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
   )
 
   const modeToggle = (maxWidth: string = 'max-w-sm') => (
-    <div className={`flex bg-white/5 rounded-xl p-1 ${maxWidth}`}>
-      {([['voice', '🎤 Voice'], ['text', '✏️ Text'], ['photo', '📸 Photo']] as const).map(([m, label]) => (
+    <div className={`flex bg-white/[0.04] border border-white/[0.08] rounded-xl p-1 ${maxWidth}`}>
+      {([['voice', 'Voice', MicIcon], ['text', 'Text', PencilIcon], ['photo', 'Photo', FileTextIcon]] as const).map(([m, label, ModeIcon]) => (
         <button
           key={m}
           onClick={() => { setMode(m as 'voice' | 'text' | 'photo'); setPhotoResult(null) }}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === m ? 'bg-white/10 text-white' : 'text-white/40'}`}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all inline-flex items-center justify-center gap-1.5 ${mode === m ? 'bg-white/[0.06] text-white' : 'text-white/45 hover:text-white/65'}`}
         >
+          <ModeIcon size={14} />
           {label}
         </button>
       ))}
@@ -249,13 +251,13 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
       <div className={embedded ? "flex flex-col h-full md:hidden" : "mobile-viewport md:hidden"}>
         {/* Header -- only shown in standalone mode */}
         {!embedded && (
-          <div className="flex-none px-6 pt-10 pb-3 animate-fade-in">
-            <button onClick={() => phase === 'results' ? setPhase('input') : router.back()} className="text-white/40 text-sm mb-2 flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+          <div className="flex-none px-5 pt-safe pb-3 animate-fade-in">
+            <button onClick={() => phase === 'results' ? setPhase('input') : router.back()} className="text-white/45 text-sm mb-2 inline-flex items-center gap-1 pt-3 hover:text-white transition-colors">
+              <svg width={16} height={16} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
               {phase === 'results' ? 'Edit' : 'Back'}
             </button>
-            <h1 className="text-xl font-bold">
-              {phase === 'results' ? 'Your gut analysis' : "How's your gut today?"}
+            <h1 className="text-xl font-medium tracking-tight">
+              {phase === 'results' ? 'Your gut analysis' : 'How’s your gut today?'}
             </h1>
           </div>
         )}

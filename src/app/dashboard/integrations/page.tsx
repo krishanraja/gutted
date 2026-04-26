@@ -87,13 +87,13 @@ export default function IntegrationsPage() {
 
   return (
     <div className="min-h-screen bg-black pb-24 md:pb-8 md:ml-60 lg:ml-64">
-      <div className="px-6 pt-12 pb-6">
-        <button onClick={() => router.back()} className="text-white/40 text-sm mb-4 flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+      <div className="px-5 pt-safe pb-5 md:px-6 md:pt-10">
+        <button onClick={() => router.back()} className="text-white/45 text-sm mb-4 inline-flex items-center gap-1 pt-3 md:pt-0 hover:text-white transition-colors">
+          <svg width={16} height={16} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           Back
         </button>
-        <h1 className="text-2xl font-bold">Health Integrations</h1>
-        <p className="text-white/40 text-sm mt-1">Track sleep, exercise, and more to find what affects your gut</p>
+        <h1 className="text-xl md:text-2xl font-medium tracking-tight">Health integrations</h1>
+        <p className="text-white/45 text-sm mt-1">Track sleep, exercise, and more to find what affects your gut.</p>
       </div>
 
       {!limits.pdfReports ? (

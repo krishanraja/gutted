@@ -31,8 +31,8 @@ export default function ResetPasswordPage() {
         <div className="flex justify-center mb-8">
           <Image src="/icon.png" alt="gutted." width={40} height={40} className="h-10 w-10" />
         </div>
-        <h1 className="text-2xl font-bold text-center mb-2">Set new password</h1>
-        <p className="text-white/40 text-center mb-8 text-sm">Choose a new password for your account</p>
+        <h1 className="text-2xl font-medium tracking-tight text-center mb-2">Set a new password</h1>
+        <p className="text-white/45 text-center mb-8 text-sm">Choose a new password for your account.</p>
 
         <form onSubmit={handleUpdate} className="space-y-4" noValidate>
           <TextInput
