@@ -42,8 +42,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url })
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Unknown error'
-    console.error('Checkout error:', message, e)
-    return NextResponse.json({ error: `Checkout failed: ${message}` }, { status: 500 })
+    // Full error stays server-side. Client gets a generic message so Stripe
+    // SDK internals (missing price IDs, bad config) don't leak.
+    console.error('Checkout error:', e)
+    return NextResponse.json({ error: 'Checkout failed. Please try again.' }, { status: 500 })
   }
 }

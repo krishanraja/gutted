@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
+import { rateLimit } from '@/lib/security'
 
 const MAX_ENTRIES_PER_REQUEST = 100
 const MAX_DAYS = 365
@@ -11,6 +12,9 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+    const { allowed } = rateLimit(`health-data-post:${user.id}`, { maxRequests: 30, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single()
     const limits = getPlanLimits(profile?.plan || 'free')
@@ -47,6 +51,9 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+    const { allowed } = rateLimit(`health-data-get:${user.id}`, { maxRequests: 30, windowMs: 60_000 })
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     const daysParam = parseInt(req.nextUrl.searchParams.get('days') || '30')
     const days = Math.max(1, Math.min(daysParam || 30, MAX_DAYS))

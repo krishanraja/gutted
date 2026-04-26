@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+// Only accept same-origin relative paths. Reject absolute URLs, protocol-relative
+// `//evil.com`, and backslash tricks `/\evil.com` that some browsers resolve to
+// a different origin.
+function safeNext(raw: string | null): string {
+  if (!raw || !raw.startsWith('/')) return '/dashboard'
+  if (raw.startsWith('//') || raw.startsWith('/\\')) return '/dashboard'
+  return raw
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') || '/dashboard'
+  const next = safeNext(requestUrl.searchParams.get('next'))
 
   if (code) {
     const supabase = await createClient()

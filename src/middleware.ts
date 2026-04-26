@@ -66,7 +66,7 @@ export async function middleware(request: NextRequest) {
           httpOnly: true,
           secure: true,
           sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 7, // 7 days
+          maxAge: 60 * 60, // 1 hour — short enough that a reset elsewhere takes effect quickly
           path: '/',
         })
       }

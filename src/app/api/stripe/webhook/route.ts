@@ -28,6 +28,22 @@ export async function POST(req: NextRequest) {
   const supabase = createServiceClient()
   const siteUrl = getAppUrl()
 
+  // Idempotency guard — Stripe redelivers events on transient 5xx.
+  // Insert-first so two concurrent replays race on the primary key.
+  const { error: dedupError } = await supabase
+    .from('stripe_webhook_events')
+    .insert({ event_id: event.id, event_type: event.type })
+  if (dedupError) {
+    if (dedupError.code === '23505') {
+      // Unique violation → already processed. Return 200 so Stripe stops retrying.
+      return NextResponse.json({ received: true, duplicate: true })
+    }
+    // Anything else (connection, RLS misconfiguration) — return 500 so
+    // Stripe retries instead of silently dropping the event.
+    console.error('Webhook dedup insert failed:', dedupError)
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+  }
+
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object
     const { userId, plan } = session.metadata || {}
