@@ -36,6 +36,7 @@ function FoodPageContent() {
     setLoaded(true)
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(audit-#19): mount-time data load. Migrate to React 19 `use()` + Suspense as part of file split.
   useEffect(() => { load() }, [load])
 
   const unlock = getUnlockStatus(logCount, docCount, hasRestrictions)

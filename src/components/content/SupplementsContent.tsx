@@ -81,7 +81,7 @@ export function SupplementsContent() {
           <Card className="text-center py-10">
             <div className="text-4xl mb-4">💊</div>
             <p className="font-semibold mb-2">Get personalised recommendations</p>
-            <p className="text-white/40 text-sm mb-6">Based on your logs, test results, and gut profile, we'll recommend specific probiotics and supplements.</p>
+            <p className="text-white/40 text-sm mb-6">Based on your logs, test results, and gut profile, we&apos;ll recommend specific probiotics and supplements.</p>
             <Button onClick={generate} loading={generating}>Generate recommendations</Button>
           </Card>
           {error && <p className="text-red-400 text-sm mt-4 text-center">{error}</p>}

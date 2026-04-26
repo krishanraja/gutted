@@ -223,7 +223,7 @@ export default function OnboardingPage() {
         {/* Summary step */}
         {phase === 'summary' && (
           <div className="animate-fade-in">
-            <h2 className="text-2xl font-bold mb-2">Here's your gut profile</h2>
+            <h2 className="text-2xl font-bold mb-2">Here&apos;s your gut profile</h2>
             <p className="text-white/40 text-sm mb-6">Everything looks good? You can always update this later in settings.</p>
 
             <div className="space-y-3">
@@ -282,7 +282,7 @@ export default function OnboardingPage() {
         <div className="pt-4 pb-safe max-w-md mx-auto w-full space-y-3 shrink-0">
           {phase === 'summary' ? (
             <Button onClick={handleSave} loading={saving} className="w-full" size="lg">
-              Let's go
+              Let&apos;s go
             </Button>
           ) : (
             <Button onClick={handleNext} className="w-full" size="lg">

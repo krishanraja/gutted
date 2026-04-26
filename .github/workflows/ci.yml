@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          # Build needs these to render auth-protected pages and Supabase clients.
+          # CI value isn't used at runtime — keys are real only on Vercel.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-key
+          ANTHROPIC_API_KEY: ci-placeholder
+          OPENAI_API_KEY: ci-placeholder
+          STRIPE_SECRET_KEY: ci-placeholder
+          STRIPE_WEBHOOK_SECRET: ci-placeholder
+          RESEND_API_KEY: ci-placeholder
+          EDAMAM_APP_ID: ci-placeholder
+          EDAMAM_APP_KEY: ci-placeholder
+          CRON_SECRET: ci-placeholder
