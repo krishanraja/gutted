@@ -1,200 +1,243 @@
 # Deployment
 
-## Overview
-
-gutted. is deployed as a serverless Next.js application with Supabase for backend services and Stripe for payments.
+How gutted. is built, configured, and shipped to production.
 
 ---
 
-## Infrastructure
+## Infrastructure overview
 
-| Service | Provider | Purpose |
-|---------|----------|---------|
-| Application | Vercel | Next.js hosting, serverless functions, CDN |
-| Database | Supabase | PostgreSQL with Row-Level Security |
-| Authentication | Supabase Auth | Email/password, Google OAuth, magic links |
-| File Storage | Supabase Storage | Document uploads (images, PDFs) |
-| Payments | Stripe | Subscription billing, webhooks |
-| Email | Resend | Transactional emails |
-| AI (Text) | Anthropic | Claude API for analysis + meal plans |
-| AI (Vision) | OpenAI | GPT-4o for document analysis, Whisper for audio |
-| Food Data | Edamam | Nutrition database API |
+| Layer | Provider | Purpose |
+|---|---|---|
+| Application | Vercel (Fluid Compute, Node runtime) | Next.js 16 hosting, serverless API routes, CDN |
+| Database / Auth / Storage | Supabase (Postgres + Auth + Storage) | App data, sessions, file uploads |
+| Payments | Stripe | Subscription billing, customer portal, webhooks |
+| Email | Resend | Transactional + cron-triggered emails |
+| AI -- text + vision | Anthropic Claude | All non-audio AI |
+| AI -- audio | OpenAI Whisper | Voice transcription |
+| Nutrition | Edamam Food Database API | Cached server-side in Postgres |
+
+Hosting note: Vercel **Fluid Compute** is the default. Functions run on the Node.js runtime (Whisper + the Anthropic SDK do not require edge), with instance reuse so the in-process rate limiter in `src/lib/security.ts` actually amortises.
 
 ---
 
-## Environment Variables
+## Environment variables
 
-### Required for Production
+All required values for production:
 
 ```bash
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://<project-id>.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
-SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>     # server-only, bypasses RLS
 
-# OpenAI
-OPENAI_API_KEY=sk-...
-
-# Anthropic
+# AI
 ANTHROPIC_API_KEY=sk-ant-...
-
-# Stripe
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-
-# Resend
-RESEND_API_KEY=re_...
-RESEND_FROM_EMAIL=hello@gutted.app
+OPENAI_API_KEY=sk-...
 
 # Edamam
 EDAMAM_APP_ID=<app-id>
 EDAMAM_APP_KEY=<app-key>
 
-# Site
-NEXT_PUBLIC_SITE_URL=https://gutted.app
+# Stripe
+STRIPE_SECRET_KEY=sk_live_...                    # use sk_test_... in preview/staging
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_CORE_PRICE_ID=price_...                   # Stripe price object id for Core ($14)
+STRIPE_PRO_PRICE_ID=price_...                    # Stripe price object id for Pro  ($29)
+
+# Email
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=hello@gutted.app
+
+# Internal
+CRON_SECRET=<long-random>                        # constant-time-compared on cron-only routes
+NEXT_PUBLIC_APP_URL=https://www.gutted.app
 ```
 
-### Notes
-- `NEXT_PUBLIC_` prefixed variables are exposed to the browser -- only use for non-sensitive values
-- `SUPABASE_SERVICE_ROLE_KEY` has full database access -- server-side only
-- Stripe keys: use `sk_test_` for staging, `sk_live_` for production
+Notes:
+- `NEXT_PUBLIC_*` values are exposed to the browser -- never put a secret behind that prefix.
+- `SUPABASE_SERVICE_ROLE_KEY` is the master key -- it MUST stay server-side. Used only by the Stripe webhook, food cache, and the few other RLS-bypass paths.
+- `STRIPE_*_PRICE_ID` env vars and the `PLANS` config in [`src/lib/stripe.ts`](../src/lib/stripe.ts) must agree -- the webhook resolves a plan from the price id (or amount) on `customer.subscription.updated`.
 
 ---
 
-## Build & Run
+## Build & run
 
-### Development
-```bash
-npm install
-npm run dev          # Starts at http://localhost:3000
-```
+| Command | What it does |
+|---|---|
+| `npm install` | Install deps |
+| `npm run dev` | Start the Next dev server on `:3000` |
+| `npm run lint` | ESLint (Next.js core-web-vitals + TS rules) over `src/` |
+| `npm run typecheck` | `tsc --noEmit` (added to CI) |
+| `npm run build` | Production compile + optimisation |
+| `npm run start` | Run the production build locally |
 
-### Production Build
-```bash
-npm run build        # Compiles + optimizes
-npm run start        # Starts production server
-```
-
-### Linting
-```bash
-npm run lint         # ESLint check
-```
+CI runs lint + typecheck on every PR (see `.github/workflows/`).
 
 ---
 
-## Vercel Deployment
+## Vercel deployment
 
-### Setup
-1. Connect GitHub repository to Vercel
-2. Set framework preset to **Next.js**
-3. Add all environment variables in Vercel dashboard → Settings → Environment Variables
-4. Deploy
+1. Connect the GitHub repo to Vercel.
+2. Framework preset: **Next.js**. Output dir: `.next` (auto). Node runtime (default).
+3. Add every env var from the list above. Mirror across **Production**, **Preview**, and **Development** scopes -- with test Stripe keys on Preview/Development.
+4. Push to `main` -> production deploy. PRs -> unique preview URLs.
 
-### Configuration
-- **Build Command:** `next build` (auto-detected)
-- **Output Directory:** `.next` (auto-detected)
-- **Node.js Version:** 18.x+
-- **Regions:** Auto (or specify for latency optimization)
+Production URL: **https://www.gutted.app**.
 
-### Automatic Deployments
-- **Production:** Deploys on push to `main` branch
-- **Preview:** Deploys on pull request (unique URL per PR)
-
-### Server Actions
-Next.js config allows 10MB body size for server actions (needed for audio uploads):
-```ts
-experimental: {
-  serverActions: { bodySizeLimit: '10mb' }
-}
-```
+`next.config.ts` configures:
+- `images.remotePatterns` -> the Supabase project hostname for CDN-served document images.
+- `experimental.serverActions.bodySizeLimit = '10mb'` -> required for audio uploads from the voice recorder.
 
 ---
 
-## Supabase Setup
+## Supabase setup
+
+### Create the project
+
+1. New Supabase project -> pick a region close to your users.
+2. Save the **Project URL**, **anon key**, and **service-role key** into Vercel env vars.
 
 ### Database
-1. Create a new Supabase project
-2. Run the migration file: `supabase/migrations/001_initial.sql`
-3. This creates: `profiles`, `logs`, `documents`, `meal_plans` tables
-4. Row-Level Security policies are included in the migration
 
-### Authentication
-1. Enable Email/Password provider
-2. Enable Google OAuth provider (add OAuth credentials)
+Run migrations in `supabase/migrations/` in order. As of today the set is:
+
+```
+20240101000001_initial.sql                     -- profiles, logs, documents, meal_plans + RLS
+20240101000002_integrations.sql                -- health_data + index
+20240101000003_practitioner.sql                -- practitioner_access + token index
+20240101000004_subscription_status.sql         -- profiles.subscription_status, current_period_end
+20260416000001_food_cache.sql                  -- food_cache (deny-all RLS)
+20260422000001_avatar_choice.sql               -- profiles.avatar_id
+20260424000001_stripe_webhook_idempotency.sql  -- stripe_webhook_events (deny-all RLS)
+20260424000002_logs_documents_indexes.sql      -- hot-path indexes for logs + documents
+```
+
+> The earlier file `004_subscription_status.sql` is a non-timestamped duplicate of `20240101000004_subscription_status.sql`. The timestamped version is canonical; both are idempotent (`add column if not exists`) so applying both is safe.
+
+You can run these via the Supabase SQL editor or `supabase db push` if you have the CLI linked.
+
+### Auth
+
+1. Enable **Email + Password**. Disable email confirmation (we auto-confirm via `/api/auth/confirm`).
+2. (Optional) enable additional providers if/when needed -- the codebase is provider-agnostic via Supabase Auth.
 3. Set redirect URLs:
-   - `https://gutted.app/auth/callback`
-   - `http://localhost:3000/auth/callback` (development)
-4. Disable email confirmation (handled by auto-confirm API)
+   - `https://www.gutted.app/auth/callback`
+   - `http://localhost:3000/auth/callback`
+4. Site URL = the production domain.
 
 ### Storage
-1. Create a `documents` bucket
-2. Set bucket to **private**
-3. Add storage policy: authenticated users can upload to their own folder
-4. Enable public URL generation for uploaded files
+
+1. Create a bucket named `documents`. **Private**.
+2. Policy: authenticated users can `INSERT` and `SELECT` under `documents/{auth.uid}/*`.
+3. The app does not use signed-public URLs externally -- access is server-mediated.
 
 ---
 
-## Stripe Setup
+## Stripe setup
 
-### Products & Prices
-Create two subscription products in Stripe Dashboard:
+### Products
 
-1. **Core Plan**
-   - Price: $9/month (recurring)
-   - Copy the Price ID into `src/lib/stripe.ts`
+In the Stripe Dashboard, create two recurring products:
 
-2. **Pro Plan**
-   - Price: $19/month (recurring)
-   - Copy the Price ID into `src/lib/stripe.ts`
+| Plan | Price | Interval |
+|---|---|---|
+| Core | $14.00 | monthly |
+| Pro | $29.00 | monthly |
 
-### Webhooks
-1. Add webhook endpoint: `https://gutted.app/api/stripe/webhook`
-2. Listen for events:
+Capture each `price_...` id into the matching `STRIPE_*_PRICE_ID` env vars.
+
+### Webhook
+
+1. Endpoint: `https://www.gutted.app/api/stripe/webhook`.
+2. Listen for:
    - `checkout.session.completed`
+   - `customer.subscription.updated`
    - `customer.subscription.deleted`
-3. Copy the webhook signing secret to `STRIPE_WEBHOOK_SECRET`
+   - `invoice.payment_failed`
+3. Capture the signing secret (`whsec_...`) -> `STRIPE_WEBHOOK_SECRET`.
 
-### Checkout Flow
-- Checkout sessions are created server-side with user metadata
-- Success redirects to `/dashboard?upgraded=1`
-- Cancel redirects to `/dashboard`
+The webhook handler is **idempotent** -- it dedups by `event.id` via the `stripe_webhook_events` table. Stripe redeliveries on transient 5xx return `200 {duplicate: true}` rather than re-running the side effects.
 
----
+### Checkout flow
 
-## Domain & DNS
+- `/api/stripe/checkout` creates a Checkout Session with `metadata.{userId, plan}`.
+- Success URL: `/dashboard?upgraded=1`. Cancel: `/dashboard`.
 
-### Custom Domain (Vercel)
-1. Add domain in Vercel → Settings → Domains
-2. Configure DNS:
-   - `A` record → Vercel's IP
-   - `CNAME` for `www` → `cname.vercel-dns.com`
-3. SSL is automatically provisioned
+### Local webhook testing
 
-### Email Domain (Resend)
-1. Verify domain in Resend dashboard
-2. Add required DNS records (SPF, DKIM, DMARC)
-3. Set `RESEND_FROM_EMAIL` to verified address
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+Copy the printed `whsec_...` into your local `.env.local`.
 
 ---
 
-## Monitoring & Maintenance
+## Domain + DNS
 
-### Health Checks
-- Vercel provides automatic health monitoring
-- Supabase dashboard shows database metrics and API usage
-- Stripe dashboard shows payment metrics and webhook delivery
+1. Add the domain in Vercel -> Settings -> Domains.
+2. DNS: `A` record to Vercel for the apex, `CNAME` to `cname.vercel-dns.com` for `www`.
+3. SSL is provisioned automatically.
+4. Set `NEXT_PUBLIC_APP_URL` to the canonical domain (`https://www.gutted.app`).
 
-### Database Backups
-- Supabase provides automatic daily backups (Pro plan)
-- Point-in-time recovery available on higher tiers
+For email:
+1. Verify the sending domain in Resend.
+2. Add the SPF / DKIM / DMARC records Resend gives you.
+3. Set `RESEND_FROM_EMAIL` to a verified address.
 
-### Cost Considerations
-| Service | Free Tier | Estimated Production |
-|---------|-----------|---------------------|
-| Vercel | Hobby (sufficient for MVP) | Pro ($20/mo) |
-| Supabase | Free (500MB DB, 1GB storage) | Pro ($25/mo) |
-| Stripe | 2.9% + 30c per transaction | Pay-as-you-go |
-| Anthropic | Pay-per-token | ~$0.01-0.05 per analysis |
-| OpenAI | Pay-per-token | ~$0.01-0.10 per analysis |
-| Resend | 3,000 emails/mo free | $20/mo at scale |
-| Edamam | 100 calls/day free | $0+ (developer tier) |
+---
+
+## Monitoring + maintenance
+
+- **Vercel** -- automatic health checks, function logs, runtime metrics.
+- **Supabase** -- DB metrics, RLS-policy audits, storage usage.
+- **Stripe** -- webhook delivery dashboard (failed deliveries are the highest-priority alert).
+- **Resend** -- send analytics + bounce reports.
+- **AI providers** -- usage and spend dashboards on Anthropic and OpenAI consoles.
+
+### Cron jobs
+
+Vercel cron (or any external scheduler) hits these with the `x-internal-secret: $CRON_SECRET` header:
+
+- `POST /api/send-reminder` -- daily reminder emails to opted-in Core/Pro users.
+- `POST /api/weekly-digest` -- weekly score + insight digest.
+- `POST /api/monthly-report` -- monthly progress report.
+
+Without `CRON_SECRET`, the route returns 401 (no debug info).
+
+### Cost considerations (rough order of magnitude)
+
+| Service | Free tier | Production budget |
+|---|---|---|
+| Vercel | Hobby | Pro ($20/mo) once traffic warrants |
+| Supabase | Free (500MB DB, 1GB storage, 50K MAU) | Pro ($25/mo) |
+| Stripe | -- | 2.9% + $0.30 / transaction |
+| Anthropic | Pay-per-token | ~$0.01-0.05 per analysis at typical prompt sizes |
+| OpenAI | Pay-per-token | Whisper is cheap (~$0.006/min) |
+| Resend | 3,000/mo free | $20/mo at 50K |
+| Edamam | 100 calls/day free | Cached -- effectively flat at scale |
+
+Real unit-economics targets are in [OUTCOMES.md](./OUTCOMES.md).
+
+---
+
+## Rollback strategy
+
+- **Code:** every deploy is a Vercel immutable snapshot -- promote a prior deploy from the dashboard for instant rollback.
+- **Database:** Supabase point-in-time recovery (Pro tier). Migrations are additive and idempotent (e.g. `add column if not exists`); avoid destructive migrations in the repo.
+- **Stripe:** never delete a price id; create a new one and update env vars. The webhook resolves both by id and by amount, so a price change does not lose paid users.
+
+---
+
+## What to verify after a deploy
+
+1. `/auth/signup` round-trips -> onboarding -> dashboard.
+2. Voice log -> Whisper -> Claude -> score lands in `logs`.
+3. Document upload -> `documents` row + biomarkers populated.
+4. Meal plan generation -> `meal_plans` row.
+5. Stripe Checkout completes; webhook flips `plan`, `subscription_status='active'`, `current_period_end` set; upgrade email sent.
+6. Stripe portal redirect works.
+7. Practitioner share token loads `/practitioner/[token]` read-only view.
+8. `npm run lint` and `npm run typecheck` pass in CI.
+
+Full troubleshooting reference in [COMMON_ISSUES.md](./COMMON_ISSUES.md). Setting up a fresh environment from zero: [REPLICATION_GUIDE.md](./REPLICATION_GUIDE.md).

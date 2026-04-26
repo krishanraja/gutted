@@ -1,83 +1,93 @@
 # gutted. Documentation
 
-> **Know your gut.** -- AI-powered gut health companion
+> **Know your gut.** -- the AI gut-health companion that connects symptoms, lab results, and meal planning into one personalised plan.
+
+This folder is the source of truth for what gutted. is, who it's for, how it's built, how it ships, and how to sell it. It is structured so that an AI sales/marketing agent or a new engineer can answer their own questions without pinging a human.
+
+Live: [www.gutted.app](https://www.gutted.app)
 
 ---
 
-## What is gutted.?
+## How to use these docs
 
-gutted. is a full-stack AI health application that helps users track gut symptoms, interpret medical test results, and receive personalized meal plans. It combines voice-first logging, document intelligence, and multi-model AI to deliver a seamless gut health management experience.
-
-**Live stack:** Next.js 16 · React 19 · Tailwind CSS 4 · Supabase · Stripe · Claude AI · GPT-4o · Whisper
+| If you want to... | Start here |
+|---|---|
+| Understand the product in 5 minutes | [EXECUTIVE_SUMMARY](./EXECUTIVE_SUMMARY.md) |
+| Pitch / sell / market gutted. | [VALUE_PROP](./VALUE_PROP.md) -> [ICP](./ICP.md) -> [PRICING](./PRICING.md) |
+| Build or extend the product | [ARCHITECTURE](./ARCHITECTURE.md) -> [FEATURES](./FEATURES.md) -> [DECISIONS_LOG](./DECISIONS_LOG.md) |
+| Deploy or replicate the stack | [DEPLOYMENT](./DEPLOYMENT.md) -> [REPLICATION_GUIDE](./REPLICATION_GUIDE.md) -> [COMMON_ISSUES](./COMMON_ISSUES.md) |
+| Apply the design system | [BRANDING](./BRANDING.md) -> [DESIGN_SYSTEM](./DESIGN_SYSTEM.md) -> [VISUAL_GUIDELINES](./VISUAL_GUIDELINES.md) |
+| Reason about AI safety | [LLM_CRITICAL_THINKING_TRAINING](./LLM_CRITICAL_THINKING_TRAINING.md) |
+| See what's planned vs done | [SPRINTS](./SPRINTS.md) -> [HISTORY](./HISTORY.md) |
 
 ---
 
-## Documentation Index
+## Index
 
-### Strategy & Vision
-| Document | Description |
-|----------|-------------|
-| [EXECUTIVE_SUMMARY](./EXECUTIVE_SUMMARY.md) | High-level overview of the product, market, and business model |
-| [PURPOSE](./PURPOSE.md) | Why gutted. exists and who it serves |
-| [VALUE_PROP](./VALUE_PROP.md) | Core value proposition and competitive positioning |
-| [ICP](./ICP.md) | Ideal customer profiles and market sizing |
-| [OUTCOMES](./OUTCOMES.md) | Success metrics, unit economics, and impact goals |
+### Strategy, market, and revenue
+| Doc | What's in it |
+|---|---|
+| [EXECUTIVE_SUMMARY](./EXECUTIVE_SUMMARY.md) | Product, market, business model, sales/marketing handles |
+| [PURPOSE](./PURPOSE.md) | Why we exist, who we serve, what we are not |
+| [VALUE_PROP](./VALUE_PROP.md) | Core proposition, value stack, alternatives, sales hooks, objections, channel hooks |
+| [ICP](./ICP.md) | Personas, anti-ICP, market sizing, acquisition channels, retention drivers, BANT |
+| [OUTCOMES](./OUTCOMES.md) | User outcomes, funnel + retention targets, plan mix, unit economics, success criteria |
+| [PRICING](./PRICING.md) | Current tiers ($0 / $14 / $29), rationale, feature gates, pricing experiments |
 
-### Product & Design
-| Document | Description |
-|----------|-------------|
-| [FEATURES](./FEATURES.md) | Complete feature inventory with details |
-| [DESIGN_SYSTEM](./DESIGN_SYSTEM.md) | Colors, typography, spacing, components -- the full design spec |
-| [VISUAL_GUIDELINES](./VISUAL_GUIDELINES.md) | How to apply the design system correctly |
-| [BRANDING](./BRANDING.md) | Brand identity, voice, colors, and logo usage |
+### Product and design
+| Doc | What's in it |
+|---|---|
+| [FEATURES](./FEATURES.md) | Complete inventory of every shipped feature, organised by surface |
+| [DESIGN_SYSTEM](./DESIGN_SYSTEM.md) | Tokens, components, scale, breakpoints, avatars |
+| [VISUAL_GUIDELINES](./VISUAL_GUIDELINES.md) | How to apply the system in product surfaces |
+| [BRANDING](./BRANDING.md) | Identity, voice, palette, typography, brand do's and don'ts |
 
-### Technical
-| Document | Description |
-|----------|-------------|
-| [ARCHITECTURE](./ARCHITECTURE.md) | System architecture, tech stack, data flows, and security model |
-| [DEPLOYMENT](./DEPLOYMENT.md) | Environment setup, infrastructure, and deployment guide |
+### Engineering
+| Doc | What's in it |
+|---|---|
+| [ARCHITECTURE](./ARCHITECTURE.md) | Stack, routes, middleware, data flows, DB schema, indexes, security |
+| [DEPLOYMENT](./DEPLOYMENT.md) | Infra, env vars, Vercel + Supabase + Stripe + Resend setup, monitoring |
 | [REPLICATION_GUIDE](./REPLICATION_GUIDE.md) | Step-by-step setup from scratch |
-| [COMMON_ISSUES](./COMMON_ISSUES.md) | Troubleshooting guide for development and production |
+| [COMMON_ISSUES](./COMMON_ISSUES.md) | Troubleshooting (build, auth, AI, DB, Stripe, mobile, cron) |
+| [LLM_CRITICAL_THINKING_TRAINING](./LLM_CRITICAL_THINKING_TRAINING.md) | AI safety framework, runtime primitives, ethical boundaries |
 
-### Process & Decisions
-| Document | Description |
-|----------|-------------|
-| [DECISIONS_LOG](./DECISIONS_LOG.md) | Key architectural, design, and product decisions with rationale |
-| [SPRINTS](./SPRINTS.md) | Sprint planning, completed work, and roadmap |
-| [HISTORY](./HISTORY.md) | Project timeline and evolution |
-
-### AI & Intelligence
-| Document | Description |
-|----------|-------------|
-| [LLM_CRITICAL_THINKING_TRAINING](./LLM_CRITICAL_THINKING_TRAINING.md) | AI reasoning framework for health analysis, safety rules, and prompt standards |
+### Process and decisions
+| Doc | What's in it |
+|---|---|
+| [DECISIONS_LOG](./DECISIONS_LOG.md) | Architecture, design, product, and security decisions with rationale |
+| [SPRINTS](./SPRINTS.md) | What's shipped, what's next, cadence |
+| [HISTORY](./HISTORY.md) | Project timeline and surviving lessons |
 
 ---
 
-## Quick Start
+## Stack at a glance
 
-```bash
-git clone <repository-url>
-cd gutted
-npm install
-cp .env.example .env.local  # Add your API keys
-npm run dev                  # http://localhost:3000
-```
-
-See [REPLICATION_GUIDE](./REPLICATION_GUIDE.md) for the full setup walkthrough.
+| Layer | Tech |
+|---|---|
+| Framework | Next.js 16.2 (App Router) on Vercel Fluid Compute |
+| UI | React 19.2, Tailwind CSS 4 |
+| Language | TypeScript 5 |
+| Database / Auth / Storage | Supabase (Postgres + RLS) |
+| AI -- text + vision | Anthropic Claude (`claude-sonnet-4-20250514`) |
+| AI -- voice | OpenAI Whisper |
+| Payments | Stripe (API `2026-03-25.dahlia`) |
+| Email | Resend |
+| Nutrition | Edamam Food Database (Postgres-cached, 30-day TTL) |
 
 ---
 
-## Core Tech Stack
+## Pricing at a glance
 
-| Technology | Purpose |
-|-----------|---------|
-| Next.js 16 | Full-stack framework (App Router) |
-| React 19 | UI library |
-| Tailwind CSS 4 | Styling |
-| Supabase | Database, Auth, Storage |
-| Stripe | Subscription billing |
-| Claude 3.5 Sonnet | Symptom analysis + meal plan generation |
-| GPT-4o | Medical document vision analysis |
-| Whisper | Voice-to-text transcription |
-| Resend | Transactional email |
-| Edamam | Food nutrition database |
+| Plan | Price | Built for |
+|---|---|---|
+| Free | $0 | Try the AI -- 3 logs/day, 1 upload, 7-day history |
+| **Core** | **$14/mo** | Daily users -- unlimited logs, weekly meal plans, AI Coach (10/mo), food checker, pattern detection, reminders, 5 uploads/mo |
+| **Pro** | **$29/mo** | Power users -- everything in Core + unlimited uploads, unlimited AI Coach, photo logging, PDF reports, doctor summaries, supplements, practitioner share, integrations, goal tracking |
+
+---
+
+## One-line pitch
+
+> **gutted. turns your gut symptoms, test results, and food choices into one personalised AI plan.**
+
+For everything else, pick a doc above.

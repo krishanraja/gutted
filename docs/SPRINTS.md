@@ -1,141 +1,116 @@
 # Sprints
 
-## Sprint Planning & Roadmap
+Roadmap and what's actually shipped. Working principle: bias toward shipping; document outcomes here, capture decisions in [DECISIONS_LOG.md](./DECISIONS_LOG.md).
 
 ---
 
-## Completed: MVP Sprint
+## Shipped
 
-### Goals
-Ship a fully functional MVP with core AI features, authentication, billing, and mobile-optimized UI.
+### MVP -- core product
 
-### Delivered
-- [x] **Landing page** -- Hero video, feature showcase, pricing, CTAs
-- [x] **Authentication** -- Email/password, Google OAuth, magic links, auto-confirm
-- [x] **Onboarding** -- 4-step flow (goals, restrictions, conditions, gut score)
-- [x] **Dashboard** -- Personalized home with gut score, quick actions, recent logs
-- [x] **Voice logging** -- MediaRecorder + Whisper transcription + Claude analysis
-- [x] **Text logging** -- Fallback input with quick symptom tags
-- [x] **Document upload** -- Drag-drop + camera capture
-- [x] **Document analysis** -- GPT-4o vision for test results, reports, food labels
-- [x] **Meal plan generation** -- Claude-powered 7-day personalized plans
-- [x] **History** -- Timeline view with 7-day rolling average
-- [x] **Settings** -- Profile, plan display, sign out
-- [x] **Stripe billing** -- Three-tier subscriptions with webhook handling
-- [x] **Email** -- Welcome, upgrade, meal plan delivery via Resend
-- [x] **Database** -- PostgreSQL schema with RLS on all tables
-- [x] **PWA** -- Manifest, mobile-optimized, standalone display
-- [x] **Design system** -- Dark theme, teal-green gradient, component library
+- Landing page with hero MP4 background and pricing.
+- Auth: email + password, magic links, password reset. Auto-confirm.
+- Onboarding wizard (4 steps: goals, restrictions, conditions, baseline score).
+- Dashboard tabs: overview, log, history, coach. Food sub-tabs: meals, upload, check, supplements.
+- Voice + text logging with Whisper transcription and Claude analysis (gut score 1-10, summary, insights, recommendations, flagged-symptom safety).
+- Document intelligence (Viome, GI-MAP, SIBO, food labels) via Claude vision.
+- AI-generated weekly meal plans + grocery lists, personalised to profile + recent logs + uploaded biomarkers.
+- AI Gut Coach (multi-turn) with 5-log unlock.
+- Food checker (Edamam-backed nutrition + Claude gut-friendliness scoring).
+- Supplement recommendations (Pro) from uploaded biomarkers.
+- Doctor visit summary (Pro) and PDF health reports (Pro).
+- Practitioner read-only access tokens.
+- Settings as a profile admin dashboard.
+- Stripe billing: Free / Core $14 / Pro $29; full lifecycle (checkout, change-plan, cancel, resume, customer portal).
+- Email automation (Resend): welcome, upgrade, payment-failed, daily reminders, weekly digest, monthly report, weekly meal plan, password reset.
+- PWA (manifest, service worker, standalone display, OLED-friendly dark theme).
 
----
+### Reliability + AI safety
 
-## Upcoming: Sprint 2 -- Polish & Feedback
+- 25-second `aiAbort()` timeout on every Anthropic call.
+- `extractJsonObject` balanced-bracket JSON parsing (no greedy regex failures).
+- Prompt-injection delimiters (`[BEGIN USER DATA] ... [END USER DATA]`) on all user-data prompts.
+- Server-side context fetching -- prompts never trust client-supplied profiles or logs.
+- Per-user rate limiting in `src/lib/security.ts` with lazy 60s cleanup.
+- Constant-time `CRON_SECRET` verification, Web-API-only (edge-compatible).
+- Open-redirect protection on auth + post-checkout flows.
+- Stripe webhook idempotency via `stripe_webhook_events` (event-id PK insert race).
+- Edge-compatible Web APIs in security helpers (replaced Node `crypto`/`Buffer`).
 
-### Goals
-Refine the MVP based on initial user feedback. Focus on reliability, performance, and usability gaps.
+### Performance
 
-### Planned Work
+- DB hot-path indexes: `idx_logs_user_date`, `idx_documents_user_date`, `idx_health_data_user_date`, `idx_food_cache_created_at`, `idx_stripe_webhook_events_processed_at`, `idx_practitioner_token`.
+- Edamam response cache (`food_cache`, 30-day TTL, deny-all RLS, service-role only).
+- Hero video MP4 faststart + eager preload for fast LCP.
 
-#### Performance & Reliability
-- [ ] Cold start optimization for serverless functions
-- [ ] Add loading skeletons for AI analysis (3-8s wait times)
-- [ ] Error boundary components for graceful failure handling
-- [ ] Retry logic for transient API failures (AI, Supabase)
-- [ ] Image compression before upload (reduce storage costs)
+### UX + mobile
 
-#### UX Improvements
-- [ ] Onboarding progress persistence (resume if interrupted)
-- [ ] Empty state improvements with guided CTAs
-- [ ] Pull-to-refresh on dashboard and history pages
-- [ ] Toast notifications for success/error feedback
-- [ ] Keyboard shortcuts for power users (desktop)
+- Mobile viewport + scroll fixes on Upload, Settings, Onboarding pages.
+- Em-dash normalisation across the codebase (`--` convention).
+- 6 gut-themed avatars (`bloat-balloon`, `dash-runner`, `fiber-friend`, `gurgle-sleuth`, `probiotic-pal`, `zen-guru`); avatar replaces the plan-badge profile button.
+- Settings redesigned into a profile admin dashboard.
+- Accessibility pass: TextInput component, dialog focus management, design tokens.
+- Plan-drawer overflow + checkout error handling fixes on settings.
+- Google Search Console "Page with redirect" indexing fix.
 
-#### Data & Analytics
-- [ ] Weekly gut score trend chart (line graph)
-- [ ] Monthly summary view
-- [ ] Tag-based filtering on history page
-- [ ] Export logs as CSV/JSON
+### Tooling + CI
 
-#### Testing
-- [ ] User testing with 10-20 beta users
-- [ ] Collect structured feedback on AI analysis quality
-- [ ] A/B test onboarding step count (3 vs. 4 steps)
-- [ ] Monitor API costs per user to validate unit economics
+- GitHub Actions CI: lint + typecheck on PRs.
+- `npm run typecheck` script.
+- Lint clean across `src/`.
+- `.gitignore` covering Playwright artifacts, Supabase temp files, root screenshots.
 
 ---
 
-## Upcoming: Sprint 3 -- Growth Features
+## Up next -- Sprint A: conversion + retention
 
-### Goals
-Add features that drive retention, enable sharing, and unlock Pro plan value.
+The next 2-4 weeks of work, in priority order.
 
-### Planned Work
+- [ ] Free-to-paid conversion telemetry: cohort signup-to-Core within 7/14/30 days, plus event tracking on each Free-tier limit hit.
+- [ ] Onboarding A/B: 3-step vs 4-step wizard.
+- [ ] Empty-state CTA improvements on every locked tab (the unlock copy is good; the visual treatment can be sharper).
+- [ ] Streak surface on the overview tab (consecutive days logged) -- pure retention lever.
+- [ ] Toast feedback on all async actions where it's still missing.
+- [ ] Pull-to-refresh on dashboard + history.
+- [ ] First content marketing assets: "How to read Viome results," "How to read GI-MAP results," "Low-FODMAP meal plan AI."
 
-#### Pro Features
-- [ ] PDF health report generation (downloadable gut health summary)
-- [ ] Weekly email meal plan delivery (automated)
-- [ ] Priority AI processing queue for Pro users
-- [ ] Advanced analytics dashboard (triggers, correlations)
+## Up next -- Sprint B: practitioner channel pilot
 
-#### Engagement
-- [ ] Push notifications for logging reminders (PWA)
-- [ ] Streak tracking (consecutive days logged)
-- [ ] Weekly email digest with gut health summary
-- [ ] In-app tips and gut health education content
+- [ ] Practitioner onboarding flow (their POV, not the user's).
+- [ ] Practitioner email opt-in for weekly client digests.
+- [ ] Multi-client view (read-only across many tokens) for the practitioner.
+- [ ] Co-branded partner landing template (for at-home test brands and clinicians).
+- [ ] Outreach motion: identify 10 practitioner pilots; ship a referral code mechanism.
 
-#### Social & Sharing
-- [ ] Share gut score card (shareable image)
-- [ ] Share meal plan with partner/family
-- [ ] Referral system (invite friends, earn free month)
+## Up next -- Sprint C: pro depth + integrations
 
-#### Integrations
-- [ ] Apple Health / Google Fit data import
-- [ ] Food logging with barcode scanner
-- [ ] Edamam nutrition data in meal plan recipes
-- [ ] Calendar integration for meal plan sync
+- [ ] Health-data integration UI: import flow for Apple Health / Fitbit / Oura into the existing `health_data` schema.
+- [ ] Patterns surface: a dedicated screen that visualises the AI-detected food + symptom + sleep correlations.
+- [ ] Goal tracking surface (the schema/feature exists; the dedicated UI is thin).
+- [ ] Photo food logging UX polish (Pro).
+- [ ] Email-deliverable PDF reports vs in-app downloads.
+- [ ] Push notifications for logging reminders (PWA web push).
 
----
+## Later -- scale + B2B
 
-## Upcoming: Sprint 4 -- Scale & Expand
-
-### Goals
-Prepare for growth, add B2B capabilities, and explore new markets.
-
-### Planned Work
-
-#### Infrastructure
-- [ ] Database query optimization and indexing
-- [ ] CDN optimization for global users
-- [ ] Rate limiting on AI endpoints
-- [ ] Monitoring and alerting (Sentry, Datadog)
-- [ ] Automated testing suite (unit + integration)
-
-#### B2B / Practitioner Features
-- [ ] Practitioner dashboard (manage multiple clients)
-- [ ] Client invitation and data sharing
-- [ ] Practitioner-branded reports
-- [ ] API for third-party integrations
-
-#### Expansion
-- [ ] Multi-language support (Spanish, French, German)
-- [ ] Localized meal plan generation
-- [ ] Region-specific food databases
-- [ ] App store submission (PWA wrapper or React Native)
-
-#### Advanced AI
-- [ ] Symptom pattern detection (ML on historical data)
-- [ ] Predictive gut scoring (anticipate bad days)
-- [ ] Food-symptom correlation analysis
-- [ ] Conversational AI assistant for gut health questions
+- [ ] Annual plan pricing once paid churn is provably <8% MoM and the cohort is large enough to discount safely.
+- [ ] Practitioner multi-seat tier ($79-199/mo) with white-label option.
+- [ ] At-home test partnership co-branded onboarding.
+- [ ] Multi-language support; localised meal planning + region-specific food databases.
+- [ ] Predictive gut scoring (anticipate bad days based on patterns).
+- [ ] Native app wrapper (Capacitor or React Native) if PWA limits become real.
 
 ---
 
-## Sprint Cadence
+## Cadence
 
 | Aspect | Approach |
-|--------|----------|
+|---|---|
 | Sprint length | 2 weeks |
-| Planning | Start of sprint -- prioritize by impact and effort |
-| Review | End of sprint -- demo, measure, adjust |
-| Retrospective | After each sprint -- what worked, what didn't |
-| Releases | Continuous deployment via Vercel |
+| Planning | Start of sprint; rank by impact x effort, lock top 3-5 |
+| Review | End of sprint; demo what shipped, what slipped, why |
+| Retro | Same meeting; one keep, one stop, one start |
+| Deploys | Continuous via Vercel; PRs merge -> production |
+| Hotfixes | Same day; security and billing always |
+
+When something lands, move it to **Shipped** above and capture any non-obvious decisions in [DECISIONS_LOG.md](./DECISIONS_LOG.md).

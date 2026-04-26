@@ -1,153 +1,223 @@
 # Features
 
-## Core Features
+Complete inventory of what gutted. does today, organised the way the dashboard is organised, plus the cross-cutting infrastructure that makes it all work.
 
-### 1. Voice-First Symptom Logging
-Log gut symptoms by speaking naturally -- no typing required.
-
-- **One-tap recording** with animated frequency visualization (20-bar display)
-- **OpenAI Whisper** transcription for accurate speech-to-text
-- **Quick symptom tags** for common issues (bloating, cramps, nausea, heartburn, etc.)
-- **Text fallback** -- type entries when voice isn't convenient
-- **Instant AI analysis** after each log with gut score, insights, and recommendations
-
-### 2. AI-Powered Gut Health Scoring
-Every log is analyzed by Claude AI and assigned a gut score from 1-10.
-
-- **Real-time scoring** with color-coded indicators (green/amber/red)
-- **Animated circular progress** visualization
-- **7-day rolling average** on history page
-- **Trend tracking** to see gut health trajectory over time
-- **Flagging system** alerts users to potentially serious symptoms
-
-### 3. Medical Document Intelligence
-Upload gut test results, doctor reports, or food labels for AI interpretation.
-
-- **Drag-and-drop upload** with camera capture on mobile
-- **Supported formats:** JPG, PNG, HEIC, WebP, PDF
-- **GPT-4o Vision analysis** extracts and interprets:
-  - Biomarkers and key findings
-  - Plain-English explanations
-  - Actionable recommendations
-  - Flags for concerning results
-- **Supported test types:** Viome, GI-MAP, Thryve, SIBO breath tests, food sensitivity panels
-- **Food label scanning** with gut-friendliness rating (1-10)
-
-### 4. Personalized Weekly Meal Plans
-AI-generated 7-day meal plans built from your unique gut profile.
-
-- **Claude AI** generates plans considering:
-  - Dietary restrictions and preferences (from onboarding)
-  - Recent symptom patterns and triggers
-  - Medical test results and biomarkers
-  - Gut-friendly food prioritization
-- **Daily breakdown:** Breakfast, lunch, dinner, and snacks
-- **Weekly summary** with gut health tips
-- **Tab-based daily navigation** for easy browsing
-
-### 5. Symptom History & Analytics
-Complete timeline of your gut health journey.
-
-- **Chronological log feed** with gut scores and summaries
-- **7-day average score** displayed prominently
-- **Color-coded entries** for quick visual scanning
-- **Full analysis expansion** for each log entry
-- **Date-based organization** for pattern recognition
+Plan availability is shown for each feature -- the source of truth is [`src/lib/plan-limits.ts`](../src/lib/plan-limits.ts) and the unlock thresholds in [`src/lib/unlock-status.ts`](../src/lib/unlock-status.ts).
 
 ---
 
-## User Experience Features
+## Dashboard tabs
 
-### 6. Guided Onboarding
-Four-step personalization flow for new users:
+The main dashboard is a tabbed interface with progressive unlocks based on logging behaviour and dietary-restriction setup.
 
-1. **Health goals** -- What do you want to improve?
-2. **Dietary restrictions** -- Allergies, intolerances, preferences
-3. **Existing conditions** -- IBS, GERD, Crohn's, celiac, etc.
-4. **Initial gut score** -- Baseline self-assessment
+### Overview (unlocks after 1st log)
 
-### 7. Mobile-First PWA
-Designed as a Progressive Web App for native-like mobile experience:
+- Personalised greeting (time-of-day aware).
+- Current 1-10 gut score with animated reveal.
+- 7-day rolling average score.
+- Quick-action shortcuts (Log, Upload, Coach, Meals).
+- Recent logs feed with score badges and timestamps.
+- Onboarding nudge if profile is incomplete.
 
-- **Bottom tab navigation** (Home, Log, Upload, Meals, History)
-- **Safe area padding** for notched devices
-- **Standalone display mode** (no browser chrome)
-- **Dark theme** optimized for OLED screens
-- **Touch-optimized controls** with active scale feedback
+### Log (always unlocked)
 
-### 8. Dashboard Home
-Central hub with personalized greeting and quick actions:
+**Voice-first** primary input, **text fallback** secondary.
 
-- **Time-based greeting** (Good morning/afternoon/evening)
-- **Current gut score** card with animated indicator
-- **Quick action buttons** -- Log, Upload, View Meals
-- **Recent logs** feed with scores and timestamps
-- **Onboarding prompt** for users who haven't completed setup
+- One-tap recording with a 20-bar live frequency visualiser.
+- Whisper transcription on submit (`/api/transcribe`).
+- Quick-tag chips (bloating, cramps, nausea, heartburn, etc.) for instant logging.
+- Text input fallback with the same analysis pipeline.
+- After submit: gut score, summary, insights, recommendations, plus a `flagged` safety surface for red-flag symptoms.
+- Persisted to `logs` with the full AI analysis JSON.
 
----
+### History (unlocks after 3rd log)
 
-## Authentication & Account
+- Chronological feed of all logs with score badges.
+- 7-day rolling average headline.
+- Color-coded entries (`>=7` green, `4-6` amber, `<4` red).
+- Tap-through to a detail view (`/dashboard/history/[id]`) with the full analysis.
 
-### 9. Flexible Authentication
-Multiple sign-in methods for user convenience:
+### Coach (unlocks after 5th log; **Core 10 chats/mo, Pro unlimited**)
 
-- **Email/password** -- Traditional registration
-- **Google OAuth** -- One-tap social login
-- **Magic links** -- Password-less email login
-- **Auto-confirm** -- No email verification friction
-- **Password reset** -- Self-service recovery flow
-
-### 10. User Settings
-Account management and subscription control:
-
-- **Profile display** -- Name, email, current plan
-- **Plan management** -- View tier, upgrade options
-- **Sign out** -- Secure session termination
+- Multi-turn AI Gut Coach conversation.
+- Each turn is grounded server-side in the user's profile, recent logs, uploaded documents, and dietary restrictions.
+- Same safety framework as log analysis -- no diagnoses, flagged symptoms route the user to professional care.
 
 ---
 
-## Monetization Features
+## Food tab (`/dashboard/food`)
 
-### 11. Tiered Subscriptions (Stripe)
-Three plans with progressive value:
+Sub-tabs for the food-side of the loop.
 
-| Feature | Free | Core ($9/mo) | Pro ($19/mo) |
-|---------|------|-------------|-------------|
-| Voice logs | 3 | Unlimited | Unlimited |
-| Document uploads | 1 | 3/month | Unlimited |
-| Gut scoring | Basic | Full | Full |
-| History | 7 days | Full | Full |
-| Meal plans | - | Weekly | Weekly |
-| Trends | - | Yes | Yes |
-| PDF reports | - | - | Yes |
-| Priority AI | - | - | Yes |
-| Email meal plans | - | - | Weekly |
+### Meals (Core+ -- requires dietary restrictions set)
 
-### 12. Transactional Email
-Automated email touchpoints via Resend:
+- AI-generated **7-day meal plan** + **grocery list**.
+- Built from the user's gut profile, restrictions, conditions, recent symptom pattern, and any uploaded biomarkers.
+- Daily breakdown: breakfast, lunch, dinner, snacks.
+- Weekly tips and rationale.
+- Pro: weekly **emailed** meal-plan delivery via Resend.
 
-- **Welcome email** -- Sent on signup with getting-started guidance
-- **Upgrade confirmation** -- Plan upgrade acknowledgment
-- **Weekly meal plans** -- Emailed plans for Pro subscribers
-- **Password reset** -- Self-service account recovery
+### Upload (always unlocked)
+
+- Drag-drop or camera capture for documents.
+- Supported MIME: JPEG, PNG, WebP, HEIC, HEIF, PDF.
+- 20 MB cap, validated server-side (`validateFile`).
+- Storage: Supabase Storage `documents` bucket (private; per-user prefix).
+- Claude vision analysis returns biomarkers, plain-English interpretation, prioritised recommendations.
+- Supported test types include Viome, GI-MAP, Thryve, SIBO breath tests, food-sensitivity panels, plus food labels.
+
+### Check (Core+ -- unlocks after 1st log)
+
+- Enter or scan a food name -> Edamam parser returns nutrition data (cached 30 days in `food_cache`).
+- Claude analyses the food against the user's gut profile and returns a 1-10 gut-friendliness score, called-out helpful and problematic ingredients, and a personal recommendation.
+
+### Supplements (Pro -- unlocks after 1st document upload)
+
+- Recommendations grounded in uploaded biomarker data and recent symptoms.
+- Claude returns a list with rationale per supplement.
+- Conservative -- no specific brands, always pairs with "discuss with your doctor."
 
 ---
 
-## Technical Features
+## Reports & sharing
 
-### 13. Multi-Model AI Pipeline
-Purpose-optimized AI for each task:
+### Doctor visit summary (Pro)
 
-- **Whisper** -- Audio transcription
-- **Claude 3.5 Sonnet** -- Symptom analysis + meal planning
-- **GPT-4o** -- Medical document vision analysis
-- **Edamam** -- Verified nutrition data
+- Pulls the user's recent logs, score trend, top patterns, uploaded documents.
+- Claude composes a structured PDF the user can hand to a clinician.
+- Designed for the 15-minute slot the average specialist gives.
 
-### 14. Data Security
-Enterprise-grade data protection:
+### PDF health reports (Pro)
 
-- **Row-Level Security (RLS)** on all database tables
-- **Server-side API keys** -- Never exposed to client
-- **Stripe webhook verification** -- Cryptographic signature validation
-- **File type validation** -- Restricted upload formats
-- **Cascade deletion** -- Clean account removal
+- Monthly progress reports with score charts, trends, top triggers, plan-adherence summary.
+- Available on demand via `/dashboard/report` and emailed monthly.
+
+### Practitioner share (Pro)
+
+- Generate a unique read-only token (`/dashboard/share`).
+- Share the token URL with a clinician -- no Supabase login required on their side.
+- Practitioner sees a curated read-only view at `/practitioner/[token]`.
+- Tokens are revocable (`is_active = false`); `last_accessed_at` is tracked.
+
+---
+
+## Settings (`/dashboard/settings`)
+
+Redesigned as a profile admin dashboard.
+
+- Profile: name, email, avatar selection (six gut-themed avatars).
+- Plan: current plan badge, upgrade/downgrade flow, Stripe customer portal link.
+- Subscription: cancel / resume, current period end, status (`active`, `canceling`, `past_due`).
+- Practitioner access: list, revoke, regenerate.
+- Sign out.
+
+### Avatars
+
+Six on-brand options selectable by the user, persisted as a plain-text id (`profiles.avatar_id`):
+
+`bloat-balloon`, `dash-runner`, `fiber-friend`, `gurgle-sleuth`, `probiotic-pal`, `zen-guru`.
+
+The registry lives in `src/components/avatars/` so adding new avatars never requires a database migration.
+
+---
+
+## Onboarding (`/onboarding`)
+
+A four-step wizard, gated by the middleware until complete.
+
+1. **Health goals** -- what the user wants to improve.
+2. **Dietary restrictions** -- allergies, intolerances, preferences.
+3. **Existing conditions** -- IBS, GERD, Crohn's, celiac, SIBO, etc.
+4. **Initial gut score** -- baseline 1-10 self-assessment.
+
+Output is persisted to `profiles.gut_profile` as JSONB and `profiles.onboarding_complete = true`. The middleware caches that flag for 1 hour to avoid querying it on every dashboard navigation.
+
+---
+
+## Authentication (`/auth/*`)
+
+- Email + password (auto-confirmed on signup).
+- Magic links for password-less return.
+- Password-reset flow.
+- Supabase callback at `/auth/callback`.
+- Logged-in users hitting `/auth/login` or `/auth/signup` are bounced to `/dashboard`.
+
+---
+
+## Email & notifications
+
+Powered by Resend; templates in `src/lib/email-templates.ts`.
+
+| Email | Trigger | Plan |
+|---|---|---|
+| Welcome | New signup | All |
+| Password reset | Forgot password | All |
+| Daily reminder | Cron (`/api/send-reminder`) | Core, Pro |
+| Weekly digest | Cron (`/api/weekly-digest`) | Core, Pro |
+| Weekly meal plan | Cron, after plan generation | Pro |
+| Monthly report | Cron (`/api/monthly-report`) | Pro |
+| Upgrade confirmation | Stripe `checkout.session.completed` | Core, Pro |
+| Payment failed | Stripe `invoice.payment_failed` | Core, Pro |
+
+All cron-triggered routes are guarded by a constant-time `CRON_SECRET` check.
+
+---
+
+## Mobile / PWA
+
+- Mobile-first, max-width-`sm` dashboard layout (384px) with a desktop variant.
+- Pure-black OLED-friendly theme, no light mode.
+- PWA manifest (`/manifest.json`) -- standalone display, theme color `#000000`.
+- Service worker registered in `layout.tsx`.
+- Safe-area padding on the bottom navigation for notched devices.
+- `viewport-fit=cover`, `maximumScale: 1` to prevent input zoom on iOS.
+- Hero video uses MP4 faststart and eager preload for fast LCP.
+
+---
+
+## Billing (Stripe)
+
+- Three plans: Free / Core $14 / Pro $29 (monthly).
+- Stripe Checkout for new subscriptions.
+- Stripe customer portal for payment-method updates.
+- In-app self-serve cancel, resume, and change-plan flows.
+- Idempotent webhook handler covering `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
+- `subscription_status`, `current_period_end`, and `plan` mirrored on `profiles`.
+
+Full pricing detail in [PRICING.md](./PRICING.md).
+
+---
+
+## Cross-cutting infrastructure
+
+| Capability | Where it lives |
+|---|---|
+| AI request timeout (25s) | `src/lib/ai-response.ts` `aiAbort()` |
+| Safe JSON extraction | `src/lib/ai-response.ts` `extractJsonObject()` |
+| Per-user rate limiting | `src/lib/security.ts` `rateLimit()` |
+| Cron secret verification (edge-safe) | `src/lib/security.ts` `verifyCronSecret()` |
+| File upload validation | `src/lib/security.ts` `validateFile()` |
+| Open-redirect allowlist | `src/lib/security.ts` `isAllowedOrigin()` |
+| Plan limits | `src/lib/plan-limits.ts` |
+| Tab unlock thresholds | `src/lib/unlock-status.ts` |
+| Stripe plan resolvers | `src/lib/stripe.ts` |
+| Edamam cache (Postgres) | `food_cache` table + `src/app/api/food-lookup/route.ts` |
+| Webhook idempotency | `stripe_webhook_events` table + webhook handler |
+| Haptics on mobile | `src/lib/haptics.ts` |
+| Keyboard shortcuts | `src/hooks/useKeyboardShortcuts.ts` |
+| Swipeable cards | `src/hooks/useSwipeableCards.ts` |
+| Upgrade flow | `src/hooks/useUpgrade.ts` |
+
+---
+
+## Security highlights
+
+- RLS on every user table; deny-all on `food_cache` and `stripe_webhook_events`.
+- Server-side context fetching for AI prompts (no client-supplied profile/log payloads).
+- Prompt-injection delimiters around all user-data inputs.
+- Stripe webhook signature verification + event-id idempotency.
+- Open-redirect protection on auth/post-checkout redirects.
+- Edge-compatible Web APIs (no Node `crypto` / `Buffer` in hot paths).
+- Comprehensive API-route hardening landed in recent work (rate limits, error-surface tightening, validation everywhere).
+
+Full architecture context: [ARCHITECTURE.md](./ARCHITECTURE.md). AI safety framework: [LLM_CRITICAL_THINKING_TRAINING.md](./LLM_CRITICAL_THINKING_TRAINING.md). Roadmap and what's next: [SPRINTS.md](./SPRINTS.md).

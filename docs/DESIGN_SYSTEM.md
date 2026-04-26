@@ -2,7 +2,7 @@
 
 ## Foundation
 
-gutted. uses a dark-first, mobile-first design system built on Tailwind CSS 4 with custom tokens.
+gutted. uses a dark-first, mobile-first design system built on Tailwind CSS 4 with custom tokens. The system is implemented in `src/components/ui/` (primitives), `src/app/globals.css` (tokens), and `src/components/avatars/` (gut-themed character set).
 
 ---
 
@@ -143,16 +143,19 @@ Text:           text-white
 Placeholder:    text-white/30
 ```
 
-### Navigation (Bottom Tab Bar)
-```
-Position:       fixed bottom-0
-Background:     bg-black/90 backdrop-blur
-Border top:     border-t border-white/10
-Items:          5 tabs (Home, Log, Upload, Meals, History)
-Active:         text-[#00B4B4]
-Inactive:       text-white/50
-Safe area:      pb-safe (env(safe-area-inset-bottom))
-```
+### Navigation
+
+The dashboard uses a tabbed structure rather than a fixed bottom nav. Two layers:
+
+**Section nav** (`SectionNav.tsx`) -- the in-page tab strip.
+- Dashboard tabs: `overview | log | history | coach`.
+- Food tabs: `meals | upload | check | supplements`.
+- Active: `text-[#00B4B4]` plus an underline accent.
+- Locked tabs (per `unlock-status.ts`) render with the lock icon and a one-line CTA to satisfy the unlock requirement.
+
+**Top navigation** (`Navigation.tsx`) -- header with avatar profile button (replaces the older plan-badge approach), upgrade nudge, and section affordances.
+
+A desktop layout (`DesktopLayout.tsx`) widens content beyond the `max-w-sm` mobile container with a side-rail navigation.
 
 ---
 
@@ -235,7 +238,24 @@ Mobile-first with minimal breakpoints:
 |------------|-------|-------|
 | Default | 0px+ | Mobile (primary target) |
 | `sm:` | 640px+ | Small tablet adjustments |
-| `md:` | 768px+ | Landing page grid changes |
+| `md:` | 768px+ | Landing page grid changes; desktop dashboard layout (`DesktopLayout`) |
 | `lg:` | 1024px+ | Landing page max-width |
 
-The dashboard is designed for `max-w-sm` (384px) -- fully mobile-optimized.
+The mobile dashboard is designed for `max-w-sm` (384px). On `md:` and up, `DesktopLayout` widens the canvas with a side-rail navigation and multi-column content surfaces.
+
+---
+
+## Avatars
+
+Six on-brand gut-themed avatar characters, registered in `src/components/avatars/index.ts` and selected on the profile page.
+
+| ID | Component |
+|---|---|
+| `bloat-balloon` | `<BloatBalloon />` |
+| `dash-runner` | `<DashRunner />` |
+| `fiber-friend` | `<FiberFriend />` |
+| `gurgle-sleuth` | `<GurgleSleuth />` |
+| `probiotic-pal` | `<ProbioticPal />` |
+| `zen-guru` | `<ZenGuru />` |
+
+Stored as plain text on `profiles.avatar_id`. Adding a new avatar = add a component + register in `index.ts`. No DB migration needed.

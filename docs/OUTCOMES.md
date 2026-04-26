@@ -1,99 +1,152 @@
 # Outcomes
 
-## What gutted. Delivers
-
-### For Users
-
-#### Immediate Outcomes (First Session)
-| Action | Outcome |
-|--------|---------|
-| Voice-log a symptom | Get a gut score (1-10) with AI insights in under 30 seconds |
-| Upload a gut test | Receive plain-English interpretation with actionable recommendations |
-| Complete onboarding | Personalized profile established for all future interactions |
-
-#### Short-Term Outcomes (First Week)
-| Action | Outcome |
-|--------|---------|
-| Log daily symptoms | See 7-day trend and rolling average gut score |
-| Upload medical documents | AI connects test results to daily symptom patterns |
-| Generate first meal plan | Receive 7-day plan personalized to gut profile, restrictions, and symptoms |
-
-#### Long-Term Outcomes (Ongoing Use)
-| Action | Outcome |
-|--------|---------|
-| Consistent tracking | Identify triggers -- foods, stress, timing patterns |
-| Regular meal plans | Diet aligned with individual gut needs, not generic advice |
-| Document history | Complete medical data archive with AI interpretations |
-| Score trends | Measurable gut health improvement over weeks and months |
+The contract gutted. makes -- with users, with the business, and with the ecosystem.
 
 ---
 
-### For the Business
+## Outcomes for users
 
-#### Product Metrics (Targets)
+### First session (under 10 minutes)
 
-| Metric | Target | Why It Matters |
-|--------|--------|----------------|
-| Signup → First Log | > 60% | Proves the voice-first approach reduces friction |
-| Day 7 Retention | > 30% | Indicates habit formation potential |
-| Day 30 Retention | > 15% | Shows sustained value delivery |
-| Free → Paid Conversion | > 5% | Validates willingness to pay |
-| Monthly Churn (Paid) | < 8% | Proves ongoing value |
-| Logs per Active User/Week | > 3 | Engagement depth |
-| Meal Plans Generated/Week | > 1 per paid user | Feature utilization |
+| User action | Outcome |
+|---|---|
+| Voice-log a symptom | A 1-10 gut score with summary, insights, and 1-2 recommendations in <30 seconds. |
+| Upload a gut test (PDF/image) | Plain-English interpretation, prioritised biomarkers, flagged concerns. |
+| Complete onboarding | Personalised gut profile drives every future analysis and meal plan. |
 
-#### Revenue Model
+### First week
 
-| Plan | Price | Target Mix | Revenue/1000 Users |
-|------|-------|------------|-------------------|
+| Action | Outcome |
+|---|---|
+| Log daily | 7-day rolling-average gut score and trend. |
+| Upload labs | AI ties biomarkers to the symptoms in your logs. |
+| Generate first meal plan | 7-day plan + grocery list personalised to restrictions, conditions, biomarkers, and recent symptom pattern. |
+| Use the food checker | Per-food gut-friendliness rating against your profile. |
+
+### First month and beyond
+
+| Action | Outcome |
+|---|---|
+| Consistent tracking | Trigger detection -- specific foods, timing, stress, sleep. |
+| Regular meal plans | Diet aligns with the gut you actually have, not the average gut. |
+| Ongoing uploads | A continuously analysed archive of your medical record. |
+| AI Gut Coach (Core 10/mo, Pro unlimited) | Conversational guidance grounded in your data. |
+| Doctor visit summary (Pro) | Walk into your appointment with a structured PDF instead of "I haven't been feeling great." |
+| Practitioner share (Pro) | Read-only token gives your clinician a live window into your data. |
+| Score trend | Measurable gut-health improvement quarter over quarter. |
+
+### Outcome statement (for landing/marketing)
+
+> *"In 7 days you know your average gut score, your top trigger candidates, and what to eat this week. In 30 days you have a personal gut record more useful than most specialist intake forms."*
+
+---
+
+## Outcomes for the business
+
+### Funnel and retention targets
+
+| Metric | Target | Why it matters |
+|---|---|---|
+| Signup -> first log | >60% | Validates voice-first reduces friction. |
+| Day 1 -> Day 7 retention | >30% | Habit-formation indicator. |
+| Day 7 -> Day 30 retention | >15% | Sustained value delivery. |
+| Free -> Paid conversion (D14) | >5% | Validates willingness to pay. |
+| Free -> Paid conversion (D30) | >7% | Confirms longer-tail upsell motion. |
+| Monthly paid churn | <8% | Proves continuous value. |
+| Logs per active user / week | >3 | Engagement depth. |
+| Meal plans / paid user / week | >0.8 | Feature utilisation on Core/Pro. |
+| AI Coach sessions / paid user / month | >2 | Stickiness of the coach loop. |
+| Document uploads / paid user / quarter | >1 | Test-data flywheel is firing. |
+
+### Plan mix target (steady state)
+
+| Plan | Price | Mix | Revenue / 1,000 signups (steady) |
+|---|---|---|---|
 | Free | $0 | 70% | $0 |
-| Core | $9/mo | 20% | $1,800/mo |
-| Pro | $19/mo | 10% | $1,900/mo |
-| **Total** | | | **$3,700/mo per 1,000 users** |
+| Core | $14/mo | 20% | $2,800/mo |
+| Pro | $29/mo | 10% | $2,900/mo |
+| **Total** | | | **~$5,700 MRR per 1,000 signups** |
 
-#### Unit Economics (Per User)
+### Unit economics (per active user, monthly)
 
-| Cost | Free User | Core User | Pro User |
-|------|-----------|-----------|----------|
-| AI API (monthly avg) | $0.15 | $0.80 | $1.50 |
-| Infrastructure | $0.02 | $0.05 | $0.08 |
-| Email | $0.00 | $0.00 | $0.10 |
-| Stripe fees | - | $0.56 | $0.85 |
-| **Total cost** | **$0.17** | **$1.41** | **$2.53** |
-| **Revenue** | **$0** | **$9.00** | **$19.00** |
-| **Margin** | **-$0.17** | **$7.59 (84%)** | **$16.47 (87%)** |
+These are operating targets, not contractual guarantees -- the AI/email/Stripe lines vary with usage tier and prompt design.
 
----
+| Cost line | Free | Core | Pro |
+|---|---|---|---|
+| AI (Anthropic + OpenAI) | $0.15-0.30 | $0.80-1.50 | $1.50-3.00 |
+| Edamam (cached) | <$0.05 | <$0.10 | <$0.15 |
+| Supabase + Vercel infra | $0.05 | $0.10 | $0.15 |
+| Resend email | $0.00 | $0.02 | $0.10 |
+| Stripe fees | -- | ~$0.71 | ~$1.14 |
+| **Total cost** | **~$0.30** | **~$1.60-2.40** | **~$3.20-4.50** |
+| **Revenue** | **$0** | **$14** | **$29** |
+| **Gross margin** | n/a | **>80%** | **>85%** |
 
-## Success Criteria
+The Free tier is intentionally money-losing per user as long as the marginal cost stays inside the **D30 conversion to Core (>5-7%)** target. Above that bar, the funnel pays for itself.
 
-### MVP Success (Current Phase)
-- [ ] All core features functional (voice logging, document analysis, meal plans)
-- [ ] Authentication and billing operational
-- [ ] Mobile-optimized UI performing well on target devices
-- [ ] AI analysis quality meets user expectations
-- [ ] Data security via RLS confirmed
+### LTV / CAC discipline
 
-### Growth Success (Next Phase)
-- [ ] 1,000 registered users
-- [ ] 100 paying subscribers
-- [ ] 4+ average app store rating
-- [ ] < 8% monthly churn on paid plans
-- [ ] Positive user testimonials for marketing
+- Target paid LTV: **>$200** at <8% monthly churn (~12-18 month average tenure).
+- Target blended CAC: **<$50** through a content-led + practitioner-referral mix.
+- Floor LTV/CAC: **3.0** at the funnel level. Channels under 3.0 get cut.
 
-### Scale Success (Future)
-- [ ] 10,000+ active users
-- [ ] $30K+ MRR
-- [ ] Practitioner referral channel established
-- [ ] B2B/whitelabel opportunities explored
-- [ ] International expansion (multi-language support)
+### What drives the moat
+
+1. **Compounding personal data.** Switching = losing 30, 60, 90 days of context.
+2. **AI Coach memory.** The coach becomes more useful per chat.
+3. **Document archive.** All uploaded labs interpreted in one place.
+4. **Practitioner relationships.** Once a clinician's caseload is on gutted., they don't move it.
 
 ---
 
-## Impact Vision
+## Success criteria by stage
 
-**Individual level:** Every gutted. user gains measurable clarity about their gut health -- they know their triggers, they understand their tests, and they eat food that works for their body.
+### MVP (current)
 
-**Market level:** gutted. proves that AI can make personalized health management accessible to everyone, not just those who can afford specialists and nutritionists.
+- [x] All core features functional (voice + text logging, document analysis, meal plans, food checker, AI Coach, supplements, doctor summary, practitioner share).
+- [x] Auth + Stripe billing + idempotent webhooks operational.
+- [x] Mobile-first UI verified on iOS and Android viewports.
+- [x] AI safety hardening (timeouts, JSON extraction, prompt-injection delimiters).
+- [x] RLS on every user table; deny-all on server-only tables.
+- [x] DB hot-path indexes on logs, documents, health_data, food_cache, practitioner tokens, Stripe events.
+- [x] CI workflow + typecheck + lint clean.
 
-**Health system level:** Better-informed patients have more productive doctor visits, catch issues earlier, and manage chronic conditions more effectively -- reducing long-term healthcare burden.
+### Growth (next)
+
+- [ ] 1,000 registered users / 100 paying subscribers.
+- [ ] 4+ rating from any in-app review prompt or app-store wrapper.
+- [ ] Monthly paid churn <8%.
+- [ ] At least 2 content topics ranking page-1 ("how to read Viome results," "low FODMAP meal plan AI" or equivalent).
+- [ ] First practitioner partner channelling >10 clients/mo.
+
+### Scale (later)
+
+- [ ] 10,000+ MAU / $30K+ MRR.
+- [ ] Multi-seat practitioner tier shipping.
+- [ ] One distribution partnership with an at-home gut-test brand.
+- [ ] International + multilingual meal planning.
+
+---
+
+## Health system impact (the macro outcome)
+
+- Better-informed patients -> more productive doctor visits.
+- Earlier surfacing of red-flag symptoms via the `flagged: true` AI logic.
+- Higher adherence between specialist visits = better long-term outcomes.
+- Practitioner caseloads scale (AI does the prep, clinician focuses on care).
+- Existing $5B at-home test market gains a competent ongoing interpretation layer.
+
+---
+
+## What "winning" looks like
+
+A user who, six months in, can answer:
+- *What's my average gut score this month vs. last?* -- one tap.
+- *Which foods are my top three triggers?* -- screen 1.
+- *What does my last GI-MAP say in plain English?* -- already interpreted.
+- *What should I eat this week?* -- meal plan + grocery list ready.
+- *What do I tell my doctor?* -- doctor-summary PDF, one tap.
+
+Hit that bar and retention, conversion, and word-of-mouth take care of themselves.
+
+For the personas this serves and the channels that reach them, see [ICP.md](./ICP.md). For pricing rationale, see [PRICING.md](./PRICING.md).

@@ -1,133 +1,198 @@
 # Ideal Customer Profile (ICP)
 
-## Primary Personas
+The ICP is the operational source of truth for sales, marketing, paid acquisition, and AI-agent prospecting. Keep it tight and behaviour-driven, not demographic-only.
+
+---
+
+## Primary personas
 
 ### 1. The Frustrated Tracker -- "Sarah"
-**Demographics:** 25-40, female, urban/suburban, health-conscious
-**Income:** $50K-$100K
-**Tech comfort:** High (daily smartphone user, uses 3+ health apps)
 
-**Situation:**
-- Experiences recurring bloating, irregular digestion, or food sensitivities
-- Has tried tracking symptoms in Notes, spreadsheets, or generic apps
-- Abandons tracking within 2-3 weeks because it's too tedious
-- Knows diet affects her gut but doesn't know *which* foods to avoid
+| | |
+|---|---|
+| Age | 25-40 |
+| Identity | Female, urban or suburban, health-conscious |
+| Income | $50K-$120K |
+| Tech | Daily smartphone user, uses 2-4 health/fitness apps |
+| Trigger event | Third "bad gut" week in a row, or a friend recommended a tracker |
 
-**Pain Points:**
-- Manual logging takes too long and she forgets
-- Can't see meaningful patterns in her data
-- Generic diet advice doesn't account for her specific issues
-- Feels stuck between "it's not bad enough for a doctor" and "something's off"
+**Situation.** Recurring bloating, irregular digestion, food sensitivities. She has tried Notes, spreadsheets, Cara, Bowelle. She abandoned each within 2-3 weeks because manual logging was too tedious. She knows diet matters; she doesn't know *which* foods.
 
-**Why gutted.:**
-- Voice logging removes the friction that caused her to quit other apps
-- AI analysis gives her instant, personalized insights after each entry
-- Meal plans are built from her actual symptom data, not generic templates
+**Pains.**
+- Manual logging: too long, gets forgotten.
+- No meaningful patterns visible in her data.
+- Generic diet advice doesn't account for her body.
+- Stuck between *"not bad enough for a doctor"* and *"something's clearly off."*
 
-**Willingness to pay:** Core plan ($9/mo) -- she values convenience and personalization
+**Why gutted. wins her.**
+- Voice logging removes the friction that killed her last attempts.
+- AI score + insights after every entry feel rewarding, not bureaucratic.
+- Meal plans are built from her data, not a Pinterest board.
+
+**Plan and price.** **Core, $14/mo.** Converts in week 1 from Free.
+
+**Acquisition.** TikTok / Reels gut-health creators, Instagram, podcast pre-rolls, SEO around "IBS bloating tracker," "low FODMAP app."
+
+**Sales-agent script handle.** *"You've tried tracking before, right? What killed it -- the typing, or that nothing useful came out the other side?"*
 
 ---
 
 ### 2. The Test-Result Googler -- "Mike"
-**Demographics:** 30-50, any gender, has seen a GI specialist or done at-home gut tests
-**Income:** $60K-$120K
-**Tech comfort:** Moderate to high
 
-**Situation:**
-- Has received results from Viome, GI-MAP, food sensitivity panels, or a gastroenterologist
-- Spent hours Googling what his results mean
-- Understands some of it but can't connect the dots to daily life
-- Wants to make dietary changes but doesn't know where to start
+| | |
+|---|---|
+| Age | 30-55 |
+| Identity | Any gender, has done at-home gut testing or seen a GI specialist |
+| Income | $70K-$150K |
+| Tech | Moderate to high |
+| Trigger event | Just received a Viome / GI-MAP / SIBO / food-sensitivity report |
 
-**Pain Points:**
-- Medical reports use terminology he doesn't fully understand
-- His doctor gave him 15 minutes and a generic pamphlet
-- He wants actionable, ongoing guidance -- not a one-time interpretation
-- No existing tool connects his test data to daily nutrition
+**Situation.** Has results from Viome, GI-MAP, Thryve, ZOE, Tiny Health, food-sensitivity panels, or a gastroenterologist. He spent hours Googling. He understands fragments but cannot connect the dots to daily life. His doctor gave him 15 minutes and a generic pamphlet.
 
-**Why gutted.:**
-- Upload any gut test and get plain-English interpretation instantly
-- Biomarker extraction highlights what actually matters
-- Meal plans incorporate his test results alongside daily symptoms
-- Ongoing tracking shows whether dietary changes are improving his scores
+**Pains.**
+- Reports use terminology he doesn't fully grasp.
+- He wants ongoing guidance, not a one-time interpretation.
+- Nothing he owns connects his test data to his daily nutrition.
+- He spent $300-500 on the test; he wants ROI on it.
 
-**Willingness to pay:** Pro plan ($19/mo) -- he's already invested in testing and wants maximum value
+**Why gutted. wins him.**
+- Upload any gut test -> instant plain-English interpretation with prioritised takeaways.
+- Biomarker extraction surfaces the numbers that actually matter.
+- Meal plans incorporate his biomarkers alongside his daily symptoms.
+- Ongoing tracking proves whether his diet is moving the needle.
 
----
+**Plan and price.** **Pro, $29/mo.** Already invested in testing -- wants the maximum-value tier.
 
-### 3. The Gut-Curious Optimizer -- "Alex"
-**Demographics:** 22-35, any gender, fitness/wellness-oriented
-**Income:** $40K-$80K
-**Tech comfort:** Very high (early adopter, uses productivity tools)
+**Acquisition.** SEO ("how to read Viome results," "GI-MAP interpretation," "what does SIBO breath test mean"), partnerships with at-home test brands, retargeting from test-brand sites, Reddit r/SIBO, r/IBS.
 
-**Situation:**
-- Generally healthy but interested in optimizing gut health proactively
-- Follows gut health content on social media (podcasts, Instagram, TikTok)
-- Has heard about the gut-brain connection and wants to act on it
-- Willing to try new health tools and share with friends
-
-**Pain Points:**
-- Overwhelmed by conflicting gut health advice online
-- Wants personalized guidance but can't justify specialist costs yet
-- Existing apps don't feel modern or intelligent enough
-- Wants something quick and not "clinical feeling"
-
-**Why gutted.:**
-- Modern, sleek dark interface feels premium and tech-forward
-- AI-powered scoring gamifies gut health improvement
-- Voice logging fits his on-the-go lifestyle
-- Free tier lets him try before committing
-
-**Willingness to pay:** Free → Core ($9/mo) after seeing value in first week
+**Sales-agent handle.** *"You spent $300+ on the test. What's actually different in your life since the result came back?"*
 
 ---
 
-## Secondary Personas
+### 3. The Gut-Curious Optimiser -- "Alex"
 
-### 4. The IBS Warrior
-- Diagnosed with IBS, GERD, or similar chronic condition
-- Actively managing symptoms and diet
-- Needs consistent tracking to identify triggers
-- Shares data with healthcare providers
-- Core or Pro plan
+| | |
+|---|---|
+| Age | 22-35 |
+| Identity | Any gender, fitness/wellness-oriented, early adopter |
+| Income | $40K-$90K |
+| Tech | Very high; uses Whoop / Oura / Apple Health daily |
+| Trigger event | Listened to a Huberman / Attia / Means episode on gut health |
+
+**Situation.** Generally healthy but interested in proactive optimisation. Follows gut-health and longevity content. Has heard about the gut-brain axis and wants to act. Willing to try new tools and share with friends.
+
+**Pains.**
+- Conflicting online advice.
+- Cannot justify a specialist yet.
+- Existing apps feel dated and clinical.
+
+**Why gutted. wins them.**
+- Modern dark UI feels premium and tech-forward.
+- AI scoring gamifies improvement.
+- Voice logging fits an on-the-go lifestyle.
+- Health-data integration (Apple Health / Fitbit / Oura) on Pro lines up with their existing stack.
+
+**Plan and price.** **Free -> Core ($14/mo)** in week 1; some upgrade to **Pro ($29/mo)** for the integrations.
+
+**Acquisition.** Wellness podcasts, optimiser communities (Reddit r/longevity, Twitter/X health niche), referral mechanics, influencer collabs.
+
+**Sales-agent handle.** *"You're tracking sleep, HRV, and steps. What's tracking the thing that actually controls 70% of your immune system?"*
+
+---
+
+## Secondary personas
+
+### 4. The IBS / GERD / Crohn's Warrior
+- Diagnosed chronic condition; actively managing diet.
+- Highly motivated, will adopt fast if AI quality holds up.
+- Shares data with healthcare providers (practitioner-share is a hook).
+- **Plan:** Core or Pro.
 
 ### 5. The Postpartum Recoverer
-- Experiencing gut changes after pregnancy
-- New to digestive health tracking
-- Limited time (new parent) -- voice logging is essential
-- Values convenience above all
-- Core plan
+- New gut issues post-pregnancy, often undiagnosed.
+- Severely time-constrained -- voice-first is non-negotiable.
+- **Plan:** Core. Strong word-of-mouth driver.
 
-### 6. The Wellness Professional
-- Nutritionist, health coach, or functional medicine practitioner
-- Recommends gut tracking to clients
-- Values the document analysis for interpreting client test results
-- Potential B2B opportunity (future)
+### 6. The Practitioner
+- Nutritionist, functional-medicine practitioner, health coach.
+- Wants client adherence + a read-only window into client data.
+- Buys gutted. for *clients*, recommends to caseload.
+- **Plan:** Pro (today). B2B / multi-seat tier is the natural future SKU.
+
+### 7. The At-Home Test Buyer (post-purchase)
+- Just spent $200-500 on Viome / Tiny Health / GI-MAP.
+- High intent, narrow window (2-4 weeks after results arrive).
+- **Plan:** Pro on first session.
 
 ---
 
-## Market Sizing
+## Anti-ICP -- who not to chase
 
-| Segment | US Population | Addressable |
-|---------|--------------|-------------|
+- **People with no symptoms or curiosity.** They will not retain.
+- **Hospital procurement / regulated medical-device buyers.** gutted. is explicitly non-medical and non-diagnostic.
+- **Casual diet-app shoppers.** They want calorie counting; we are not that.
+- **Under-18 minors.** Out of scope.
+
+Don't burn ad spend or sales attention on these -- the conversion economics will not work.
+
+---
+
+## Market sizing
+
+| Segment | US population | gutted. addressable |
+|---|---|---|
 | Digestive disease sufferers | 70M+ | Primary market |
-| IBS diagnosed | 25-45M | High-intent segment |
-| At-home gut test users | 5-10M (growing) | Perfect product-market fit |
-| Health app users interested in gut health | 20-30M | Broader market |
+| IBS diagnosed (Rome IV) | 25-45M | High-intent core |
+| At-home gut test users | 5-10M (>20% YoY) | Perfect product-market fit |
+| General health-app users curious about gut | 20-30M | Broader Core/Free funnel |
+| Functional-medicine + nutrition practitioners | ~150K US | B2B / referral channel |
 
-## Acquisition Channels (Prioritized)
+Total addressable spend in adjacent categories the user is *already paying for*: gut testing ($5B+), IBS-related Rx and OTC ($10B+), wellness coaching ($16B+), digital-health subscriptions ($30B+). The wallet exists; gutted. consolidates spend.
 
-1. **Content marketing** -- SEO for "how to read Viome results," "gut health meal plan," "IBS symptom tracker"
-2. **Social media** -- TikTok/Instagram gut health community (large, engaged audience)
-3. **App store optimization** -- "gut health," "IBS tracker," "meal plan" keywords
-4. **Referral** -- Users share meal plans and gut scores with friends/partners
-5. **Practitioner partnerships** -- Nutritionists recommend to clients
-6. **Influencer collaborations** -- Gut health podcasters and creators
+---
 
-## Retention Drivers
+## Acquisition channels (prioritised)
 
-- **Daily habit:** Voice logging becomes part of morning/evening routine
-- **Compounding data:** More logs = better insights = harder to leave
-- **Weekly meal plans:** Recurring value delivery every week
-- **Score gamification:** Users want to improve their gut score
-- **Document uploads:** Test history is stored and analyzed -- switching means losing context
+1. **Content + SEO.** "How to read Viome / GI-MAP / SIBO results," "low FODMAP meal plan," "IBS symptom tracker." Long-form -> Free signup.
+2. **At-home test partnerships.** Co-branded interpretation upsell. Highest LTV cohort.
+3. **Practitioner channel.** Nutritionists/FM clinicians recommend. Long-tail referral.
+4. **Short-form social (TikTok, Reels).** *"I uploaded my Viome to AI and here's what it said."* Demo-heavy.
+5. **Podcasts.** Gut-health, optimiser, longevity audiences (Huberman, Hyman, Means, Bulsiewicz, etc. adjacencies).
+6. **Reddit + community.** r/IBS, r/SIBO, r/Gastroenterology, r/Microbiome -- story-led, no-spam.
+7. **Referrals.** Free-month for referrer + referred.
+
+---
+
+## Retention drivers
+
+- **Daily habit.** Voice logging + reminders + streaks become routine.
+- **Compounding data.** More logs = better insights = harder to leave.
+- **Weekly meal plans.** Recurring fresh value every Sunday.
+- **Score gamification.** Users want their score to go up.
+- **Document history.** Test archive is stored; switching means losing the interpretations.
+- **AI Coach memory.** The coach gets more useful per chat.
+
+---
+
+## Quick BANT for sales agents
+
+| | Free -> Core | Core -> Pro |
+|---|---|---|
+| Budget | <$20/mo accepted | <$40/mo accepted |
+| Authority | Self-serve | Self-serve |
+| Need | Symptom + trigger clarity | Lab interpretation + practitioner share + integrations |
+| Timing | Active flare or recurring discomfort | Just received a test result, or a clinician asked them to track |
+
+---
+
+## Discovery questions an AI sales agent should always ask
+
+1. *"How are you tracking your gut today, if at all?"*
+2. *"Have you done a gut test (Viome, GI-MAP, SIBO, food sensitivity)? When?"*
+3. *"What did your last doctor visit leave you with?"*
+4. *"What food do you suspect is a trigger -- and how confident are you?"*
+5. *"On a scale of 1-10, what would you say your gut feels like this week?"*
+
+These map cleanly to onboarding fields and unlock the Core/Pro recommendation logic on the spot.
+
+For positioning lines, objections, and channel-specific hooks, see [VALUE_PROP.md](./VALUE_PROP.md). For target metrics on conversion and retention, see [OUTCOMES.md](./OUTCOMES.md).

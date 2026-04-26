@@ -208,8 +208,9 @@ Label to input:      mb-1 (4px)
 ## Image & Media
 
 ### Hero Video
-- Background video on landing page: `/public/Gutted background.mp4`
-- Auto-play, muted, looped
+- Background video on landing page: `/public/gutted-bg.mp4`
+- Auto-play, muted, looped, `playsInline`
+- MP4 with faststart (moov atom moved up) and `preload="auto"` for fast LCP
 - Dark overlay to maintain text readability
 
 ### Uploaded Images
@@ -240,3 +241,5 @@ Label to input:      mb-1 (4px)
 - Don't use more than 2 font weights on a single card
 - Don't use the gradient on text smaller than `text-lg`
 - Don't add decorative elements that don't serve a function
+- Don't use em dashes in user-facing copy -- the project uses double-hyphens (`--`) consistently
+- Don't introduce a light theme; the app is dark-only by design
