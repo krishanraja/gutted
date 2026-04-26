@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
+import { TextInput } from '@/components/ui/TextInput'
 
 export default function SignupPage() {
   return (
@@ -110,32 +111,37 @@ function SignupForm() {
           <div className="flex-1 h-px bg-white/10" />
         </div>
 
-        <form onSubmit={signup} className="space-y-4">
-          <div>
-            <label className="block text-sm text-white/60 mb-1.5">Your name</label>
-            <input
-              type="text" value={name} onChange={e => setName(e.target.value)} required
-              placeholder="Alex"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 transition-colors"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-white/60 mb-1.5">Email</label>
-            <input
-              type="email" value={email} onChange={e => setEmail(e.target.value)} required
-              placeholder="you@example.com"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 transition-colors"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-white/60 mb-1.5">Password</label>
-            <input
-              type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
-              placeholder="At least 6 characters"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 transition-colors"
-            />
-          </div>
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+        <form onSubmit={signup} className="space-y-4" noValidate>
+          <TextInput
+            type="text"
+            label="Your name"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            required
+            autoComplete="name"
+            placeholder="Alex"
+          />
+          <TextInput
+            type="email"
+            label="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+          />
+          <TextInput
+            type="password"
+            label="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+            placeholder="At least 6 characters"
+            hint="Minimum 6 characters."
+            error={error || null}
+          />
           <Button type="submit" loading={loading} className="w-full">Create account</Button>
         </form>
 

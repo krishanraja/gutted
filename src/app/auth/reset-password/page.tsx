@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
+import { TextInput } from '@/components/ui/TextInput'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -33,24 +34,29 @@ export default function ResetPasswordPage() {
         <h1 className="text-2xl font-bold text-center mb-2">Set new password</h1>
         <p className="text-white/40 text-center mb-8 text-sm">Choose a new password for your account</p>
 
-        <form onSubmit={handleUpdate} className="space-y-4">
-          <div>
-            <label className="block text-sm text-white/60 mb-1.5">New password</label>
-            <input
-              type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
-              placeholder="At least 6 characters"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 transition-colors"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-white/60 mb-1.5">Confirm password</label>
-            <input
-              type="password" value={confirm} onChange={e => setConfirm(e.target.value)} required minLength={6}
-              placeholder="Re-enter your password"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 transition-colors"
-            />
-          </div>
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+        <form onSubmit={handleUpdate} className="space-y-4" noValidate>
+          <TextInput
+            type="password"
+            label="New password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+            placeholder="At least 6 characters"
+            hint="Minimum 6 characters."
+          />
+          <TextInput
+            type="password"
+            label="Confirm password"
+            value={confirm}
+            onChange={e => setConfirm(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+            placeholder="Re-enter your password"
+            error={error || null}
+          />
           <Button type="submit" loading={loading} className="w-full">Update password</Button>
         </form>
       </div>

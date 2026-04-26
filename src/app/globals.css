@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/* Tailwind v4 design tokens. Once defined here, `bg-accent`, `text-positive`,
+ * `from-accent`, `to-positive`, etc. all work without arbitrary-value escapes
+ * (`bg-[#00B4B4]`). New code should prefer these aliases; existing arbitrary
+ * values can be migrated incrementally with a grep-and-replace.
+ */
+@theme {
+  --color-accent: #00B4B4;
+  --color-accent-50: rgba(0, 180, 180, 0.5);
+  --color-accent-30: rgba(0, 180, 180, 0.3);
+  --color-positive: #4ADE80;
+}
+
 :root {
   --background: #000000;
   --foreground: #ffffff;

@@ -135,9 +135,10 @@ export default function IntegrationsPage() {
             <p className="text-white/40 text-xs uppercase tracking-wide mb-3">Log health data</p>
             <div className="flex gap-2 mb-3">
               <select
+                aria-label="Health metric type"
                 value={manualEntry.metric}
                 onChange={e => setManualEntry(prev => ({ ...prev, metric: e.target.value }))}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#00B4B4]/50"
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:border-accent/60"
               >
                 {Object.entries(metricLabels).map(([key, { label, emoji }]) => (
                   <option key={key} value={key}>{emoji} {label}</option>
@@ -145,10 +146,11 @@ export default function IntegrationsPage() {
               </select>
               <input
                 type="number"
+                aria-label={`${metricLabels[manualEntry.metric]?.label || 'Value'} value`}
                 value={manualEntry.value}
                 onChange={e => setManualEntry(prev => ({ ...prev, value: e.target.value }))}
                 placeholder={metricLabels[manualEntry.metric]?.unit || 'Value'}
-                className="w-24 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#00B4B4]/50"
+                className="w-24 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:border-accent/60"
               />
               <Button onClick={saveManualEntry} loading={saving} size="md">Add</Button>
             </div>

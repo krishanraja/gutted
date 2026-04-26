@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
+import { TextInput } from '@/components/ui/TextInput'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -91,27 +92,29 @@ export default function LoginPage() {
           </div>
         ) : mode === 'password' ? (
           <>
-            <form onSubmit={login} className="space-y-4">
-              <div>
-                <label className="block text-sm text-white/60 mb-1.5">Email</label>
-                <input
-                  type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                  placeholder="you@example.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-white/60 mb-1.5">Password</label>
-                <input
-                  type="password" value={password} onChange={e => setPassword(e.target.value)} required
-                  placeholder="••••••••"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 transition-colors"
-                />
-              </div>
+            <form onSubmit={login} className="space-y-4" noValidate>
+              <TextInput
+                type="email"
+                label="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                placeholder="you@example.com"
+              />
+              <TextInput
+                type="password"
+                label="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••"
+                error={error || null}
+              />
               <div className="flex justify-end">
                 <Link href="/auth/forgot-password" className="text-[#4ADE80] text-sm hover:underline">Forgot password?</Link>
               </div>
-              {error && <p className="text-red-400 text-sm">{error}</p>}
               <Button type="submit" loading={loading} className="w-full">Sign in</Button>
             </form>
             <button onClick={() => { setMode('magic-link'); setError('') }} className="w-full text-center text-white/40 text-sm mt-4 hover:text-white/60 transition-colors">
@@ -120,16 +123,17 @@ export default function LoginPage() {
           </>
         ) : (
           <>
-            <form onSubmit={loginWithMagicLink} className="space-y-4">
-              <div>
-                <label className="block text-sm text-white/60 mb-1.5">Email</label>
-                <input
-                  type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                  placeholder="you@example.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00B4B4]/50 transition-colors"
-                />
-              </div>
-              {error && <p className="text-red-400 text-sm">{error}</p>}
+            <form onSubmit={loginWithMagicLink} className="space-y-4" noValidate>
+              <TextInput
+                type="email"
+                label="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                placeholder="you@example.com"
+                error={error || null}
+              />
               <Button type="submit" loading={magicLinkLoading} className="w-full">Send magic link</Button>
             </form>
             <button onClick={() => { setMode('password'); setError('') }} className="w-full text-center text-white/40 text-sm mt-4 hover:text-white/60 transition-colors">

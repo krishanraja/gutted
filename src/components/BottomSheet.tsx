@@ -1,5 +1,5 @@
 'use client'
-import { ReactNode, useEffect, useRef, useCallback, TouchEvent, useState } from 'react'
+import { ReactNode, useEffect, useId, useRef, useCallback, TouchEvent, useState } from 'react'
 import { haptic } from '@/lib/haptics'
 
 interface BottomSheetProps {
@@ -11,14 +11,20 @@ interface BottomSheetProps {
 
 export function BottomSheet({ open, onClose, children, title }: BottomSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null)
+  const previouslyFocused = useRef<HTMLElement | null>(null)
   const dragStart = useRef(0)
   const [dragY, setDragY] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const titleId = useId()
 
   useEffect(() => {
     if (open) {
       haptic.medium()
       document.body.style.overflow = 'hidden'
+      // Remember whoever was focused so we can restore on close.
+      previouslyFocused.current = document.activeElement as HTMLElement | null
+      // Focus the sheet itself so keyboard users start inside it.
+      sheetRef.current?.focus()
     }
     return () => { document.body.style.overflow = '' }
   }, [open])
@@ -26,7 +32,27 @@ export function BottomSheet({ open, onClose, children, title }: BottomSheetProps
   const handleClose = useCallback(() => {
     haptic.tap()
     onClose()
+    // Return focus to whatever opened the sheet. Guarded because the element
+    // may have unmounted between open and close.
+    const target = previouslyFocused.current
+    if (target && typeof target.focus === 'function' && document.contains(target)) {
+      target.focus()
+    }
   }, [onClose])
+
+  // Esc-to-close. Attached at window scope so it fires even if focus has left
+  // the sheet (e.g. a screen reader virtual cursor outside the element).
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        handleClose()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, handleClose])
 
   const onTouchStart = useCallback((e: TouchEvent) => {
     dragStart.current = e.touches[0].clientY
@@ -55,12 +81,17 @@ export function BottomSheet({ open, onClose, children, title }: BottomSheetProps
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
         onClick={handleClose}
+        aria-hidden="true"
       />
 
       {/* Sheet */}
       <div
         ref={sheetRef}
-        className={`relative w-full max-h-[80vh] bg-[#111] border-t border-white/10 rounded-t-2xl animate-fade-up overflow-hidden ${isDragging ? '' : 'transition-transform duration-300'}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        tabIndex={-1}
+        className={`relative w-full max-h-[80vh] bg-[#111] border-t border-white/10 rounded-t-2xl animate-fade-up overflow-hidden focus:outline-none ${isDragging ? '' : 'transition-transform duration-300'}`}
         style={{ transform: `translateY(${dragY}px)` }}
       >
         {/* Drag handle */}
@@ -76,7 +107,7 @@ export function BottomSheet({ open, onClose, children, title }: BottomSheetProps
         {/* Title */}
         {title && (
           <div className="px-6 pb-3">
-            <h3 className="text-lg font-semibold">{title}</h3>
+            <h3 id={titleId} className="text-lg font-semibold">{title}</h3>
           </div>
         )}
 
