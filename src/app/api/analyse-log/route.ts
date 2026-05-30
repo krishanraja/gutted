@@ -3,6 +3,7 @@ import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit, truncate } from '@/lib/security'
 import { aiAbort, extractJsonObject, isAbortError } from '@/lib/ai-response'
+import { emitAttributionEvent } from '@/lib/attribution'
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,6 +59,11 @@ Return exactly this JSON structure:
       return NextResponse.json({ error: 'Model returned an invalid response' }, { status: 502 })
     }
 
+    // First log is gutted's true activation moment. Fire once (the warehouse
+    // dedups on the idempotency key); emit is a no-op until ingest is wired.
+    if (!(recentLogs || []).length) {
+      await emitAttributionEvent({ event_name: 'activated', user_id: user.id, idempotency_key: `activated:${user.id}` })
+    }
     return NextResponse.json(parsed)
   } catch (e: unknown) {
     if (isAbortError(e)) return NextResponse.json({ error: 'Analysis timed out' }, { status: 504 })
