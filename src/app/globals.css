@@ -108,7 +108,11 @@ html { overscroll-behavior-y: none; }
   touch-action: manipulation;
 }
 @media (min-width: 768px) {
-  .mobile-viewport { position: static; height: auto; min-height: 100vh; overflow: auto; }
+  /* The mobile-viewport block is always paired with `md:hidden`, but `md:hidden`
+   * is a layered Tailwind utility and this class is unlayered, so the utility
+   * cannot hide it. Hide it here so desktop does not render a duplicate hero /
+   * dashboard. */
+  .mobile-viewport { display: none; }
 }
 
 /* === ENTRANCE ANIMATIONS === */

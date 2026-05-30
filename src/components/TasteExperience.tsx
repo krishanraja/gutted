@@ -106,7 +106,7 @@ export function TasteExperience() {
   if (state === 'result' && result) {
     return (
       <div className="w-full max-w-sm mx-auto text-left max-h-[62vh] overflow-y-auto hide-scrollbar">
-        <div className="bg-white/[0.05] border border-white/[0.10] rounded-2xl p-5 backdrop-blur-sm">
+        <div className="bg-black/60 border border-white/[0.12] rounded-2xl p-5 backdrop-blur-md">
           <div className="flex items-center gap-4">
             <GutScore score={result.gutScore} size="sm" />
             <div className="flex-1">
@@ -173,7 +173,7 @@ export function TasteExperience() {
 
   return (
     <div className="w-full max-w-sm mx-auto">
-      <div className="bg-white/[0.05] border border-white/[0.10] rounded-2xl p-4 backdrop-blur-sm text-left">
+      <div className="bg-black/60 border border-white/[0.12] rounded-2xl p-4 backdrop-blur-md text-left">
         <label className="text-sm text-white/80 font-medium block mb-2">Tell me how your gut feels today</label>
         <div className="relative">
           <textarea
