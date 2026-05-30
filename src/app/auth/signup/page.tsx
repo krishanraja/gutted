@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { TextInput } from '@/components/ui/TextInput'
+import { readStoredAttribution } from '@/lib/attribution-client'
 
 export default function SignupPage() {
   return (
@@ -69,7 +70,33 @@ function SignupForm() {
         }
       }
 
-      await supabase.from('profiles').upsert({ id: data.user.id, email, name })
+      const attrib = readStoredAttribution()
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        email,
+        name,
+        attribution: {
+          utm: attrib.utm,
+          referrer: attrib.referrer,
+          landing_path: attrib.landing_path,
+          anonymous_id: attrib.anonymous_id,
+          captured_at: new Date().toISOString(),
+        },
+      })
+
+      // Emit signed_up (revenue-only). user_id is attached server-side from the
+      // now-active session, linking the anonymous journey to the account.
+      fetch('/api/attribution', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_name: 'signed_up',
+          anonymous_id: attrib.anonymous_id,
+          utm: attrib.utm,
+          idempotency_key: `signedup:${data.user.id}`,
+        }),
+        keepalive: true,
+      }).catch(() => {})
 
       // Send welcome email (non-blocking)
       fetch('/api/send-email', {

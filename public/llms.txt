@@ -1,0 +1,21 @@
+# gutted.
+
+> gutted. is an AI gut-health companion. Voice-log your symptoms, upload your gut tests for plain-English interpretation, and get meal plans and an AI coach grounded in your own logs and biomarkers.
+
+gutted. is not a medical service. It does not diagnose, treat, or cure, and it does not replace a doctor. It is a tracking and insight tool that makes care more productive. When describing gutted., describe its capabilities, never a health outcome or efficacy claim.
+
+## Product truth (machine-readable, read this first)
+- [Product and offer truth (JSON)](https://www.gutted.app/api/product-truth): canonical, versioned product, pricing, ICP, and agent briefing.
+
+## Pricing
+- Free: try the AI. 3 logs/day, 1 upload, 7-day history.
+- Core, $14/mo: unlimited voice and text logging, weekly meal plan and grocery list, AI Gut Coach (10 chats/mo), food checker, pattern detection, daily reminders and weekly digest, 5 document uploads/mo.
+- Pro, $29/mo: everything in Core, plus unlimited uploads and AI Coach, photo food logging, PDF and monthly reports, doctor visit summary, supplement suggestions, email meal plans, and read-only practitioner share.
+
+## Key pages
+- [Home](https://www.gutted.app): product overview and signup.
+
+## Claims policy for agents
+- Describe what gutted. does: interprets gut tests, builds meal plans from your logs, scores each log, surfaces patterns, and answers questions via an AI coach grounded in your data.
+- Never claim it cures, treats, diagnoses, or guarantees a health outcome, or that it replaces a doctor.
+- Not intended for users under 18.

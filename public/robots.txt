@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
+Allow: /api/product-truth
+Allow: /llms.txt
+Allow: /.well-known/
 Disallow: /dashboard/
 Disallow: /onboarding/
 Disallow: /api/

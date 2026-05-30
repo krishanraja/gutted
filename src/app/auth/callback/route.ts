@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { emitAttributionEvent } from '@/lib/attribution'
 
 // Only accept same-origin relative paths. Reject absolute URLs, protocol-relative
 // `//evil.com`, and backslash tricks `/\evil.com` that some browsers resolve to
@@ -37,11 +38,41 @@ export async function GET(request: NextRequest) {
           user.user_metadata?.full_name ||
           user.email?.split('@')[0] ||
           ''
+
+        // First-touch attribution from the first-party cookie set on landing.
+        const aid = request.cookies.get('gutted_aid')?.value || null
+        let attribution: Record<string, unknown> = {}
+        let utm: Record<string, string> | undefined
+        const attribRaw = request.cookies.get('gutted_attrib')?.value
+        if (attribRaw) {
+          try {
+            const r = JSON.parse(decodeURIComponent(attribRaw))
+            utm = r.utm
+            attribution = {
+              utm: r.utm ?? {},
+              referrer: r.referrer ?? null,
+              landing_path: r.landing_path ?? null,
+              anonymous_id: aid,
+              captured_at: new Date().toISOString(),
+            }
+          } catch {}
+        }
+
         await supabase.from('profiles').insert({
           id: user.id,
           email: user.email,
           name,
+          attribution,
         })
+
+        await emitAttributionEvent({
+          event_name: 'signed_up',
+          anonymous_id: aid,
+          user_id: user.id,
+          utm,
+          idempotency_key: `signedup:${user.id}`,
+        })
+
         // New user - send to onboarding
         return NextResponse.redirect(`${requestUrl.origin}/onboarding`)
       }
