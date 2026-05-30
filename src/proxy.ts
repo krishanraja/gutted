@@ -1,7 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+// Next 16 renamed the `middleware` file convention to `proxy`. Same request
+// gate, runs server-side before routes render (nodejs runtime, which suits the
+// Supabase SSR client and the occasional profiles lookup below).
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -51,7 +54,7 @@ export async function middleware(request: NextRequest) {
   if (user && pathname.startsWith('/dashboard')) {
     const onboardingCookie = request.cookies.get('onboarding_complete')?.value
     if (onboardingCookie === 'true') {
-      // Already verified — skip DB query
+      // Already verified, skip DB query
     } else {
       const { data: profile } = await supabase
         .from('profiles')
@@ -66,7 +69,7 @@ export async function middleware(request: NextRequest) {
           httpOnly: true,
           secure: true,
           sameSite: 'lax',
-          maxAge: 60 * 60, // 1 hour — short enough that a reset elsewhere takes effect quickly
+          maxAge: 60 * 60, // 1 hour, short enough that a reset elsewhere takes effect quickly
           path: '/',
         })
       }
