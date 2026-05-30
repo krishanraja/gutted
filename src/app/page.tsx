@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { HeroVideo } from '@/components/HeroVideo'
 import { MicIcon, FileTextIcon, UtensilsIcon, CheckIcon, ArrowRightIcon } from '@/components/icons'
+import { TasteExperience } from '@/components/TasteExperience'
 
 const features = [
   {
@@ -81,19 +82,15 @@ export default function LandingPage() {
           </div>
         </nav>
 
-        {/* Hero content - centered */}
-        <div className="flex-1 relative z-10 flex flex-col items-center justify-center px-6 text-center">
-          <Image src="/logo.png" alt="gutted." width={240} height={80} className="h-auto w-44 mx-auto drop-shadow-2xl" priority />
-          <p className="text-[11px] font-light tracking-[0.32em] uppercase text-white/45 mt-2 mb-5">Know Your Gut</p>
-          <p className="text-sm text-white/80 mb-7 leading-relaxed drop-shadow-lg max-w-sm">
-            Voice-log your symptoms. Upload your tests. Get a meal plan that actually fits your gut.
-          </p>
-          <Link href="/auth/signup">
-            <Button size="lg">Start free – no card needed</Button>
-          </Link>
-          <Link href="/auth/login" className="mt-4 text-sm text-white/45 hover:text-white transition-colors">
-            Already have an account? <span className="underline">Sign in</span>
-          </Link>
+        {/* Hero content - centered, interactive taste */}
+        <div className="flex-1 relative z-10 flex flex-col items-center justify-center px-6 text-center gap-4">
+          <Image src="/logo.png" alt="gutted." width={240} height={80} className="h-auto w-40 mx-auto drop-shadow-2xl" priority />
+          <TasteExperience />
+          <div className="flex items-center gap-3 text-sm text-white/45">
+            <Link href="/auth/signup" className="underline hover:text-white transition-colors">Start free</Link>
+            <span className="text-white/15">·</span>
+            <Link href="/auth/login" className="hover:text-white transition-colors">Sign in</Link>
+          </div>
         </div>
 
         {/* Feature hints */}
@@ -130,13 +127,13 @@ export default function LandingPage() {
             <p className="text-lg text-white/80 mb-10 leading-relaxed drop-shadow-lg">
               Voice-log your symptoms. Upload your tests. Get a meal plan built from your data, not a template.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/auth/signup">
-                <Button size="lg">Start free – no card needed</Button>
-              </Link>
-              <Link href="#how-it-works">
-                <Button variant="outline" size="lg">See how it works</Button>
-              </Link>
+            <div className="max-w-sm mx-auto">
+              <TasteExperience />
+            </div>
+            <div className="mt-4 flex items-center justify-center gap-4 text-sm text-white/45">
+              <Link href="/auth/signup" className="underline hover:text-white transition-colors">Start free, no card</Link>
+              <span className="text-white/15">·</span>
+              <Link href="#how-it-works" className="hover:text-white transition-colors">See how it works</Link>
             </div>
           </div>
         </section>
