@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe, resolvePlanFromPriceId, resolvePlanFromAmount } from '@/lib/stripe'
 import { createServiceClient } from '@/lib/supabase/server'
-import { getAppUrl, verifyCronSecret } from '@/lib/security'
+import { getAppUrl } from '@/lib/security'
+import { emitAttributionEvent } from '@/lib/attribution'
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -105,6 +106,20 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    // Revenue attribution: emit purchased with the utm set stamped at checkout.
+    const m = session.metadata || {}
+    await emitAttributionEvent({
+      event_name: 'purchased',
+      user_id: m.userId || null,
+      anonymous_id: m.anonymous_id || null,
+      utm: { source: m.utm_source, medium: m.utm_medium, campaign: m.utm_campaign, content: m.utm_content, term: m.utm_term },
+      stripe_customer_id: typeof session.customer === 'string' ? session.customer : null,
+      stripe_subscription_id: typeof session.subscription === 'string' ? session.subscription : null,
+      value_cents: session.amount_total ?? null,
+      currency: session.currency ?? null,
+      idempotency_key: `purchased:${event.id}`,
+    })
   }
 
   if (event.type === 'customer.subscription.updated') {
@@ -135,6 +150,10 @@ export async function POST(req: NextRequest) {
 
   if (event.type === 'customer.subscription.deleted') {
     const sub = event.data.object
+    const { data: churned } = await supabase.from('profiles')
+      .select('id')
+      .eq('stripe_subscription_id', sub.id)
+      .single()
     await supabase.from('profiles')
       .update({
         plan: 'free',
@@ -143,6 +162,14 @@ export async function POST(req: NextRequest) {
         current_period_end: null,
       })
       .eq('stripe_subscription_id', sub.id)
+
+    await emitAttributionEvent({
+      event_name: 'churned',
+      user_id: churned?.id || null,
+      stripe_customer_id: typeof sub.customer === 'string' ? sub.customer : null,
+      stripe_subscription_id: sub.id,
+      idempotency_key: `churned:${event.id}`,
+    })
   }
 
   if (event.type === 'invoice.payment_failed') {
@@ -174,6 +201,27 @@ export async function POST(req: NextRequest) {
         console.log('Payment failed email failed:', e)
       }
     }
+  }
+
+  if (event.type === 'charge.refunded') {
+    const charge = event.data.object
+    const custId = typeof charge.customer === 'string' ? charge.customer : null
+    let refundedUserId: string | null = null
+    if (custId) {
+      const { data: refunded } = await supabase.from('profiles')
+        .select('id')
+        .eq('stripe_customer_id', custId)
+        .single()
+      refundedUserId = refunded?.id || null
+    }
+    await emitAttributionEvent({
+      event_name: 'refunded',
+      user_id: refundedUserId,
+      stripe_customer_id: custId,
+      value_cents: charge.amount_refunded ?? null,
+      currency: charge.currency ?? null,
+      idempotency_key: `refunded:${event.id}`,
+    })
   }
 
   return NextResponse.json({ received: true })
