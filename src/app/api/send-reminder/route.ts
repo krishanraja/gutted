@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
+import { resend } from '@/lib/resend'
 import { emailTemplates } from '@/lib/email-templates'
 import { createServiceClient } from '@/lib/supabase/server'
 import { verifyCronSecret } from '@/lib/security'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Called by a cron job (e.g., Vercel Cron) to send daily reminders
 export async function POST(req: NextRequest) {

@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
+import { resend } from '@/lib/resend'
 import { emailTemplates } from '@/lib/email-templates'
 import { createClient } from '@/lib/supabase/server'
 import { verifyCronSecret, isValidEmail, getAppUrl } from '@/lib/security'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Internal-only email types that should never be triggered by regular users
 const INTERNAL_ONLY_TYPES = new Set(['welcome', 'upgrade', 'payment-failed'])

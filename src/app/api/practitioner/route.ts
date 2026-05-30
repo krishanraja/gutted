@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getPlanLimits } from '@/lib/plan-limits'
-import { Resend } from 'resend'
+import { resend } from '@/lib/resend'
 import { escapeHtml, isValidEmail, getAppUrl, rateLimit } from '@/lib/security'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 // POST: Create a practitioner share link
 export async function POST(req: NextRequest) {

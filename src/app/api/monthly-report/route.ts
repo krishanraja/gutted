@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
+import { resend } from '@/lib/resend'
 import { emailTemplates } from '@/lib/email-templates'
 import { anthropic, CLAUDE_MODEL } from '@/lib/anthropic'
 import { createServiceClient } from '@/lib/supabase/server'
 import { verifyCronSecret } from '@/lib/security'
 import { aiAbort } from '@/lib/ai-response'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Called by monthly cron job to send progress reports to Pro users
 export async function POST(req: NextRequest) {

@@ -1,8 +1,13 @@
 import Stripe from 'stripe'
+import { lazyClient } from '@/lib/lazy'
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-03-25.dahlia',
-})
+// Constructed lazily so importing a route at build time (no env) never throws.
+export const stripe = lazyClient(
+  () =>
+    new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2026-03-25.dahlia',
+    }),
+)
 
 export const PLANS = {
   core: {
