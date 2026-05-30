@@ -84,6 +84,16 @@ html { overscroll-behavior-y: none; }
 }
 .animate-slide-in { animation: slide-in 0.2s ease-out; }
 
+/* Subtle breathing for a healthy gut score, so the number feels alive. */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+.animate-breathe { animation: breathe 3.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .animate-breathe { animation: none; }
+}
+
 /* Hide scrollbar utility */
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

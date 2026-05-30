@@ -38,7 +38,7 @@ Recent logs (last 5): ${JSON.stringify((recentLogs || []).map(l => ({ content: l
 
 Return exactly this JSON structure:
 {
-  "gutScore": <number 1-10, based on symptoms described>,
+  "gutScore": <number 1-10 based on symptoms described; stay consistent with their recent scores above and move gradually unless today's entry clearly differs>,
   "summary": "<2-3 sentence plain English interpretation of what this tells us about their gut health today>",
   "insights": ["<insight 1>", "<insight 2>", "<insight 3>"],
   "recommendations": ["<actionable recommendation 1>", "<actionable recommendation 2>"],
