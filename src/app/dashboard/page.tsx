@@ -46,6 +46,7 @@ function DashboardContent() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [logs, setLogs] = useState<Log[]>([])
   const [todayScore, setTodayScore] = useState(0)
+  const [scoreDelta, setScoreDelta] = useState(0)
   const [loading, setLoading] = useState(true)
   const [streak, setStreak] = useState(0)
   const [dailyInsight, setDailyInsight] = useState<{ insight: string; type: string } | null>(null)
@@ -88,7 +89,13 @@ function DashboardContent() {
     setHasRestrictions(!!(p?.gut_profile as Record<string, unknown>)?.restrictions)
 
     const scores = allLogs.filter(log => log.gut_score).map(log => log.gut_score)
-    setTodayScore(scores.length ? Math.round(scores.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(scores.length, 3)) : 0)
+    const todayMean = scores.length ? Math.round(scores.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(scores.length, 3)) : 0
+    setTodayScore(todayMean)
+    // Trajectory: compare the latest 3-log mean against the prior window so the
+    // score shows momentum instead of a context-free number.
+    const priorScores = scores.slice(3, 6)
+    const priorMean = priorScores.length ? Math.round(priorScores.reduce((a, b) => a + b, 0) / priorScores.length) : 0
+    setScoreDelta(priorMean ? todayMean - priorMean : 0)
 
     const today = new Date().toDateString()
     setHasLoggedToday(allLogs.some(log => new Date(log.logged_at).toDateString() === today))
@@ -238,7 +245,7 @@ function DashboardContent() {
             />
           ) : (
             <Card className="flex flex-col items-center py-5 animate-fade-up">
-              <GutScore score={todayScore} size="lg" />
+              <GutScore score={todayScore} size="lg" delta={scoreDelta} />
               <p className="text-white/55 text-sm mt-4 text-center line-clamp-2 px-4 animate-fade-up stagger-1">
                 {contextLine}
               </p>
@@ -452,13 +459,18 @@ function DashboardContent() {
               />
             ) : (
             <Card className="flex items-center gap-6 py-6 animate-fade-up">
-              <GutScore score={todayScore} size="lg" />
+              <GutScore score={todayScore} size="lg" delta={scoreDelta} />
               <div>
                 <p className="text-white/45 text-xs uppercase tracking-wider mb-1">Today&apos;s gut score</p>
                 <p className="text-base font-medium">
                   {todayScore === 0 ? 'Log your first entry' : todayScore >= 7 ? 'Gut feeling good' : todayScore >= 4 ? 'Room to improve' : 'Rough day. Take it easy.'}
                 </p>
                 {todayScore === 0 && <p className="text-white/35 text-xs mt-1">Log to get your score.</p>}
+                {scoreDelta !== 0 && todayScore > 0 && (
+                  <p className="num text-xs mt-1" style={{ color: scoreDelta > 0 ? '#3FBE6F' : '#E96363' }}>
+                    {scoreDelta > 0 ? `Up from ${todayScore - scoreDelta}` : `Down from ${todayScore - scoreDelta}`}
+                  </p>
+                )}
               </div>
             </Card>
             )}
