@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { getPlanLimits } from '@/lib/plan-limits'
 import { useToast } from '@/components/ToastProvider'
-import { FileTextIcon, CheckIcon, AlertIcon, ArrowRightIcon } from '@/components/icons'
+import { FileTextIcon, CheckIcon, AlertIcon, ArrowRightIcon, HeartPulseIcon } from '@/components/icons'
 
 type DocType = 'gut_test' | 'doctor_report' | 'food_label'
 
@@ -18,6 +18,7 @@ interface AnalysisResult {
   recommendations: string[]
   gutFriendlyRating?: number
   flags?: string[]
+  symptomConnections?: string[]
   fileUrl?: string
   fileName?: string
 }
@@ -137,6 +138,33 @@ export function UploadContent() {
             <p className="text-white/40 text-[11px] uppercase tracking-wider mb-2">AI interpretation</p>
             <p className="text-white/80 text-sm leading-relaxed">{result.summary}</p>
           </Card>
+
+          {/* Cross-reference between this document and the user's logged symptoms */}
+          {result.symptomConnections && result.symptomConnections.length > 0 ? (
+            <Card>
+              <p className="text-accent text-[11px] uppercase tracking-wider mb-3 inline-flex items-center gap-1.5">
+                <HeartPulseIcon size={13} className="text-accent" />
+                How this connects to your symptoms
+              </p>
+              <ul className="space-y-2.5">
+                {result.symptomConnections.map((c, i) => (
+                  <li key={i} className="flex gap-2.5 text-sm text-white/80 leading-relaxed">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-white/35 text-[11px] mt-3 leading-relaxed">These are observations linking your test to what you have logged, not a diagnosis. For anything concerning, see a doctor.</p>
+            </Card>
+          ) : (
+            <Card>
+              <p className="text-accent text-[11px] uppercase tracking-wider mb-2 inline-flex items-center gap-1.5">
+                <HeartPulseIcon size={13} className="text-accent" />
+                How this connects to your symptoms
+              </p>
+              <p className="text-white/55 text-sm leading-relaxed">No clear links to your logged symptoms yet. Keep logging how you feel and re-check this document to see connections appear here.</p>
+            </Card>
+          )}
 
           {result.biomarkers && Object.keys(result.biomarkers).length > 0 && (
             <Card>

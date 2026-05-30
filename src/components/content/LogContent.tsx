@@ -22,7 +22,10 @@ interface Analysis {
   flagged: boolean
 }
 
-type Phase = 'input' | 'processing' | 'results'
+// 'input' captures, 'results' shows the (optimistically) saved entry with the
+// score filling in inline. The old full-screen blocking 'processing' phase is gone:
+// analysis now streams into the results view via `analysing`.
+type Phase = 'input' | 'results'
 
 export function LogContent({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter()
@@ -43,6 +46,11 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
   const [todayLogCount, setTodayLogCount] = useState(0)
   const [phase, setPhase] = useState<Phase>('input')
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
+  // Inline analysis state replaces the old blocking spinner.
+  const [analysing, setAnalysing] = useState(false)
+  // Voice is the default. Text/Photo are secondary affordances, not an equal 3-way fork.
+  const [showAltModes, setShowAltModes] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   const limits = getPlanLimits(plan)
   const atLimit = todayLogCount >= limits.maxLogsPerDay
@@ -81,9 +89,19 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
     analyseText(text)
   }
 
+  // Live partial transcript from the Web Speech path: keep the textarea in sync
+  // as the user speaks (no analysis yet, that fires on final transcription).
+  const handleInterim = (text: string) => {
+    setTranscript(text)
+  }
+
   const analyseText = async (text: string) => {
     if (!text.trim()) return
-    setPhase('processing')
+    // Move straight to the results view and fill the score in inline. No blocking spinner.
+    setAnalysis(null)
+    setAnalysing(true)
+    setSaved(false)
+    setPhase('results')
     haptic.medium()
     setError('')
     try {
@@ -99,11 +117,12 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setAnalysis(data)
-      setPhase('results')
     } catch (e: unknown) {
       setError((e as Error).message || 'Analysis failed')
+      // Drop back to input only if we have nothing to show.
       setPhase('input')
     } finally {
+      setAnalysing(false)
       setTagsChanged(false)
     }
   }
@@ -130,21 +149,35 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
   const save = async () => {
     if (!transcript.trim() || !userId) return
     setSaving(true)
+    // Optimistic: reflect the save instantly, persist in the background.
+    setSaved(true)
+    haptic.success()
     const supabase = createClient()
-    await supabase.from('logs').insert({
+    const { error: saveError } = await supabase.from('logs').insert({
       user_id: userId,
       type: mode,
       content: transcript,
       gut_score: analysis?.gutScore || 0,
       ai_analysis: analysis,
     })
-    haptic.success()
+    if (saveError) {
+      // Roll back the optimistic state so the user can retry.
+      setSaved(false)
+      setSaving(false)
+      setError('Could not save your log. Please try again.')
+      toast('Could not save log', 'error')
+      return
+    }
     toast('Log saved successfully', 'success')
     if (embedded) {
       setPhase('input')
       setTranscript('')
       setTags([])
       setAnalysis(null)
+      setSaved(false)
+      setSaving(false)
+      setShowAltModes(false)
+      setMode('voice')
     } else {
       router.push('/dashboard')
     }
@@ -230,19 +263,51 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
     </div>
   )
 
-  const modeToggle = (maxWidth: string = 'max-w-sm') => (
-    <div className={`flex bg-white/[0.04] border border-white/[0.08] rounded-xl p-1 ${maxWidth}`}>
-      {([['voice', 'Voice', MicIcon], ['text', 'Text', PencilIcon], ['photo', 'Photo', FileTextIcon]] as const).map(([m, label, ModeIcon]) => (
+  const selectMode = (m: 'voice' | 'text' | 'photo') => {
+    haptic.tap()
+    setMode(m)
+    setPhotoResult(null)
+    setError('')
+    // Switching to voice is the way back to the default, frictionless path.
+    if (m === 'voice') setShowAltModes(false)
+  }
+
+  // Secondary affordances: voice is the default, so Text and Photo live behind a
+  // single quiet "Or type / snap a photo" toggle rather than an equal 3-way fork.
+  const altModePicker = (
+    <div className="flex flex-col items-center gap-3">
+      {!showAltModes ? (
         <button
-          key={m}
-          onClick={() => { setMode(m as 'voice' | 'text' | 'photo'); setPhotoResult(null) }}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all inline-flex items-center justify-center gap-1.5 ${mode === m ? 'bg-white/[0.06] text-white' : 'text-white/45 hover:text-white/65'}`}
+          onClick={() => { haptic.tap(); setShowAltModes(true) }}
+          className="text-white/40 text-sm hover:text-white/70 transition-colors inline-flex items-center gap-1.5"
         >
-          <ModeIcon size={14} />
-          {label}
+          <PencilIcon size={13} /> Or type / snap a photo
         </button>
-      ))}
+      ) : (
+        <div className="flex bg-white/[0.04] border border-white/[0.08] rounded-xl p-1 w-full max-w-xs">
+          {([['voice', 'Voice', MicIcon], ['text', 'Text', PencilIcon], ['photo', 'Photo', FileTextIcon]] as const).map(([m, label, ModeIcon]) => (
+            <button
+              key={m}
+              onClick={() => selectMode(m)}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all inline-flex items-center justify-center gap-1.5 ${mode === m ? 'bg-white/[0.06] text-white' : 'text-white/45 hover:text-white/65'}`}
+            >
+              <ModeIcon size={14} />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
+  )
+
+  // When the user has switched to a non-voice mode, offer a quiet route back to voice.
+  const backToVoice = mode !== 'voice' && (
+    <button
+      onClick={() => selectMode('voice')}
+      className="text-white/40 text-sm hover:text-white/70 transition-colors inline-flex items-center gap-1.5 mt-3"
+    >
+      <MicIcon size={13} /> Back to voice
+    </button>
   )
 
   const photoContent = plan === 'free' ? photoUpgradePrompt : photoUploadUI
@@ -254,7 +319,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
         {/* Header -- only shown in standalone mode */}
         {!embedded && (
           <div className="flex-none px-5 pt-safe pb-3 animate-fade-in">
-            <button onClick={() => phase === 'results' ? setPhase('input') : router.back()} className="text-white/45 text-sm mb-2 inline-flex items-center gap-1 pt-3 hover:text-white transition-colors">
+            <button onClick={() => { if (phase === 'results') { setPhase('input'); setSaved(false) } else { router.back() } }} className="text-white/45 text-sm mb-2 inline-flex items-center gap-1 pt-3 hover:text-white transition-colors">
               <svg width={16} height={16} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
               {phase === 'results' ? 'Edit' : 'Back'}
             </button>
@@ -264,20 +329,18 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
           </div>
         )}
 
-        {/* Phase: Input */}
+        {/* Phase: Input -- voice-first by default */}
         {phase === 'input' && (
           <div className="flex-1 flex flex-col px-5 pb-nav min-h-0 animate-fade-in">
-            {/* Mode toggle */}
-            <div className="flex-none mb-4">
-              {modeToggle('max-w-sm')}
-            </div>
-
             {/* Input area */}
             <div className="flex-1 flex flex-col justify-center">
               {mode === 'photo' ? (
-                photoContent
+                <>
+                  {photoContent}
+                  <div className="flex justify-center">{backToVoice}</div>
+                </>
               ) : mode === 'voice' ? (
-                <VoiceRecorder onTranscription={handleTranscription} onError={setError} />
+                <VoiceRecorder onTranscription={handleTranscription} onInterim={handleInterim} onError={setError} autoStart={!embedded} />
               ) : (
                 <div className="space-y-3">
                   <textarea
@@ -285,11 +348,13 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
                     onChange={e => setTranscript(e.target.value)}
                     placeholder="How is your gut feeling today? Describe any symptoms, what you ate, your energy levels…"
                     rows={4}
+                    autoFocus
                     className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-accent-50 resize-none transition-colors"
                   />
                   <Button onClick={() => analyseText(transcript)} variant="outline" className="w-full" disabled={!transcript.trim()}>
                     Analyse
                   </Button>
+                  <div className="flex justify-center">{backToVoice}</div>
                 </div>
               )}
 
@@ -302,6 +367,16 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
                     rows={2}
                     className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent-50 resize-none"
                   />
+                  <Button onClick={() => analyseText(transcript)} variant="outline" size="sm" className="mt-2 w-full">
+                    Analyse
+                  </Button>
+                </div>
+              )}
+
+              {/* Secondary mode affordances (only meaningful from the voice default) */}
+              {mode === 'voice' && (
+                <div className="mt-6">
+                  {altModePicker}
                 </div>
               )}
             </div>
@@ -337,35 +412,46 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
           </div>
         )}
 
-        {/* Phase: Processing */}
-        {phase === 'processing' && (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 animate-scale-in">
-            <div className="w-12 h-12 rounded-full border-2 border-accent border-t-transparent animate-spin mb-4" />
-            <p className="text-white/55 text-sm mb-1">Analysing your gut health…</p>
-            <div className="w-44 h-1 rounded-full mt-3 animate-shimmer" />
-            <button
-              onClick={() => setPhase('input')}
-              className="text-white/35 text-xs mt-6 hover:text-white/55 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-
-        {/* Phase: Results */}
-        {phase === 'results' && analysis && (
+        {/* Phase: Results -- score fills in inline; no full-screen blocking spinner */}
+        {phase === 'results' && (
           <div className="flex-1 flex flex-col px-5 pb-nav min-h-0 overflow-y-auto animate-scale-in">
-            {/* Score card */}
+            {/* Score card. While analysing, the ring shows a placeholder that fills
+                in the moment the score lands. The entry is never blocked. */}
             <Card className="flex-none flex items-center gap-4 mb-3">
-              <GutScore score={analysis.gutScore} size="lg" />
+              {analysis ? (
+                <GutScore score={analysis.gutScore} size="lg" />
+              ) : (
+                <div className="relative inline-flex items-center justify-center" style={{ width: 132, height: 132 }}>
+                  <svg width={132} height={132} style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx={66} cy={66} r={56} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={4} />
+                    <circle cx={66} cy={66} r={56} fill="none" stroke="#00B4B4" strokeWidth={4} strokeLinecap="round" strokeDasharray={2 * Math.PI * 56} strokeDashoffset={2 * Math.PI * 56 * 0.75} className="animate-spin origin-center" style={{ animationDuration: '1.4s' }} />
+                  </svg>
+                  <span className="absolute text-accent text-xs num">…</span>
+                </div>
+              )}
               <div>
                 <p className="text-white/40 text-[11px] uppercase tracking-wider mb-1">Gut score for this log</p>
-                <p className="text-sm text-white/80">{analysis.summary}</p>
+                {analysis ? (
+                  <p className="text-sm text-white/80">{analysis.summary}</p>
+                ) : (
+                  <p className="text-sm text-white/55">Reading your gut signals…</p>
+                )}
               </div>
             </Card>
 
+            {/* Skeleton placeholders while the rest of the analysis streams in. */}
+            {!analysis && analysing && (
+              <div className="flex-none space-y-3">
+                <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4 animate-pulse">
+                  <div className="h-2.5 w-20 bg-white/10 rounded mb-3" />
+                  <div className="h-2.5 w-full bg-white/[0.07] rounded mb-2" />
+                  <div className="h-2.5 w-4/5 bg-white/[0.07] rounded" />
+                </div>
+              </div>
+            )}
+
             {/* Collapsible insights */}
-            {analysis.insights.length > 0 && (
+            {analysis && analysis.insights.length > 0 && (
               <Card className="flex-none mb-3">
                 <button onClick={() => toggleSection('insights')} className="w-full flex items-center justify-between">
                   <p className="text-white/40 text-[11px] uppercase tracking-wider">Insights</p>
@@ -384,7 +470,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
             )}
 
             {/* Collapsible recommendations */}
-            {analysis.recommendations.length > 0 && (
+            {analysis && analysis.recommendations.length > 0 && (
               <Card className="flex-none mb-3">
                 <button onClick={() => toggleSection('recommendations')} className="w-full flex items-center justify-between">
                   <p className="text-white/40 text-[11px] uppercase tracking-wider">Recommendations</p>
@@ -403,7 +489,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
             )}
 
             {/* Flagged warning */}
-            {analysis.flagged && (
+            {analysis && analysis.flagged && (
               <div className="flex-none flex items-start gap-2 mb-3 px-1">
                 <AlertIcon size={14} className="text-[#E8AE1E] shrink-0 mt-0.5" />
                 <p className="text-[#E8AE1E] text-xs">Some symptoms may benefit from a chat with your doctor.</p>
@@ -412,7 +498,8 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
           </div>
         )}
 
-        {/* Save button -- anchored at bottom for results phase */}
+        {/* Save button -- anchored at bottom for results phase. Save is available
+            immediately (optimistic); the score keeps filling in even after saving. */}
         {phase === 'results' && transcript && (
           <div className="flex-none px-5 pb-nav">
             {atLimit ? (
@@ -421,6 +508,10 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
                 <p className="text-white/55 text-xs mb-2">Free plan includes <span className="num">{limits.maxLogsPerDay}</span> logs per day.</p>
                 <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-accent text-xs font-medium hover:text-white transition-colors">Upgrade now <ArrowRightIcon size={12} /></Link>
               </Card>
+            ) : saved ? (
+              <Button disabled className="w-full" size="lg">
+                <CheckIcon size={16} className="mr-1.5" /> Saved
+              </Button>
             ) : (
               <Button onClick={save} loading={saving} className="w-full" size="lg">Save log</Button>
             )}
@@ -436,18 +527,17 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
             Back
           </button>
           <h1 className="text-2xl font-medium tracking-tight">How&apos;s your gut today?</h1>
-          <p className="text-white/45 text-sm mt-1">Voice-log or type how you&apos;re feeling.</p>
-        </div>
-
-        <div className="px-6 mb-6">
-          {modeToggle('max-w-sm')}
+          <p className="text-white/45 text-sm mt-1">Just speak. Or type / snap a photo if you prefer.</p>
         </div>
 
         <div className="px-6 mb-6">
           {mode === 'photo' ? (
-            photoContent
+            <>
+              {photoContent}
+              <div className="flex justify-center">{backToVoice}</div>
+            </>
           ) : mode === 'voice' ? (
-            <VoiceRecorder onTranscription={handleTranscription} onError={setError} />
+            <VoiceRecorder onTranscription={handleTranscription} onInterim={handleInterim} onError={setError} />
           ) : (
             <div className="space-y-3">
               <textarea
@@ -455,11 +545,13 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
                 onChange={e => setTranscript(e.target.value)}
                 placeholder="How is your gut feeling today? Describe any symptoms, what you ate, your energy levels…"
                 rows={5}
+                autoFocus
                 className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-accent-50 resize-none transition-colors"
               />
-              <Button onClick={() => analyseText(transcript)} loading={phase === 'processing'} variant="outline" className="w-full" disabled={!transcript.trim()}>
+              <Button onClick={() => analyseText(transcript)} variant="outline" className="w-full" disabled={!transcript.trim()}>
                 Analyse
               </Button>
+              <div className="flex justify-center">{backToVoice}</div>
             </div>
           )}
 
@@ -472,6 +564,16 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
                 rows={3}
                 className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-accent-50 resize-none"
               />
+              <Button onClick={() => analyseText(transcript)} variant="outline" size="sm" className="mt-2">
+                Analyse
+              </Button>
+            </div>
+          )}
+
+          {/* Secondary mode affordances (only from the voice default) */}
+          {mode === 'voice' && (
+            <div className="mt-6">
+              {altModePicker}
             </div>
           )}
         </div>
@@ -492,7 +594,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
             ))}
           </div>
           {tagsChanged && transcript && (
-            <Button onClick={() => analyseText(transcript)} loading={phase === 'processing'} variant="outline" size="sm" className="mt-3">
+            <Button onClick={() => analyseText(transcript)} loading={analysing} variant="outline" size="sm" className="mt-3">
               Re-analyse with updated tags
             </Button>
           )}
@@ -504,25 +606,40 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
           </div>
         )}
 
-        {phase === 'processing' && (
-          <div className="px-6 mb-6">
-            <Card className="text-center py-6">
-              <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin mx-auto mb-3"/>
-              <p className="text-white/55 text-sm">Analysing your gut health…</p>
-            </Card>
-          </div>
-        )}
-
-        {analysis && phase === 'results' && (
+        {/* Results -- score fills in inline; no blocking spinner card. */}
+        {phase === 'results' && (
           <div className="px-6 mb-6 space-y-3 animate-fade-up">
             <Card className="flex items-center gap-4">
-              <GutScore score={analysis.gutScore} size="lg" />
+              {analysis ? (
+                <GutScore score={analysis.gutScore} size="lg" />
+              ) : (
+                <div className="relative inline-flex items-center justify-center" style={{ width: 132, height: 132 }}>
+                  <svg width={132} height={132} style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx={66} cy={66} r={56} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={4} />
+                    <circle cx={66} cy={66} r={56} fill="none" stroke="#00B4B4" strokeWidth={4} strokeLinecap="round" strokeDasharray={2 * Math.PI * 56} strokeDashoffset={2 * Math.PI * 56 * 0.75} className="animate-spin origin-center" style={{ animationDuration: '1.4s' }} />
+                  </svg>
+                  <span className="absolute text-accent text-xs num">…</span>
+                </div>
+              )}
               <div>
                 <p className="text-white/40 text-[11px] uppercase tracking-wider mb-1">Gut score for this log</p>
-                <p className="text-sm text-white/80">{analysis.summary}</p>
+                {analysis ? (
+                  <p className="text-sm text-white/80">{analysis.summary}</p>
+                ) : (
+                  <p className="text-sm text-white/55">Reading your gut signals…</p>
+                )}
               </div>
             </Card>
-            {analysis.insights.length > 0 && (
+            {!analysis && analysing && (
+              <Card>
+                <div className="animate-pulse">
+                  <div className="h-2.5 w-20 bg-white/10 rounded mb-3" />
+                  <div className="h-2.5 w-full bg-white/[0.07] rounded mb-2" />
+                  <div className="h-2.5 w-4/5 bg-white/[0.07] rounded" />
+                </div>
+              </Card>
+            )}
+            {analysis && analysis.insights.length > 0 && (
               <Card>
                 <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Insights</p>
                 <ul className="space-y-2">
@@ -534,7 +651,19 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
                 </ul>
               </Card>
             )}
-            {analysis.flagged && (
+            {analysis && analysis.recommendations.length > 0 && (
+              <Card>
+                <p className="text-white/40 text-[11px] uppercase tracking-wider mb-3">Recommendations</p>
+                <ul className="space-y-2">
+                  {analysis.recommendations.map((rec, i) => (
+                    <li key={i} className="flex gap-2 text-sm text-white/75">
+                      <ArrowRightIcon size={12} className="text-accent shrink-0 mt-1" />{rec}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+            {analysis && analysis.flagged && (
               <div className="rounded-xl bg-[#E8AE1E]/8 border border-[#E8AE1E]/25 p-4">
                 <p className="text-[#E8AE1E] text-sm inline-flex items-start gap-2">
                   <AlertIcon size={14} className="shrink-0 mt-0.5" />
@@ -545,7 +674,7 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
           </div>
         )}
 
-        {transcript && (
+        {transcript && phase === 'results' && (
           <div className="px-6 pb-4">
             {atLimit ? (
               <Card className="text-center">
@@ -553,6 +682,10 @@ export function LogContent({ embedded = false }: { embedded?: boolean }) {
                 <p className="text-white/55 text-sm mb-3">Free plan includes <span className="num">{limits.maxLogsPerDay}</span> logs per day. Upgrade for unlimited logging.</p>
                 <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-accent text-sm font-medium hover:text-white transition-colors">Upgrade now <ArrowRightIcon size={14} /></Link>
               </Card>
+            ) : saved ? (
+              <Button disabled className="w-full" size="lg">
+                <CheckIcon size={16} className="mr-1.5" /> Saved
+              </Button>
             ) : (
               <Button onClick={save} loading={saving} className="w-full" size="lg">Save log</Button>
             )}
