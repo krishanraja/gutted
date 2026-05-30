@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const { messages: userMessages } = await req.json()
     if (!userMessages?.length) return NextResponse.json({ error: 'No messages' }, { status: 400 })
 
-    // Validate and sanitize messages — only allow role: "user", enforce length limits
+    // Validate and sanitize messages, only allow role: "user", enforce length limits
     const sanitizedMessages = userMessages
       .slice(-MAX_MESSAGES)
       .filter((m: { role: string }) => m.role === 'user')
@@ -40,16 +40,31 @@ export async function POST(req: NextRequest) {
 
     if (!sanitizedMessages.length) return NextResponse.json({ error: 'No valid messages' }, { status: 400 })
 
-    // Fetch user context
-    const [{ data: logs }, { data: documents }] = await Promise.all([
+    // Fetch user context plus prior coach turns so the coach has genuine memory
+    // across sessions, not just the current page's messages.
+    const [{ data: logs }, { data: documents }, { data: priorTurns }] = await Promise.all([
       supabase.from('logs').select('content, gut_score, logged_at').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(15),
       supabase.from('documents').select('type, ai_interpretation, biomarkers, recommendations').eq('user_id', user.id).order('uploaded_at', { ascending: false }).limit(5),
+      // Most recent ~20, then reversed to chronological order below.
+      supabase.from('coach_messages').select('role, content, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
     ])
+
+    // Prior turns come back newest-first; flip to chronological and sanitize so
+    // a stored row can never inject a non-text or oversized payload into the
+    // model conversation. These become real prior turns in the messages array.
+    const historyMessages = (priorTurns || [])
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .reverse()
+      .map(m => ({
+        role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
+        content: truncate(m.content, MAX_MESSAGE_LENGTH),
+      }))
+      .filter(m => m.content.length > 0)
 
     const recentScores = (logs || []).filter(l => l.gut_score > 0).map(l => l.gut_score)
     const avgScore = recentScores.length ? Math.round((recentScores.reduce((a, b) => a + b, 0) / recentScores.length) * 10) / 10 : 0
 
-    // System prompt is static — no user-controlled data in it, so it can't be
+    // System prompt is static, no user-controlled data in it, so it can't be
     // overridden by an injection payload inside a log entry or chat message.
     const systemPrompt = `You are the gutted. Gut Health Coach - a warm, knowledgeable, evidence-based gut health assistant. You have access to the user's complete health data via the first message and should reference it when relevant.
 
@@ -78,6 +93,20 @@ Documents on file: ${JSON.stringify((documents || []).map(d => ({ type: d.type, 
 
 Acknowledge receipt of this context and then answer my follow-up messages directly.`
 
+    // The latest user message is the one we will both answer and persist. The
+    // client may replay earlier user turns too, but those are already captured
+    // in historyMessages, so we only carry forward the final (new) user turn to
+    // avoid duplicating prior input. History supplies the genuine memory.
+    const latestUserMessage = sanitizedMessages[sanitizedMessages.length - 1]
+
+    // The Anthropic API requires alternating roles after the leading pair. If
+    // stored history ends on a user turn (e.g. a turn whose reply never got
+    // persisted), drop the trailing one so it cannot collide with the new user
+    // turn we are about to append.
+    const safeHistory = historyMessages.length && historyMessages[historyMessages.length - 1].role === 'user'
+      ? historyMessages.slice(0, -1)
+      : historyMessages
+
     const aiStream = anthropic.messages.stream({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
@@ -85,7 +114,8 @@ Acknowledge receipt of this context and then answer my follow-up messages direct
       messages: [
         { role: 'user' as const, content: userContext },
         { role: 'assistant' as const, content: 'Got it. I have your profile, recent logs, and documents in front of me. What would you like to talk about?' },
-        ...sanitizedMessages,
+        ...safeHistory,
+        latestUserMessage,
       ],
     }, { signal: aiAbort(STREAM_TIMEOUT_MS) })
 
@@ -96,9 +126,13 @@ Acknowledge receipt of this context and then answer my follow-up messages direct
     const encoder = new TextEncoder()
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
+        // Accumulate the streamed reply so we can persist the full turn after the
+        // loop closes, without re-reading anything from the client.
+        let assistantReply = ''
         try {
           for await (const event of aiStream) {
             if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+              assistantReply += event.delta.text
               controller.enqueue(encoder.encode(event.delta.text))
             }
           }
@@ -106,6 +140,22 @@ Acknowledge receipt of this context and then answer my follow-up messages direct
         } catch (err) {
           console.error('Gut coach stream error:', err)
           controller.error(err)
+        } finally {
+          // Persist memory: store the user's latest message and the full assistant
+          // reply so future sessions remember this conversation. This runs after
+          // streaming, never blocks the client, and a persist failure is swallowed
+          // so it can never break the stream the user already received.
+          try {
+            const rows: { user_id: string; role: 'user' | 'assistant'; content: string }[] = [
+              { user_id: user.id, role: 'user', content: latestUserMessage.content },
+            ]
+            if (assistantReply.trim()) {
+              rows.push({ user_id: user.id, role: 'assistant', content: assistantReply })
+            }
+            await supabase.from('coach_messages').insert(rows)
+          } catch (persistErr) {
+            console.error('Gut coach persist error (non-fatal):', persistErr)
+          }
         }
       },
       cancel() {

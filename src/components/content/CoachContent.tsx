@@ -33,19 +33,65 @@ export function CoachContent() {
   const awaitingFirstToken = sending && lastMessage?.role === 'assistant' && !lastMessage.content
 
   useEffect(() => {
+    let cancelled = false
     const load = async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
       const { data: profile } = await supabase.from('profiles').select('plan, name').eq('id', user.id).single()
+      if (cancelled) return
       setPlan(profile?.plan || 'free')
 
-      setMessages([{
-        role: 'assistant',
-        content: `Hi ${profile?.name || 'there'}. I'm your gut health coach. I can see your logs, test results, and patterns. Ask me anything about your gut — what to eat, why your score changed, or how to manage symptoms.`,
-      }])
+      // Restore the prior thread instead of resetting to a single greeting each
+      // session. Pull the most recent turns and render them chronologically.
+      const { data: history } = await supabase
+        .from('coach_messages')
+        .select('role, content, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(40)
+      if (cancelled) return
+
+      const restored: Message[] = (history || [])
+        .filter(m => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.length > 0)
+        .reverse()
+        .map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }))
+
+      // Does the restored thread already contain a turn from today? If so we
+      // pick the conversation back up; if not, the coach opens proactively.
+      const startOfToday = new Date()
+      startOfToday.setHours(0, 0, 0, 0)
+      const hasThreadToday = (history || []).some(m => {
+        const t = m.created_at ? new Date(m.created_at).getTime() : 0
+        return t >= startOfToday.getTime()
+      })
+
+      if (restored.length && hasThreadToday) {
+        setMessages(restored)
+        return
+      }
+
+      // No conversation yet today: greet proactively with a line grounded in
+      // their own data. Show prior history (if any) above the fresh opener so
+      // the thread still feels continuous.
+      try {
+        const res = await fetch('/api/coach-opener', { method: 'POST' })
+        const data = await res.json().catch(() => null)
+        if (cancelled) return
+        const opener = res.ok && typeof data?.opener === 'string' && data.opener.trim()
+          ? data.opener.trim()
+          : `Hi ${profile?.name || 'there'}. I'm your gut health coach. I can see your logs, test results, and patterns. Ask me anything about your gut, what to eat, why your score changed, or how to manage symptoms.`
+        setMessages([...restored, { role: 'assistant', content: opener }])
+      } catch {
+        if (cancelled) return
+        setMessages([...restored, {
+          role: 'assistant',
+          content: `Hi ${profile?.name || 'there'}. I'm your gut health coach. I can see your logs, test results, and patterns. Ask me anything about your gut, what to eat, why your score changed, or how to manage symptoms.`,
+        }])
+      }
     }
     load()
+    return () => { cancelled = true }
   }, [router])
 
   useEffect(() => {
