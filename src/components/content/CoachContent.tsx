@@ -29,6 +29,8 @@ export function CoachContent() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const limits = getPlanLimits(plan)
+  const lastMessage = messages[messages.length - 1]
+  const awaitingFirstToken = sending && lastMessage?.role === 'assistant' && !lastMessage.content
 
   useEffect(() => {
     const load = async () => {
@@ -56,8 +58,10 @@ export function CoachContent() {
 
     setInput('')
     setError('')
-    const newMessages: Message[] = [...messages, { role: 'user', content: messageText }]
-    setMessages(newMessages)
+    const baseMessages: Message[] = [...messages, { role: 'user', content: messageText }]
+    // Show the user's message immediately, plus an empty assistant slot that the
+    // streamed tokens fill in as they arrive.
+    setMessages([...baseMessages, { role: 'assistant', content: '' }])
     setSending(true)
 
     try {
@@ -65,16 +69,48 @@ export function CoachContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({
-            role: m.role,
-            content: m.content,
-          })),
+          messages: baseMessages
+            .filter(m => m.role === 'user')
+            .map(m => ({ role: m.role, content: m.content })),
         }),
       })
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      setMessages([...newMessages, { role: 'assistant', content: data.reply }])
+
+      if (!res.ok || !res.body) {
+        let message = 'Could not get response'
+        try {
+          const data = await res.json()
+          if (data?.error) message = data.error
+        } catch {}
+        throw new Error(message)
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let acc = ''
+      let done = false
+      while (!done) {
+        const chunk = await reader.read()
+        done = chunk.done
+        if (chunk.value) {
+          acc += decoder.decode(chunk.value, { stream: true })
+          setMessages(prev => {
+            const next = [...prev]
+            next[next.length - 1] = { role: 'assistant', content: acc }
+            return next
+          })
+        }
+      }
+
+      if (!acc.trim()) throw new Error('Coach did not respond. Try again.')
     } catch (e: unknown) {
+      // Drop a still-empty assistant slot so we never leave a blank bubble, then
+      // surface a soft error. Any text already streamed in stays on screen.
+      setMessages(prev => {
+        const next = [...prev]
+        const last = next[next.length - 1]
+        if (last?.role === 'assistant' && !last.content.trim()) next.pop()
+        return next
+      })
       setError((e as Error).message || 'Could not get response')
     } finally {
       setSending(false)
@@ -125,19 +161,24 @@ export function CoachContent() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-5 md:px-6 space-y-3 pb-4">
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] rounded-xl px-4 py-3 ${
-              msg.role === 'user'
-                ? 'bg-accent/15 border border-accent/30 text-white'
-                : 'bg-white/[0.04] border border-white/[0.08] text-white/85'
-            }`}>
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+        {messages.map((msg, i) => {
+          // Skip the empty assistant slot until its first token lands; the
+          // typing indicator below stands in for it.
+          if (msg.role === 'assistant' && !msg.content) return null
+          return (
+            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[85%] rounded-xl px-4 py-3 ${
+                msg.role === 'user'
+                  ? 'bg-accent/15 border border-accent/30 text-white'
+                  : 'bg-white/[0.04] border border-white/[0.08] text-white/85'
+              }`}>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
 
-        {sending && (
+        {awaitingFirstToken && (
           <div className="flex justify-start">
             <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3">
               <div className="flex gap-1.5">
