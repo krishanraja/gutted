@@ -24,7 +24,7 @@ export function Button({ variant = 'gradient', size = 'md', loading, children, c
   }
 
   return (
-    <button {...props} onClick={handleClick} disabled={disabled || loading} className={`${base} ${sizes[size]} ${variants[variant]} ${className}`}>
+    <button {...props} onClick={handleClick} disabled={disabled || loading} className={`${base} press-elastic ${sizes[size]} ${variants[variant]} ${className}`}>
       {loading ? (
         <span className="flex items-center gap-2">
           <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
