@@ -7,6 +7,9 @@ import { aiAbort, isAbortError } from '@/lib/ai-response'
 
 const MAX_MESSAGE_LENGTH = 2000
 const MAX_MESSAGES = 10
+// Streaming replies can run longer than a buffered call, so the abort is a
+// safety net well above normal completion time rather than a tight 25s cap.
+const STREAM_TIMEOUT_MS = 60_000
 
 export async function POST(req: NextRequest) {
   try {
@@ -75,21 +78,52 @@ Documents on file: ${JSON.stringify((documents || []).map(d => ({ type: d.type, 
 
 Acknowledge receipt of this context and then answer my follow-up messages directly.`
 
-    const msg = await anthropic.messages.create({
+    const aiStream = anthropic.messages.stream({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
       system: systemPrompt,
       messages: [
         { role: 'user' as const, content: userContext },
-        { role: 'assistant' as const, content: 'Got it — I have your profile, recent logs, and documents in front of me. What would you like to talk about?' },
+        { role: 'assistant' as const, content: 'Got it. I have your profile, recent logs, and documents in front of me. What would you like to talk about?' },
         ...sanitizedMessages,
       ],
-    }, { signal: aiAbort() })
+    }, { signal: aiAbort(STREAM_TIMEOUT_MS) })
 
-    const content = msg.content[0].type === 'text' ? msg.content[0].text : ''
-    return NextResponse.json({ reply: content })
+    // Stream Claude's reply to the client token by token. The guard checks above
+    // still return JSON errors; once streaming starts the status is already 200,
+    // so a mid-stream failure ends the stream and the client keeps and flags
+    // whatever partial text arrived (no dead end, no raw error dumped).
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        try {
+          for await (const event of aiStream) {
+            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+              controller.enqueue(encoder.encode(event.delta.text))
+            }
+          }
+          controller.close()
+        } catch (err) {
+          console.error('Gut coach stream error:', err)
+          controller.error(err)
+        }
+      },
+      cancel() {
+        // Client disconnected: stop the upstream model call so we do not pay for
+        // tokens nobody will read.
+        aiStream.abort()
+      },
+    })
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'X-Accel-Buffering': 'no',
+      },
+    })
   } catch (e: unknown) {
-    if (isAbortError(e)) return NextResponse.json({ error: 'Coach took too long to respond — try again.' }, { status: 504 })
+    if (isAbortError(e)) return NextResponse.json({ error: 'Coach took too long to respond. Try again.' }, { status: 504 })
     console.error('Gut coach error:', e)
     return NextResponse.json({ error: 'Coach unavailable' }, { status: 500 })
   }
