@@ -4,8 +4,10 @@ import { emailTemplates } from '@/lib/email-templates'
 import { createClient } from '@/lib/supabase/server'
 import { verifyCronSecret, isValidEmail, getAppUrl } from '@/lib/security'
 
-// Internal-only email types that should never be triggered by regular users
-const INTERNAL_ONLY_TYPES = new Set(['welcome', 'upgrade', 'payment-failed'])
+// Billing-state email types a regular user must not self-trigger. 'welcome' is
+// safe for an authenticated user to send to their own address (used by signup),
+// so it is intentionally not here; the to===authenticatedEmail check still applies.
+const INTERNAL_ONLY_TYPES = new Set(['upgrade', 'payment-failed'])
 
 export async function POST(req: NextRequest) {
   try {
