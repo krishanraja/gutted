@@ -11,12 +11,15 @@ import { MealPlanSkeleton } from '@/components/ui/Skeleton'
 import { CardCarousel } from '@/components/CardCarousel'
 import { BottomSheet } from '@/components/BottomSheet'
 import { useToast } from '@/components/ToastProvider'
-import { UtensilsIcon, BulbIcon, CheckIcon, ArrowRightIcon, CalendarIcon } from '@/components/icons'
+import { UtensilsIcon, BulbIcon, CheckIcon, ArrowRightIcon, CalendarIcon, RefreshIcon } from '@/components/icons'
 
 interface Meal { name: string; description: string; gutBenefits: string; prepTime: string }
 interface Day { day: string; breakfast: Meal; lunch: Meal; dinner: Meal; snacks: string[] }
 interface GroceryCategory { category: string; items: string[] }
 interface Plan { weekSummary: string; days: Day[]; gutTips: string[]; groceryList?: GroceryCategory[] }
+
+type SwapMealType = 'breakfast' | 'lunch' | 'dinner'
+const swapKey = (dayIndex: number, mealType: SwapMealType) => `${dayIndex}-${mealType}`
 
 export function MealPlanContent() {
   const router = useRouter()
@@ -31,6 +34,8 @@ export function MealPlanContent() {
   const [planAge, setPlanAge] = useState(0)
   const [emailing, setEmailing] = useState(false)
   const [showGroceryList, setShowGroceryList] = useState(false)
+  // Track which single meal is mid-swap so only that one card shows loading.
+  const [swapping, setSwapping] = useState<string | null>(null)
   const { toast } = useToast()
   const limits = getPlanLimits(userPlan)
 
@@ -95,6 +100,38 @@ export function MealPlanContent() {
     }
   }
 
+  // Swap a single meal in place without regenerating the whole week.
+  const swapMeal = async (dayIndex: number, mealType: SwapMealType) => {
+    const key = swapKey(dayIndex, mealType)
+    if (swapping) return
+    setSwapping(key)
+    haptic.tap()
+    try {
+      const res = await fetch('/api/meal-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ swap: { dayIndex, mealType } }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error || 'Could not swap this meal')
+      const newMeal = data.meal as Meal
+      // Replace just this meal; the route also persisted it server-side.
+      setPlan(prev => {
+        if (!prev) return prev
+        const days = prev.days.map((d, i) =>
+          i === dayIndex ? { ...d, [mealType]: newMeal } : d
+        )
+        return { ...prev, days }
+      })
+      haptic.success()
+      toast('Meal swapped', 'success')
+    } catch (e: unknown) {
+      toast((e as Error).message || 'Could not swap this meal', 'error')
+    } finally {
+      setSwapping(null)
+    }
+  }
+
   const emailPlan = async () => {
     setEmailing(true)
     try {
@@ -124,25 +161,43 @@ export function MealPlanContent() {
 
   const currentDay = plan?.days[activeDay]
 
-  const renderMealCard = (meal: Meal, label: string) => (
-    <div className="h-full flex flex-col">
-      <Card className="flex-1 flex flex-col">
-        <div className="flex items-start justify-between mb-2">
-          <div>
-            <p className="text-white/40 text-[11px] uppercase tracking-wider mb-0.5">{label}</p>
-            <p className="font-medium tracking-tight">{meal.name}</p>
+  const renderMealCard = (meal: Meal, label: string, mealType: SwapMealType) => {
+    const key = swapKey(activeDay, mealType)
+    const isSwapping = swapping === key
+    return (
+      <div className="h-full flex flex-col">
+        <Card className={`flex-1 flex flex-col relative transition-opacity ${isSwapping ? 'opacity-50' : ''}`}>
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <p className="text-white/40 text-[11px] uppercase tracking-wider mb-0.5">{label}</p>
+              <p className="font-medium tracking-tight">{meal.name}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 ml-2">
+              <span className="num text-white/40 text-xs inline-flex items-center gap-1">
+                <CalendarIcon size={11} /> {meal.prepTime}
+              </span>
+              <button
+                onClick={() => swapMeal(activeDay, mealType)}
+                disabled={isSwapping || !!swapping}
+                aria-label={`Swap ${label.toLowerCase()}`}
+                title="Swap this meal"
+                className="p-1 -mr-1 rounded-md text-white/35 hover:text-accent transition-colors disabled:opacity-50"
+              >
+                <RefreshIcon size={13} className={isSwapping ? 'animate-spin' : ''} />
+              </button>
+            </div>
           </div>
-          <span className="num text-white/40 text-xs shrink-0 ml-2 inline-flex items-center gap-1">
-            <CalendarIcon size={11} /> {meal.prepTime}
-          </span>
-        </div>
-        <p className="text-white/55 text-sm mb-3 flex-1">{meal.description}</p>
-        <p className="text-[#3FBE6F] text-xs inline-flex items-center gap-1">
-          <CheckIcon size={11} /> {meal.gutBenefits}
-        </p>
-      </Card>
-    </div>
-  )
+          <p className="text-white/55 text-sm mb-3 flex-1">{meal.description}</p>
+          <p className="text-[#3FBE6F] text-xs inline-flex items-center gap-1">
+            <CheckIcon size={11} /> {meal.gutBenefits}
+          </p>
+          {isSwapping && (
+            <span className="absolute bottom-3 right-3 text-accent text-[11px]">Swapping…</span>
+          )}
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -250,9 +305,9 @@ export function MealPlanContent() {
             {!showGroceryList && currentDay && (
               <div className="flex-1 px-5 pb-nav min-h-0 animate-fade-up">
                 <CardCarousel>
-                  {renderMealCard(currentDay.breakfast, 'Breakfast')}
-                  {renderMealCard(currentDay.lunch, 'Lunch')}
-                  {renderMealCard(currentDay.dinner, 'Dinner')}
+                  {renderMealCard(currentDay.breakfast, 'Breakfast', 'breakfast')}
+                  {renderMealCard(currentDay.lunch, 'Lunch', 'lunch')}
+                  {renderMealCard(currentDay.dinner, 'Dinner', 'dinner')}
                   {/* Snacks card */}
                   <div className="h-full flex flex-col">
                     <Card className="flex-1">
@@ -415,16 +470,30 @@ export function MealPlanContent() {
                   <div className="px-6 space-y-3 mb-4">
                     {(['breakfast', 'lunch', 'dinner'] as const).map(meal => {
                       const m = currentDay[meal]
+                      const key = swapKey(activeDay, meal)
+                      const isSwapping = swapping === key
                       return (
-                        <Card key={meal} entrance="fade-up">
+                        <Card key={meal} entrance="fade-up" className={`relative transition-opacity ${isSwapping ? 'opacity-50' : ''}`}>
                           <div className="flex items-start justify-between mb-2">
                             <div>
                               <p className="text-white/40 text-[11px] uppercase tracking-wider mb-0.5 capitalize">{meal}</p>
                               <p className="font-medium tracking-tight">{m.name}</p>
                             </div>
-                            <span className="num text-white/40 text-xs shrink-0 ml-2 inline-flex items-center gap-1">
-                              <CalendarIcon size={11} /> {m.prepTime}
-                            </span>
+                            <div className="flex items-center gap-2 shrink-0 ml-2">
+                              <span className="num text-white/40 text-xs inline-flex items-center gap-1">
+                                <CalendarIcon size={11} /> {m.prepTime}
+                              </span>
+                              <button
+                                onClick={() => swapMeal(activeDay, meal)}
+                                disabled={isSwapping || !!swapping}
+                                aria-label={`Swap ${meal}`}
+                                title="Swap this meal"
+                                className="p-1 -mr-1 rounded-md text-white/35 hover:text-accent transition-colors disabled:opacity-50 inline-flex items-center gap-1"
+                              >
+                                <RefreshIcon size={13} className={isSwapping ? 'animate-spin' : ''} />
+                                <span className="text-[11px]">{isSwapping ? 'Swapping…' : 'Swap'}</span>
+                              </button>
+                            </div>
                           </div>
                           <p className="text-white/55 text-sm mb-2">{m.description}</p>
                           <p className="text-[#3FBE6F] text-xs inline-flex items-center gap-1">
