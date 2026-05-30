@@ -14,7 +14,9 @@ gutted. is a production Next.js 16 / React 19 web app and PWA. It closes the loo
 2. **Medical document intelligence** -- Viome, GI-MAP, SIBO, food-sensitivity reports, food labels.
 3. **Personalised meal planning** -- weekly plans built from the user's actual gut profile, not a template.
 
-A single AI score (1-10) sits at the centre, with a multi-turn AI Gut Coach, pattern detection, daily reminders, supplement guidance (Pro), doctor summaries (Pro), and practitioner-share read-only access on top.
+A single AI score (1-10) sits at the centre, with a multi-turn AI Gut Coach that streams its responses token-by-token, pattern detection, daily reminders, supplement guidance (Pro), doctor summaries (Pro), and practitioner-share read-only access on top.
+
+gutted. is also agent-readable: [`/api/product-truth`](https://www.gutted.app/api/product-truth) serves a versioned, capability-only JSON description of the product (price and priceId sourced from the authoritative `PLANS` object so they never drift), and [`/llms.txt`](https://www.gutted.app/llms.txt) is the discovery file that points LLMs and agents at it.
 
 ## Stack at a glance
 
@@ -42,11 +44,17 @@ npm run typecheck            # tsc --noEmit
 npm run build && npm start   # production build
 ```
 
+The production build never requires AI keys (clients are constructed lazily). A few env vars are worth noting beyond the basics in `.env.example`:
+
+- `CRON_SECRET` -- shared secret guarding the scheduled (cron) route handlers.
+- `ATTRIBUTION_INGEST_URL` and `ATTRIBUTION_INGEST_SECRET` -- the warehouse ingest endpoint and its secret for revenue-only attribution. Both are optional: attribution emit is a safe no-op until they are set, and only an opaque user id, the utm set, and a plan-derived value ever leave gutted. (never email, name, symptom, score, condition, or biomarker.)
+
 ## Where to read next
 
 The full source of truth lives in [`/docs`](./docs/README.md). Highlights:
 
 - **Selling & positioning:** [EXECUTIVE_SUMMARY](./docs/EXECUTIVE_SUMMARY.md) · [VALUE_PROP](./docs/VALUE_PROP.md) · [ICP](./docs/ICP.md) · [OUTCOMES](./docs/OUTCOMES.md) · [PRICING](./docs/PRICING.md)
+- **Fleet sell/market source:** [AGENT_BRIEFING](./docs/AGENT_BRIEFING.md) -- the canonical brief the agent fleet uses to sell and market gutted.
 - **Building & shipping:** [ARCHITECTURE](./docs/ARCHITECTURE.md) · [FEATURES](./docs/FEATURES.md) · [DEPLOYMENT](./docs/DEPLOYMENT.md) · [REPLICATION_GUIDE](./docs/REPLICATION_GUIDE.md) · [COMMON_ISSUES](./docs/COMMON_ISSUES.md)
 - **Design:** [DESIGN_SYSTEM](./docs/DESIGN_SYSTEM.md) · [VISUAL_GUIDELINES](./docs/VISUAL_GUIDELINES.md) · [BRANDING](./docs/BRANDING.md)
 - **AI safety:** [LLM_CRITICAL_THINKING_TRAINING](./docs/LLM_CRITICAL_THINKING_TRAINING.md)

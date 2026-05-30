@@ -110,6 +110,59 @@ A running record of key architectural, design, and product decisions. Newest dec
 
 **Trade-offs:** Token-based access is only as safe as the URL handling; we don't expose tokens in OpenGraph or sitemaps and never log them at INFO level.
 
+### ADR-011: Lazy client construction for env-fragile builds (2026-05-30)
+
+**Decision:** Construct the Anthropic, OpenAI, Stripe, and Resend SDK clients lazily through `src/lib/lazy.ts` rather than at module load. Pin `turbopack.root` in `next.config.ts` and document `CRON_SECRET` in `.env.example`.
+
+**Why:**
+- Eager top-level client construction meant the production build (and any route that merely imported a module) demanded env vars be present at build time, which made builds fragile and broke cleanly typed CI runs that have no secrets.
+- A lazy getter defers reading the key until the first real call, so the build never needs the secret and an unconfigured key fails at the call site (where it belongs) instead of at import.
+- Pinning `turbopack.root` removes the multi-lockfile root-inference warning and makes the build deterministic.
+
+**Trade-offs:** A tiny indirection on first use per client per instance; negligible and amortised by Fluid Compute instance reuse (see ADR-005).
+
+### ADR-012: Coach response streaming via `messages.stream` (2026-05-30)
+
+**Decision:** `src/app/api/gut-coach/route.ts` now uses `anthropic.messages.stream` piped through a `ReadableStream`, and `src/components/content/CoachContent.tsx` renders tokens as they arrive. A 60s abort bounds the stream; a mid-stream failure keeps the partial text already shown.
+
+**Why:**
+- The coach was previously **buffered** (`messages.create`): the user stared at a spinner until the whole reply was assembled, then it appeared at once. (Reconcile with older docs that imply it already streamed; it did not, it does now.)
+- Token-by-token rendering makes a multi-second reasoning reply feel immediate and lets the user start reading while generation continues.
+- Graceful mid-stream failure (keep partial text) is strictly better UX than discarding a half-formed answer on a dropped connection.
+
+**Trade-offs:** Streaming code is more involved than a single awaited call (backpressure, abort wiring, partial-state handling); the perceived-latency win for the highest-value paid surface justifies it.
+
+### ADR-013: Versioned, capability-only product-truth endpoint as the fleet source of truth (2026-05-30)
+
+**Decision:** Ship `GET /api/product-truth` returning a versioned (`gutted.product-truth/1`), capability-only JSON document assembled from the docs plus the authoritative `PLANS` object, so price and `priceId` never drift between the endpoint and checkout. Add a `/llms.txt` discovery file and a `robots.txt` carve-out that allows `/api/product-truth`, `/llms.txt`, and `/.well-known/` while the rest of `/api` stays disallowed.
+
+**Why:**
+- Other agents and surfaces across the fleet need a single machine-readable statement of what gutted can do and what it costs; deriving price from the same `PLANS` object the checkout uses removes the classic two-sources-of-truth drift.
+- Capability-only framing keeps the endpoint safe to expose publicly for a YMYL health product: it states what the product does, never user data and never medical claims.
+- `/llms.txt` plus the robots carve-out make the truth endpoint discoverable to well-behaved agents without opening the rest of the API surface.
+
+**Trade-offs:** The endpoint is one more contract to version and keep honest; the `/1` namespace makes breaking changes explicit and the docs-plus-`PLANS` assembly keeps maintenance to one edit.
+
+### ADR-014: `@anthropic-ai/sdk` bumped to 0.100.1 (2026-05-30)
+
+**Decision:** Upgrade `@anthropic-ai/sdk` from 0.82.0 to 0.100.1.
+
+**Why:**
+- The streaming coach (ADR-012) leans on the current `messages.stream` ergonomics; staying on a months-old SDK invited subtle drift against the live API.
+- Keeping the primary AI dependency current reduces the size of any future forced upgrade.
+
+**Trade-offs:** Any SDK bump carries minor-version surface risk; verified against the streaming and structured-output paths this session.
+
+### ADR-015: gutted confirmed as the fleet rendering reference (2026-05-30)
+
+**Decision:** Treat gutted as the reference implementation for server-rendered (SSR/SSG) apps across the fleet. No migration was needed: gutted is already server-rendered on Next.js App Router (see ADR-001).
+
+**Why:**
+- gutted already does the thing other surfaces are being asked to do (real SSR/SSG, agent-readable endpoints, structured data), so it is the cheapest concrete pattern to point the rest of the fleet at.
+- Naming a reference avoids each app reinventing the rendering and discovery story.
+
+**Trade-offs:** Reference status means gutted's choices get copied, so regressions here propagate; offset by the decisions being logged here and the product-truth contract (ADR-013) being explicit.
+
 ---
 
 ## Design decisions
@@ -227,6 +280,38 @@ A running record of key architectural, design, and product decisions. Newest dec
 **Decision:** Project convention is double-hyphen (`--`) instead of em dashes (`---`) in all user-facing copy and docs.
 
 **Why:** Consistent rendering across mediums (Markdown processors, email clients, social cards), simpler to type, and a recent normalisation pass removed the historical em-dash inconsistency.
+
+### PDR-009: Full 5X rebuild scope locked (2026-05-30)
+
+**Decision:** Lock the full 5X rebuild scope as the committed body of work for this initiative: lazy client construction (ADR-011), coach streaming (ADR-012), the agent-readable product-truth endpoint and discovery files (ADR-013), SEO and structured-data work, and revenue-only attribution (PDR-010).
+
+**Why:**
+- Treating these as one locked scope rather than a drip of independent tickets keeps the rebuild coherent and lets each piece assume the others land in the same pass.
+- Locking scope now prevents mid-flight expansion and makes "done" a defined boundary.
+
+**Trade-offs:** A locked scope defers anything not in it; new asks go to the next cycle rather than stretching this one.
+
+### PDR-010: Revenue-only attribution with a deny-by-default allowlist (2026-05-30)
+
+**Decision:** gutted captures and emits attribution for revenue analysis only, through a deny-by-default allowlist serializer (`src/lib/attribution.ts`). First-party cookie capture (`src/lib/attribution-client.ts` + `src/components/AttributionCapture.tsx`) records utm / referrer / landing_path; this persists to a new additive `profiles.attribution` jsonb column (RLS intact) at email signup and OAuth callback. Stripe checkout stamps `utm_*` + `anonymous_id` onto both the session and the subscription metadata. Events: `landed` / `signed_up` go via the frontend through `/api/attribution` (which keeps the ingest secret server-side and attaches the opaque Supabase `user_id`); `purchased` / `churned` / `refunded` go from the Stripe webhook (a `charge.refunded` handler was added). The serializer lets ONLY an opaque uuid, the utm set, and a plan-derived `value_cents` leave gutted: NEVER email, name, symptom, gut score, condition, or biomarker.
+
+**Why:**
+- gutted is a YMYL health product (PDR-004); the only safe attribution is one that is structurally incapable of exfiltrating PHI, so deny-by-default (allowlist what leaves, drop everything else) is the correct posture rather than blocklisting known-bad fields.
+- Revenue-only is all the OS warehouse needs to attribute conversions; nothing about a user's health is required for that, so nothing about it is sent.
+- Routing frontend events through `/api/attribution` keeps the ingest secret off the client and attaches the opaque user id server-side.
+
+**Trade-offs:** We give up rich behavioural attribution and any health-correlated marketing analysis on purpose; for a YMYL product that is a feature, not a limitation. Emit is a safe no-op until `ATTRIBUTION_INGEST_URL` and `ATTRIBUTION_INGEST_SECRET` are set.
+
+### PDR-011: Central Mindmaker OS warehouse owns attribution ingest (2026-05-30)
+
+**Decision:** A central Mindmaker OS warehouse owns the `ingest-attribution` function, the ingest secret, and a dedicated attribution schema. gutted only emits to it: gutted never holds the OS key beyond the per-app `ATTRIBUTION_INGEST_SECRET`, never migrates warehouse tables, and never reads back from the warehouse.
+
+**Why:**
+- Attribution from every fleet app should land in one schema so revenue can be analysed across products without each app reimplementing storage.
+- Keeping ownership of the ingest function, the secret, and the schema in the OS warehouse (not in gutted) means a compromise of gutted cannot rewrite warehouse structure or read other apps' data; gutted's blast radius is its own emit secret.
+- Clean separation: gutted owns producing safe events (PDR-010), the warehouse owns receiving and storing them.
+
+**Trade-offs:** gutted cannot self-serve attribution queries; that work lives in the OS. Accepted, since the warehouse is the correct cross-fleet vantage point.
 
 ---
 

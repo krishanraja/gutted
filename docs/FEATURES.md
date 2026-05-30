@@ -40,7 +40,10 @@ The main dashboard is a tabbed interface with progressive unlocks based on loggi
 ### Coach (unlocks after 5th log; **Core 10 chats/mo, Pro unlimited**)
 
 - Multi-turn AI Gut Coach conversation.
+- **Token-by-token streaming.** `/api/gut-coach` uses `anthropic.messages.stream` piped through a `ReadableStream`; `CoachContent.tsx` reads the response body and renders tokens as they arrive (`text/plain`, `Cache-Control: no-store`, `X-Accel-Buffering: no`). It genuinely streams now -- earlier it buffered the full reply via `messages.create` before showing anything.
+- Graceful mid-stream failure: once streaming starts the status is already 200, so a mid-stream error ends the stream and the client keeps and softly flags whatever partial text arrived (no dead end, no raw error dumped). A 60s abort caps a stalled call, and a client disconnect aborts the upstream model call so we stop paying for unread tokens.
 - Each turn is grounded server-side in the user's profile, recent logs, uploaded documents, and dietary restrictions.
+- User data is wrapped in `[BEGIN USER DATA]`/`[END USER DATA]` delimiters in a leading user-role message so an injection payload in a log or document cannot rewrite the static system guardrails.
 - Same safety framework as log analysis -- no diagnoses, flagged symptoms route the user to professional care.
 
 ---
@@ -188,6 +191,52 @@ Full pricing detail in [PRICING.md](./PRICING.md).
 
 ---
 
+## Agent surface (product truth for crawlers and the fleet)
+
+gutted. exposes a machine-readable description of itself so agents, crawlers, and the Mindmaker fleet all sell the same accurate, current pitch with no re-brief, and never invent a health claim.
+
+### `GET /api/product-truth`
+
+- Versioned, capability-only JSON (`schema_version: "gutted.product-truth/1"`; bump on any contract change).
+- One source of truth for product positioning, ICP and anti-ICP, channels, outcomes, an agent briefing (`claims_policy`, `how_to_describe`, `never_claim`, objection handling), and disclaimers.
+- Pricing and price IDs are read from the authoritative `PLANS` object in `src/lib/stripe.ts`, so price and `priceId` can never drift from Stripe.
+- Capability-only by policy: it describes what gutted does, never a health outcome or efficacy claim (gutted is YMYL).
+- Cacheable at the edge (`Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400`).
+
+### `/llms.txt`
+
+- Discovery file at the site root pointing agents to `/api/product-truth` first, plus a plain-language product summary, pricing, key pages, and an explicit claims policy for agents.
+
+### robots carve-out
+
+- `public/robots.txt` keeps `/api` disallowed in general but carves out `Allow: /api/product-truth`, `Allow: /llms.txt`, and `Allow: /.well-known/` so the agent surfaces stay crawlable. `/dashboard`, `/onboarding`, and `/auth` remain disallowed.
+
+---
+
+## SEO & structured data
+
+- **JSON-LD** in `src/app/layout.tsx`: `SoftwareApplication` + `Organization` + `FAQPage`, emitted as an `application/ld+json` script.
+- **Open Graph + Twitter cards** in the root metadata.
+- **Branded dynamic OG image** (`src/app/opengraph-image.tsx`): teal (`#00B4B4`) to green (`#3FBE6F`) wordmark on black.
+- The app is already server-rendered (SSR/SSG), so crawlers see fully rendered markup.
+
+---
+
+## Revenue-only attribution
+
+First-party attribution that stitches landing -> signup -> Stripe -> warehouse while sending the fleet **commercial fields only**. gutted is YMYL: no PHI ever leaves the app.
+
+- **Storage:** `profiles.attribution` jsonb column (additive migration, RLS intact).
+- **First-party capture** (`src/lib/attribution-client.ts` + `src/components/AttributionCapture.tsx`): first-touch UTM set, referrer, and landing path plus a stable anonymous id, all in first-party cookies (`gutted_attrib` 90 days, `gutted_aid` 365 days). First-touch wins.
+- **Persistence:** the captured record is written to `profiles.attribution` at email signup and at the OAuth callback.
+- **Stripe stamping:** checkout stamps `utm_*` and `anonymous_id` onto both the Checkout Session and the subscription metadata.
+- **Frontend lifecycle events** (`landed`, `signed_up`, `activated`) post to `/api/attribution`, which keeps the ingest secret server-side and attaches the opaque Supabase `user_id` (never trusted from the client).
+- **Commercial lifecycle events** (`purchased`, `refunded`, `churned`) fire from the signature-verified Stripe webhook (a `charge.refunded` handler was added).
+- **Deny-by-default serializer** (`src/lib/attribution.ts`): only an opaque uuid, the UTM set, and a plan-derived `value_cents` ever leave gutted. NEVER email, name, symptom, gut score, condition, or biomarker. A caller can pass anything; only allowlisted keys are serialized.
+- **Ships dark:** emit is a safe no-op until `ATTRIBUTION_INGEST_URL` and `ATTRIBUTION_INGEST_SECRET` are set (the Mindmaker OS warehouse owns the `ingest-attribution` function and the shared `x-attribution-secret`). It switches on with config alone, no code change. Attribution never blocks a purchase, signup, or page load.
+
+---
+
 ## Cross-cutting infrastructure
 
 | Capability | Where it lives |
@@ -207,6 +256,10 @@ Full pricing detail in [PRICING.md](./PRICING.md).
 | Keyboard shortcuts | `src/hooks/useKeyboardShortcuts.ts` |
 | Swipeable cards | `src/hooks/useSwipeableCards.ts` |
 | Upgrade flow | `src/hooks/useUpgrade.ts` |
+| Lazy AI/billing/email clients (no build-time env) | `src/lib/lazy.ts` |
+| Revenue-only attribution serializer (deny-by-default) | `src/lib/attribution.ts` |
+| First-party attribution capture | `src/lib/attribution-client.ts` + `src/components/AttributionCapture.tsx` |
+| Machine-readable product truth | `src/app/api/product-truth/route.ts` + `public/llms.txt` |
 
 ---
 

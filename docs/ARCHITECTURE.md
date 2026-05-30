@@ -57,7 +57,7 @@ gutted. is a single Next.js 16 application deployed on Vercel (Fluid Compute), b
 | Auth | Supabase Auth | `@supabase/ssr` 0.10, `@supabase/supabase-js` 2.101 |
 | Storage | Supabase Storage (`documents` bucket) | Managed |
 | Payments | Stripe | SDK 22.x, API `2026-03-25.dahlia` |
-| AI -- text + vision | Anthropic | SDK 0.82, model `claude-sonnet-4-20250514` |
+| AI -- text + vision | Anthropic | SDK 0.100.1, model `claude-sonnet-4-20250514` |
 | AI -- audio | OpenAI | SDK 6.33, Whisper |
 | Email | Resend | SDK 6.10 |
 | Nutrition data | Edamam Food Database API | v2 (server-cached) |
@@ -70,8 +70,9 @@ gutted. is a single Next.js 16 application deployed on Vercel (Fluid Compute), b
 ```
 src/
 ├── app/
-│   ├── layout.tsx              # Root layout, metadata, ServiceWorker, ToastProvider, AuthProvider
+│   ├── layout.tsx              # Root layout, metadata, JSON-LD, OG/Twitter, AttributionCapture, ServiceWorker, ToastProvider, AuthProvider
 │   ├── page.tsx                # Landing page with hero video
+│   ├── opengraph-image.tsx     # Branded dynamic OG card (next/og ImageResponse)
 │   ├── globals.css             # Tailwind 4 entry + tokens
 │   ├── not-found.tsx
 │   ├── sitemap.ts              # XML sitemap
@@ -99,19 +100,27 @@ src/
 │   ├── useKeyboardShortcuts.ts
 │   ├── useSwipeableCards.ts
 │   └── useUpgrade.ts
+├── components/
+│   └── AttributionCapture.tsx  # App-wide first-touch capture + single `landed` emit
 ├── lib/
-│   ├── anthropic.ts            # Claude client + CLAUDE_MODEL
-│   ├── openai.ts               # OpenAI client (Whisper)
+│   ├── lazy.ts                 # lazyClient() proxy: defers SDK construction to first request-time access
+│   ├── anthropic.ts            # Lazy Claude client + CLAUDE_MODEL
+│   ├── openai.ts               # Lazy OpenAI client (Whisper)
 │   ├── ai-response.ts          # aiAbort() (25s), extractJsonObject(), isAbortError()
-│   ├── stripe.ts               # Stripe client + PLANS + plan resolvers
+│   ├── stripe.ts               # Lazy Stripe client + PLANS + plan resolvers
 │   ├── plan-limits.ts          # Per-plan feature gates
 │   ├── unlock-status.ts        # Tab unlock thresholds (logs, docs, restrictions)
 │   ├── edamam.ts               # Food lookup
 │   ├── email-templates.ts      # Resend HTML templates
+│   ├── attribution.ts          # Server-side revenue-only emit + deny-by-default allowlist serializer
+│   ├── attribution-client.ts   # Browser first-party cookie capture (utm/referrer/landing_path + anonymous_id)
 │   ├── security.ts             # rateLimit, verifyCronSecret, validateFile, escapeHtml, isValidEmail, getAppUrl
 │   ├── animations.ts, haptics.ts
 │   └── supabase/{client,server}.ts  # browser + auth-aware server + service-role clients
 └── middleware.ts               # Auth + onboarding gate + legacy route redirects
+public/
+├── llms.txt                    # Agent/crawler discovery file (points to /api/product-truth)
+└── robots.txt                  # Disallows /api except the /api/product-truth + /llms.txt + /.well-known/ carve-out
 supabase/
 └── migrations/                 # Versioned SQL migrations (see Database)
 ```
@@ -124,6 +133,9 @@ supabase/
 - `/` -- landing page with hero video and pricing.
 - `/onboarding` -- 4-step wizard (gates dashboard until complete).
 - `/not-found`, `/sitemap.xml`, `/robots.txt`, `/manifest.json`, `/sw.js`.
+- `/llms.txt` -- agent/crawler discovery file (static, `public/llms.txt`); points at `/api/product-truth`.
+- `/opengraph-image` -- branded dynamic OG card (1200x630, `next/og`), referenced by OG + Twitter metadata.
+- `/api/product-truth` -- versioned, capability-only product/offer JSON (see Agent surface). Crawlable: `robots.txt` carves it (plus `/llms.txt` and `/.well-known/`) out of the otherwise-`Disallow: /api/` rule.
 
 ### Auth
 - `/auth/login`, `/auth/signup`, `/auth/forgot-password`, `/auth/reset-password`.
@@ -149,7 +161,7 @@ supabase/
 | `analyse-photo` | Claude analyses a food photo (Pro) | -- |
 | `analyse-document` | Claude extracts biomarkers + recommendations from uploaded docs | -- |
 | `analyse-food-gut` | Claude scores a food against the user's gut profile | -- |
-| `gut-coach` | Multi-turn coach (5-log unlock; Core 10/mo, Pro unlimited) | -- |
+| `gut-coach` | Multi-turn coach (5-log unlock; Core 10/mo, Pro unlimited) | **Streams** token-by-token (`messages.stream` -> `ReadableStream`); 60s abort; rate-limited 20/min/user |
 | `daily-insight` | Daily AI tip | -- |
 | `transcribe` | Whisper voice transcription | 25 MB cap (Whisper limit) |
 | `food-lookup` | Edamam parser; Postgres cache 30-day TTL | service-role read/write |
@@ -163,7 +175,9 @@ supabase/
 | `upload-document` | Supabase Storage upload + validation | `validateFile` MIME + extension + size |
 | `send-email`, `send-reminder` | Resend transactional + cron reminders | `verifyCronSecret` for cron paths |
 | `stripe/checkout`, `stripe/subscription`, `stripe/portal`, `stripe/change-plan`, `stripe/cancel`, `stripe/resume` | Subscription flow | -- |
-| `stripe/webhook` | Lifecycle handler (idempotent via `stripe_webhook_events`) | `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed` |
+| `stripe/webhook` | Lifecycle handler (idempotent via `stripe_webhook_events`) | `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`, `charge.refunded`; emits `purchased`/`churned`/`refunded` attribution |
+| `product-truth` | Versioned, capability-only product/offer JSON for agents (see Agent surface) | CDN-cached `s-maxage=3600`; price/priceId sourced from `PLANS` so they never drift |
+| `attribution` | Front door for frontend lifecycle events (`landed`/`signed_up`/`activated`) | keeps ingest secret server-side, attaches authenticated `user_id`; rate-limited 20/min/anon |
 | `practitioner` | Practitioner token issuance and validation | -- |
 
 ---
@@ -209,28 +223,81 @@ User requests plan -> server fetches profiles.gut_profile + recent logs + upload
 -> persisted to meal_plans(user_id, week_start, plan, generated_at)
 ```
 
-### AI Gut Coach
+### AI Gut Coach (streaming)
 ```
 Unlock requires logCount >= 5 (see unlock-status.ts).
-Plan check: Core 10 chats/mo, Pro unlimited.
-Server builds the message with the user's profile + recent logs + last uploads.
-Claude streams a response; turn is persisted (not user-visible chat history table today,
-context is rebuilt from profile/logs each turn).
+Plan check: Core 10 chats/mo, Pro unlimited; rate-limited 20/min/user.
+Server sanitizes chat messages (user-role only, last 10, 2,000-char cap) and builds
+context from profile + recent logs (15) + last uploads (5), wrapped in
+[BEGIN USER DATA] ... [END USER DATA] in a leading user-role message.
+
+Claude is now called with anthropic.messages.stream (was a buffered messages.create
+before this work). Earlier docs that implied the coach always streamed are wrong: the
+old path collected the full reply server-side, then returned it in one JSON response.
+
+Streaming flow:
+  anthropic.messages.stream(...)               # 60s abort via aiAbort(STREAM_TIMEOUT_MS)
+    -> iterate content_block_delta text_delta events
+    -> ReadableStream.enqueue(text)            # text/plain; Cache-Control: no-store; X-Accel-Buffering: no
+    -> CoachContent.tsx appends tokens to the live bubble as they arrive
+
+Failure modes:
+  - Guard checks (auth, plan, validation) still return JSON errors BEFORE streaming starts.
+  - Once streaming has begun the status is already 200, so a mid-stream failure ends the
+    stream; the client keeps and flags whatever partial text arrived (no dead end, no raw
+    error dumped).
+  - Client disconnect cancels the ReadableStream, which calls aiStream.abort() so we stop
+    paying for tokens nobody will read.
+  - A pre-stream timeout surfaces as 504; the 60s abort is a safety net well above normal
+    completion time, not a tight cap (streaming runs longer than a buffered call).
+
+No user-visible chat history table today: context is rebuilt from profile/logs each turn.
 ```
 
 ### Stripe billing
 ```
-/api/stripe/checkout -> Checkout Session w/ metadata.{userId, plan}
+/api/stripe/checkout -> reads profiles.attribution, flattens the utm set + anonymous_id
+   onto metadata (utm_* + anonymous_id) -> Checkout Session w/ metadata.{userId, plan, utm_*, anonymous_id}
+   AND subscription_data.metadata (same fields, so revenue_by_campaign can key on the subscription)
 -> Stripe redirect -> /dashboard?upgraded=1
 -> /api/stripe/webhook receives events
    -> insert event.id into stripe_webhook_events (idempotency, 23505 unique-violation = duplicate)
    -> on checkout.session.completed: profiles.plan, stripe_customer_id, stripe_subscription_id,
-      subscription_status='active', current_period_end; send upgrade email
+      subscription_status='active', current_period_end; send upgrade email;
+      emit `purchased` attribution (utm set stamped at checkout + plan-derived value_cents)
    -> on customer.subscription.updated: resolve plan from price_id or amount, update status
       (cancel_at_period_end -> 'canceling'), store period_end
-   -> on customer.subscription.deleted: revert to free, null subscription, status='canceled'
+   -> on customer.subscription.deleted: revert to free, null subscription, status='canceled';
+      emit `churned` attribution
    -> on invoice.payment_failed: status='past_due', send payment-failed email
+   -> on charge.refunded: emit `refunded` attribution (value_cents = amount_refunded)
 ```
+
+### Revenue-only attribution
+```
+Browser (AttributionCapture, mounted app-wide):
+  captureFirstTouch() -> first-party cookies:
+    gutted_attrib (first-touch utm + referrer + landing_path, 90d, first-touch wins)
+    gutted_aid    (stable anonymous_id, 365d)
+  fires ONE `landed` per anonymous id -> POST /api/attribution
+
+/api/attribution (frontend events only: landed | signed_up | activated):
+  keeps the ingest secret server-side, attaches the authenticated user_id (opaque
+  Supabase uuid) when a session exists -> emitAttributionEvent()
+
+Signup (email + OAuth callback): persists the captured utm/referrer/landing_path/anonymous_id
+  to profiles.attribution (jsonb), and emits `signed_up`.
+
+Stripe checkout: stamps utm_* + anonymous_id onto the session AND subscription metadata.
+Stripe webhook: emits purchased / churned / refunded (server-side, signature-verified).
+
+emitAttributionEvent -> buildAttributionEvent (deny-by-default allowlist) -> POST to the
+  Mindmaker OS `ingest-attribution` function with x-attribution-secret.
+```
+
+The serializer in `src/lib/attribution.ts` is **deny-by-default**: a caller may pass anything, but only allowlisted keys are built into the payload. ONLY an opaque Supabase `user_id` (uuid), an `anonymous_id`, the utm set, `referrer`, `landing_path`, Stripe customer/subscription ids, a plan-derived `value_cents`, and `currency` ever leave gutted. NEVER email, name, symptom, gut score, condition, or biomarker (gutted is YMYL). `value_cents` is plan-derived (or `amount_refunded` for refunds), never a raw health value.
+
+**Feature flag (ships dark):** `emitAttributionEvent` is a safe no-op until both `ATTRIBUTION_INGEST_URL` and `ATTRIBUTION_INGEST_SECRET` are set. The Mindmaker OS warehouse owns the `ingest-attribution` endpoint and the shared secret; gutted only emits. It switches on with config alone, no code change, and a failed emit never breaks a purchase, signup, or page load (4s timeout, errors swallowed and logged).
 
 ---
 
@@ -240,7 +307,7 @@ All tables enable Row-Level Security; user-owned tables have `auth.uid() = user_
 
 | Table | Purpose | Notable columns |
 |---|---|---|
-| `profiles` | One row per auth user | `id (FK auth.users)`, `email`, `name`, `plan`, `stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, `current_period_end`, `gut_profile JSONB`, `avatar_id`, `onboarding_complete` |
+| `profiles` | One row per auth user | `id (FK auth.users)`, `email`, `name`, `plan`, `stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, `current_period_end`, `gut_profile JSONB`, `avatar_id`, `onboarding_complete`, `attribution JSONB` (first-touch utm/referrer/landing_path + anonymous_id; additive, RLS intact) |
 | `logs` | Voice/text log entries | `user_id`, `type`, `content`, `audio_url`, `gut_score`, `ai_analysis JSONB`, `logged_at` |
 | `documents` | Uploaded gut tests / labels | `user_id`, `type`, `file_url`, `file_name`, `ai_interpretation`, `biomarkers JSONB`, `recommendations JSONB`, `uploaded_at` |
 | `meal_plans` | Weekly AI plans | `user_id`, `week_start`, `plan JSONB`, `generated_at` |
@@ -279,11 +346,13 @@ One bucket: `documents`. Private. Authenticated users can read/write under their
 | Voice transcription | OpenAI Whisper | Best speech-to-text accuracy |
 | Log analysis, food/photo analysis, document interpretation, meal plans, coach, daily insights, doctor summary, supplements, patterns, weekly/monthly reports | Anthropic `claude-sonnet-4-20250514` | Strong reasoning, structured-output-friendly, vision-capable |
 
-The Anthropic model id is centralised in `src/lib/anthropic.ts` (`CLAUDE_MODEL`). Update once, propagates everywhere.
+The Anthropic model id is centralised in `src/lib/anthropic.ts` (`CLAUDE_MODEL`). Update once, propagates everywhere. The SDK is pinned at `@anthropic-ai/sdk` 0.100.1 (the bump that brought `messages.stream` into use by the coach).
+
+The Anthropic, OpenAI, Stripe, and Resend clients are **lazily constructed** via `lazyClient()` (see Build + runtime). The model id constant is the only client-adjacent value evaluated at module load; the client itself is built on first request-time access.
 
 ### Safety + reliability primitives
 
-- **`aiAbort()`** -- 25-second AbortController timeout on every Anthropic call. Hung calls return `504 Analysis timed out`.
+- **`aiAbort()`** -- AbortController timeout on Anthropic calls. The buffered analysis routes use a 25-second cap and hung calls return `504 Analysis timed out`. The streaming coach uses a 60-second abort as a safety net (streaming legitimately runs longer than a buffered call), surfacing as `504` only if it trips before streaming starts.
 - **`extractJsonObject()`** -- balanced-bracket extraction. Avoids the classic greedy-regex JSON-parse failure when the model wraps JSON in prose.
 - **Prompt-injection delimiters** -- every user-data-bearing prompt uses `[BEGIN USER DATA] ... [END USER DATA]` framing with explicit instructions that the bracketed content is data, not instructions.
 - **Server-side context** -- analysis routes refetch profile + recent logs from Postgres rather than trusting client payloads.
@@ -332,11 +401,40 @@ Full safety framework in [LLM_CRITICAL_THINKING_TRAINING.md](./LLM_CRITICAL_THIN
 
 ---
 
+## Build + runtime
+
+### Lazy client construction (`src/lib/lazy.ts`)
+
+`lazyClient(factory)` returns a `Proxy` that defers `factory()` (the actual `new Anthropic(...)`, `new Stripe(...)`, `new OpenAI(...)`, `new Resend(...)`) until the first property access at request time. Why this matters: importing an API route at build time evaluates its module-scope code. If a client were constructed eagerly there and the secret were absent, construction would throw and `next build` would crash during "Collecting page data". With lazy construction, a build with **no secrets stays green**, so the production build never needs env vars.
+
+The proxy only intercepts the top-level access. Nested resources (`anthropic.messages`, `stripe.webhooks`, `resend.emails`) are the real SDK objects, and methods are bound to the real instance, so private fields and Stripe signature verification behave exactly as with a directly constructed client. The Anthropic, OpenAI, Stripe, and Resend clients all go through this helper.
+
+### Turbopack workspace root (`next.config.ts`)
+
+`turbopack.root` is pinned to this app's directory (`path.join(__dirname)`) so Turbopack does not walk up the tree and adopt an ancestor lockfile (for example a stray `C:\Users\krish\package-lock.json`) as the workspace root, which would break module resolution and the build. `experimental.serverActions.bodySizeLimit` stays at `10mb` for audio uploads.
+
+---
+
+## Agent surface
+
+gutted. exposes a small, deliberately public, machine-readable surface so the Mindmaker fleet and any agent or crawler describe the product accurately and consistently.
+
+- **`GET /api/product-truth`** -- versioned (`schema_version: 'gutted.product-truth/1'`), **capability-only** JSON assembled from the docs plus the authoritative `PLANS` object, so price and `priceId` can never drift from Stripe. It carries product, positioning, pricing tiers, ICP/anti-ICP, channels, outcomes, an agent briefing (claims policy, how-to-describe, never-claim, objection handling), and disclaimers. By policy it describes what gutted **does**, never a health outcome or efficacy claim (gutted is YMYL). CDN-cached (`s-maxage=3600, stale-while-revalidate=86400`). Bump `SCHEMA_VERSION` on any contract change.
+- **`/llms.txt`** (`public/llms.txt`) -- discovery file that points agents at `/api/product-truth` and restates the pricing and claims policy in prose.
+- **`robots.txt`** -- `Disallow: /api/` overall, with an explicit `Allow` carve-out for `/api/product-truth`, `/llms.txt`, and `/.well-known/`. Dashboard, onboarding, and auth stay disallowed.
+
+### Structured data + social cards (`src/app/layout.tsx` + `opengraph-image.tsx`)
+
+- **JSON-LD** rendered server-side (so it is in the initial HTML) as an `@graph` of `SoftwareApplication` (with Free/Core/Pro `Offer` entries at 0/14/29 USD), `Organization`, and an `FAQPage`. Health-safe: explicitly non-medical and non-diagnostic.
+- **OpenGraph + Twitter** metadata in the root `metadata` export (`summary_large_image`), backed by **`src/app/opengraph-image.tsx`**: a branded dynamic card (1200x630, `next/og` `ImageResponse`) with the teal `#00B4B4` to green `#3FBE6F` wordmark on a black canvas, so fleet-posted and shared links unfurl cleanly.
+
+---
+
 ## External services
 
 | Service | Purpose | Caching / cost notes |
 |---|---|---|
-| Anthropic | All text + vision AI | Capped via `aiAbort` (25s); plan-tiered usage limits gate volume. |
+| Anthropic | All text + vision AI | SDK 0.100.1. Buffered routes capped via `aiAbort` (25s); the coach streams via `messages.stream` (60s safety-net abort). Plan-tiered usage limits gate volume. |
 | OpenAI | Whisper transcription | 25 MB per request limit; audio capped client-side. |
 | Edamam | Nutrition data | Postgres `food_cache` with 30-day TTL; service-role-only access; `hit_count` tracks reuse. |
 | Stripe | Billing | Idempotent webhook; portal for self-serve. |
@@ -352,7 +450,9 @@ Full safety framework in [LLM_CRITICAL_THINKING_TRAINING.md](./LLM_CRITICAL_THIN
 - **Edamam cache** -- 30-day TTL on parsed food responses cuts API spend dramatically as repeat queries (e.g. "yogurt", "salmon") dominate.
 - **Webhook idempotency** -- Stripe redelivery on transient 5xx no longer doubles emails or rewrites period_end.
 - **Hero video** -- MP4 with `faststart`, eager preload, dark overlay; LCP-friendly.
-- **AI timeouts** -- 25s ceiling prevents stuck function instances.
+- **AI timeouts** -- 25s ceiling on buffered analysis routes; 60s safety-net abort on the streaming coach. Both prevent stuck function instances.
+- **Streaming coach** -- `messages.stream` piped through a `ReadableStream` means first token reaches the UI in well under a second instead of after the full buffered reply, and a client disconnect aborts the upstream call so we stop paying for unread tokens.
+- **Build with no secrets** -- lazy client construction keeps `next build` green even when AI/Stripe/Resend secrets are absent (see Build + runtime), so the production build is not gated on env wiring.
 - **Service Worker** -- registered in `layout.tsx`; PWA manifest in `public/manifest.json`; standalone display.
 
 ---
@@ -386,6 +486,14 @@ RESEND_FROM_EMAIL=
 # Internal
 CRON_SECRET=
 NEXT_PUBLIC_APP_URL=https://www.gutted.app
+
+# Revenue-only attribution (OPTIONAL feature flag; ships dark)
+# Both must be set for emitAttributionEvent to fire; otherwise it is a safe no-op.
+# The Mindmaker OS warehouse owns the ingest endpoint and the shared secret.
+ATTRIBUTION_INGEST_URL=
+ATTRIBUTION_INGEST_SECRET=
 ```
+
+Because of lazy client construction, none of the AI/Stripe/Resend secrets are needed at build time; they are read at request time. `ATTRIBUTION_INGEST_URL`/`ATTRIBUTION_INGEST_SECRET` are optional: leaving them unset keeps attribution emit dark with no error.
 
 Setup walkthrough: [DEPLOYMENT.md](./DEPLOYMENT.md). Replication from scratch: [REPLICATION_GUIDE.md](./REPLICATION_GUIDE.md).
