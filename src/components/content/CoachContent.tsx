@@ -42,6 +42,10 @@ export function CoachContent() {
       if (cancelled) return
       setPlan(profile?.plan || 'free')
 
+      // Free plan cannot use the coach (the render shows an upgrade CTA), so do
+      // not load history or call the proactive opener (it would 403).
+      if (!getPlanLimits(profile?.plan || 'free').gutCoach) return
+
       // Restore the prior thread instead of resetting to a single greeting each
       // session. Pull the most recent turns and render them chronologically.
       const { data: history } = await supabase
