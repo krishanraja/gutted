@@ -10,6 +10,7 @@ import { UploadContent } from '@/components/content/UploadContent'
 import { FoodCheckerContent } from '@/components/content/FoodCheckerContent'
 import { SupplementsContent } from '@/components/content/SupplementsContent'
 import { getUnlockStatus } from '@/lib/unlock-status'
+import { getPlanLimits } from '@/lib/plan-limits'
 
 function FoodPageContent() {
   const searchParams = useSearchParams()
@@ -18,6 +19,7 @@ function FoodPageContent() {
   const [logCount, setLogCount] = useState(0)
   const [docCount, setDocCount] = useState(0)
   const [hasRestrictions, setHasRestrictions] = useState(false)
+  const [plan, setPlan] = useState('free')
   const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(async () => {
@@ -26,7 +28,7 @@ function FoodPageContent() {
     if (!user) return
 
     const [{ data: profile }, { count: lc }, { count: dc }] = await Promise.all([
-      supabase.from('profiles').select('gut_profile').eq('id', user.id).single(),
+      supabase.from('profiles').select('gut_profile, plan').eq('id', user.id).single(),
       supabase.from('logs').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
       supabase.from('documents').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     ])
@@ -34,6 +36,7 @@ function FoodPageContent() {
     setLogCount(lc || 0)
     setDocCount(dc || 0)
     setHasRestrictions(!!(profile?.gut_profile as Record<string, unknown>)?.restrictions)
+    setPlan((profile as { plan?: string })?.plan || 'free')
     setLoaded(true)
   }, [])
 

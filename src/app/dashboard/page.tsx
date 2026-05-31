@@ -18,6 +18,7 @@ import { CoachContent } from '@/components/content/CoachContent'
 import { haptic } from '@/lib/haptics'
 import { useToast } from '@/components/ToastProvider'
 import { getUnlockStatus } from '@/lib/unlock-status'
+import { getPlanLimits } from '@/lib/plan-limits'
 import { GuidedLogWizard } from '@/components/GuidedLogWizard'
 import {
   MicIcon, FileTextIcon, UtensilsIcon, SearchIcon, FlameIcon, BulbIcon,
@@ -176,7 +177,7 @@ function DashboardContent() {
     || dailyInsight?.insight
     || (todayScore === 0 ? 'Log your first entry to get your score' : todayScore >= 7 ? 'Gut feeling good.' : todayScore >= 4 ? 'Room to improve.' : 'Rough day. Take it easy.')
 
-  const unlock = getUnlockStatus(logCount, docCount, hasRestrictions)
+  const unlock = getUnlockStatus(logCount, docCount, hasRestrictions, getPlanLimits(profile?.plan || 'free'))
   const gutTabs = [
     { key: 'overview', label: 'Overview' },
     { key: 'log', label: 'Log' },

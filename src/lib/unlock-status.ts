@@ -20,7 +20,11 @@ export function getUnlockStatus(
   logCount: number,
   docCount: number,
   hasRestrictions: boolean,
+  planLimits?: { gutCoach?: boolean; foodChecker?: boolean; supplements?: boolean; mealPlan?: boolean },
 ): UnlockStatus {
+  // Paid plans unlock the features they include immediately. Free users keep the
+  // usage-based progressive unlock, which also surfaces the upgrade prompt.
+  const p = planLimits || {}
   return {
     log: {
       unlocked: true,
@@ -41,13 +45,13 @@ export function getUnlockStatus(
       ctaTab: 'log',
     },
     coach: {
-      unlocked: logCount >= 5,
+      unlocked: !!p.gutCoach || logCount >= 5,
       requirement: `Log ${Math.max(0, 5 - logCount)} more ${5 - logCount === 1 ? 'entry' : 'entries'} to unlock Coach`,
       cta: 'Log now',
       ctaTab: 'log',
     },
     meals: {
-      unlocked: hasRestrictions,
+      unlocked: !!p.mealPlan || hasRestrictions,
       requirement: 'Set your dietary restrictions to unlock Meals',
       cta: 'Update profile',
       ctaTab: 'overview',
@@ -59,13 +63,13 @@ export function getUnlockStatus(
       ctaTab: '',
     },
     check: {
-      unlocked: logCount >= 1,
+      unlocked: !!p.foodChecker || logCount >= 1,
       requirement: 'Log your first entry to unlock Food Check',
       cta: 'Log now',
       ctaTab: 'log',
     },
     supplements: {
-      unlocked: docCount >= 1,
+      unlocked: !!p.supplements || docCount >= 1,
       requirement: 'Upload a gut test to unlock Supplements',
       cta: 'Upload now',
       ctaTab: 'upload',
